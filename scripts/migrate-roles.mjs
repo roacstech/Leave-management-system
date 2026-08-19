@@ -32,24 +32,26 @@ async function main() {
     console.log("RoleDefinition table created or verified!");
 
     // Seed default roles if empty
-    const count = await prisma.$queryRawUnsafe(`SELECT COUNT(*) as cnt FROM \`RoleDefinition\``);
-    const existingCount = Number(count[0]?.cnt || 0);
+    const count = await prisma.roleDefinition.count();
 
-    if (existingCount === 0) {
+    if (count === 0) {
       console.log("Seeding default system roles...");
-      await prisma.$executeRawUnsafe(`
-        INSERT INTO \`RoleDefinition\` (\`name\`, \`code\`, \`description\`, \`permissions\`, \`accessLevel\`, \`isSystem\`, \`isActive\`)
-        VALUES 
-          ('CEO', 'CEO', 'Chief Executive Officer - Executive oversight, organization audits, and final approvals', 'DASHBOARD_FULL,LEAVES_APPROVE_ALL,REPORTS_ALL,AUDIT_VIEW', 'EXECUTIVE', TRUE, TRUE),
-          ('Admin (Manager)', 'ADMIN', 'System Manager - Complete administrative privileges, employee & leave management', 'DASHBOARD_FULL,EMPLOYEES_MANAGE,LEAVES_APPROVE_ALL,ROLES_MANAGE,SETTINGS_MANAGE', 'ADMIN', TRUE, TRUE),
-          ('Team Lead (TL)', 'TL', 'Department Lead - Team attendance monitoring, team leave requests approval', 'DASHBOARD_VIEW,LEAVES_APPROVE_TEAM,ATTENDANCE_VIEW_TEAM', 'LEAD', TRUE, TRUE),
-          ('Employee', 'EMPLOYEE', 'Standard Staff - Self-service portal, apply for leave, personal timesheets', 'DASHBOARD_VIEW,LEAVES_APPLY,ATTENDANCE_CLOCK_IN', 'STANDARD', TRUE, TRUE),
-          ('HR Manager', 'HR_MGR', 'Human Resources - Staff onboarding, leave quota adjustments, holiday calendar', 'EMPLOYEES_MANAGE,LEAVES_MANAGE,HOLIDAYS_MANAGE', 'MANAGEMENT', FALSE, TRUE),
-          ('Project Manager', 'PM', 'Project Delivery - Team allocation, task approvals, project timesheets', 'DASHBOARD_VIEW,TEAM_VIEW,LEAVES_APPROVE_TEAM', 'LEAD', FALSE, TRUE)
-      `);
+      const defaultRoles = [
+        { name: "CEO", code: "CEO", description: "Chief Executive Officer - Executive oversight, organization audits, and final approvals", permissions: "DASHBOARD_FULL,LEAVES_APPROVE_ALL,REPORTS_ALL,AUDIT_VIEW", accessLevel: "EXECUTIVE", isSystem: true, isActive: true },
+        { name: "Admin (Manager)", code: "ADMIN", description: "System Manager - Complete administrative privileges, employee & leave management", permissions: "DASHBOARD_FULL,EMPLOYEES_MANAGE,LEAVES_APPROVE_ALL,ROLES_MANAGE,SETTINGS_MANAGE", accessLevel: "ADMIN", isSystem: true, isActive: true },
+        { name: "Team Lead (TL)", code: "TL", description: "Department Lead - Team attendance monitoring, team leave requests approval", permissions: "DASHBOARD_VIEW,LEAVES_APPROVE_TEAM,ATTENDANCE_VIEW_TEAM", accessLevel: "LEAD", isSystem: true, isActive: true },
+        { name: "Employee", code: "EMPLOYEE", description: "Standard Staff - Self-service portal, apply for leave, personal timesheets", permissions: "DASHBOARD_VIEW,LEAVES_APPLY,ATTENDANCE_CLOCK_IN", accessLevel: "STANDARD", isSystem: true, isActive: true },
+        { name: "HR Manager", code: "HR_MGR", description: "Human Resources - Staff onboarding, leave quota adjustments, holiday calendar", permissions: "EMPLOYEES_MANAGE,LEAVES_MANAGE,HOLIDAYS_MANAGE", accessLevel: "MANAGEMENT", isSystem: false, isActive: true },
+        { name: "Project Manager", code: "PM", description: "Project Delivery - Team allocation, task approvals, project timesheets", permissions: "DASHBOARD_VIEW,TEAM_VIEW,LEAVES_APPROVE_TEAM", accessLevel: "LEAD", isSystem: false, isActive: true },
+      ];
+
+      for (const role of defaultRoles) {
+        await prisma.roleDefinition.create({ data: role });
+        console.log(`Created role: ${role.name} (${role.code})`);
+      }
       console.log("Default roles seeded successfully!");
     } else {
-      console.log(`RoleDefinition table already has ${existingCount} roles.`);
+      console.log(`RoleDefinition table already has ${count} roles.`);
     }
   } catch (err) {
     console.error("Migration error:", err);

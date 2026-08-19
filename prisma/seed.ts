@@ -2,53 +2,85 @@ import "dotenv/config";
 import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 import { PrismaClient } from "../src/generated/prisma/client";
 
+const dbUrl = process.env.DATABASE_URL || "";
+
+// Parse database URL: mysql://user:pass@host:port/dbname
+function parseDbUrl(url: string) {
+  try {
+    const match = url.match(
+      /mysql:\/\/([^:]+):([^@]*)@([^:]+):(\d+)\/(.+)/
+    );
+    if (!match) return null;
+    return {
+      user: match[1],
+      password: decodeURIComponent(match[2]),
+      host: match[3],
+      port: Number(match[4]),
+      database: match[5].split("?")[0],
+    };
+  } catch {
+    return null;
+  }
+}
+
+const parsed = parseDbUrl(dbUrl);
+
+if (!parsed) {
+  console.error("Could not parse DATABASE_URL:", dbUrl);
+  process.exit(1);
+}
+
 const adapter = new PrismaMariaDb({
-  host: "localhost",
-  port: 3306,
-  user: "root",
-  password: process.env.DB_PASSWORD,
-  database: "leave_management",
+  host: parsed.host,
+  port: parsed.port,
+  user: parsed.user,
+  password: parsed.password,
+  database: parsed.database,
+  connectionLimit: 5,
 });
 
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  const admin = await prisma.user.upsert({
-    where: {
-      email: "admin@lms.com",
-    },
-    update: {
-      password: "admin123",
-      role: "ADMIN",
-    },
-    create: {
-      name: "LMS Admin",
-      email: "admin@lms.com",
-      password: "admin123",
-      role: "ADMIN",
-      updatedAt: new Date(),
-    },
+  console.log(`Connecting to database: ${parsed!.database} at ${parsed!.host}:${parsed!.port}`);
+
+  // Check if admin exists, create if not
+  const existingAdmin = await prisma.user.findUnique({
+    where: { email: "admin@lms.com" },
   });
 
-  const employee = await prisma.user.upsert({
-    where: {
-      email: "employee@lms.com",
-    },
-    update: {
-      password: "employee123",
-      role: "EMPLOYEE",
-    },
-    create: {
-      name: "Test Employee",
-      email: "employee@lms.com",
-      password: "employee123",
-      role: "EMPLOYEE",
-      updatedAt: new Date(),
-    },
+  if (!existingAdmin) {
+    const admin = await prisma.user.create({
+      data: {
+        name: "LMS Admin",
+        email: "admin@lms.com",
+        password: "admin123",
+        role: "ADMIN",
+      },
+    });
+    console.log("Admin user created:", admin.email);
+  } else {
+    console.log("Admin user already exists:", existingAdmin.email);
+  }
+
+  // Check if employee exists, create if not
+  const existingEmployee = await prisma.user.findUnique({
+    where: { email: "employee@lms.com" },
   });
 
-  console.log("Employee user created:", employee.email);
-  console.log("Admin user created:", admin.email);
+  if (!existingEmployee) {
+    const employee = await prisma.user.create({
+      data: {
+        name: "Test Employee",
+        email: "employee@lms.com",
+        password: "employee123",
+        role: "EMPLOYEE",
+      },
+    });
+    console.log("Employee user created:", employee.email);
+  } else {
+    console.log("Employee user already exists:", existingEmployee.email);
+  }
 }
 
 main()
