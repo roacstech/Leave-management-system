@@ -23,6 +23,7 @@ model User {
   password  String
   role      Role
   teamId    Int?
+  isActive  Boolean  @default(true)
   team      Team?   @relation(fields: [teamId], references: [id])
   leaveBalances LeaveBalance[]
   leaveRequests LeaveRequest[]
@@ -56,6 +57,22 @@ model LeaveType {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
+
+//--------Role Definition model---------
+
+model RoleDefinition {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  code        String   @unique
+  description String?
+  permissions String?  @default("VIEW_DASHBOARD,APPLY_LEAVE")
+  accessLevel String   @default("STANDARD")
+  isSystem    Boolean  @default(false)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
 
 //--------LeaveBalance model------
 
