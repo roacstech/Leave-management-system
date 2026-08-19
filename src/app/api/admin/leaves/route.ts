@@ -8,39 +8,55 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status");
+    const page = parseInt(searchParams.get("page") || "1", 10);
+    const limit = parseInt(searchParams.get("limit") || "10", 10);
+    const skip = (page - 1) * limit;
 
     const whereClause: any = {};
     if (status && status !== "ALL") {
       whereClause.status = status;
     }
 
-    const leaveRequests = await prisma.leaveRequest.findMany({
-      where: whereClause,
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            role: true,
-            team: {
-              select: {
-                id: true,
-                name: true,
+    const [totalItems, leaveRequests] = await Promise.all([
+      prisma.leaveRequest.count({ where: whereClause }),
+      prisma.leaveRequest.findMany({
+        where: whereClause,
+        skip,
+        take: limit,
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              role: true,
+              team: {
+                select: {
+                  id: true,
+                  name: true,
+                },
               },
             },
           },
+          leaveType: true,
         },
-        leaveType: true,
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+        orderBy: {
+          createdAt: "desc",
+        },
+      }),
+    ]);
+
+    const totalPages = Math.ceil(totalItems / limit);
 
     return NextResponse.json({
       success: true,
       leaveRequests,
+      pagination: {
+        totalItems,
+        totalPages,
+        currentPage: page,
+        limit,
+      },
     });
   } catch (error: any) {
     console.error("Fetch leave requests error:", error);
