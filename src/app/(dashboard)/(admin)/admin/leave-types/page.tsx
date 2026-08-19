@@ -1,44 +1,1588 @@
 "use client";
 
-import React from "react";
-import { FileSpreadsheet } from "lucide-react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
+import {
+  FileSpreadsheet,
+  Plus,
+  LayoutGrid,
+  List,
+  Search,
+  MoreVertical,
+  CheckCircle2,
+  AlertCircle,
+  X,
+  Calendar,
+  Clock,
+  ShieldCheck,
+  Paperclip,
+  RotateCcw,
+  Check,
+  Eye,
+  Edit2,
+  Trash2,
+  ToggleLeft,
+  ToggleRight,
+  Power,
+  Layers,
+  ArrowRight,
+  AlertTriangle,
+} from "lucide-react";
+
+interface LeaveTypeItem {
+  id: number;
+  name: string;
+  code: string;
+  description: string | null;
+  category: string;
+  annualAllocation: number;
+  isPaid: boolean;
+  carryForward: boolean;
+  maxCarryForwardDays: number;
+  maxConsecutiveDays: number;
+  requiresApproval: boolean;
+  requiresAttachment: boolean;
+  minimumNoticeDays: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  _count?: {
+    leaveBalances: number;
+    leaveRequests: number;
+  };
+}
+
+interface SummaryData {
+  totalLeaveTypes: number;
+  activeLeaveTypes: number;
+  inactiveLeaveTypes: number;
+  totalAllocatedDays: number;
+}
 
 export default function LeaveTypesPage() {
-  const leaveTypes = [
-    { name: "Annual Leave", code: "AL", quota: 18, desc: "Paid annual vacation days for all full-time staff." },
-    { name: "Casual Leave", code: "CL", quota: 10, desc: "Emergency short-notice leave for unforeseen personal tasks." },
-    { name: "Sick Leave", code: "SL", quota: 12, desc: "Health and medical illness recovery days." },
-    { name: "Maternity/Paternity", code: "MPL", quota: 90, desc: "Parental family support leaves for welcoming newborns." },
-    { name: "Compensatory Off", code: "COMP", quota: 5, desc: "Earned compensatory rest days after weekend deployments." },
-  ];
+  const [leaveTypes, setLeaveTypes] = useState<LeaveTypeItem[]>([]);
+  const [summary, setSummary] = useState<SummaryData>({
+    totalLeaveTypes: 0,
+    activeLeaveTypes: 0,
+    inactiveLeaveTypes: 0,
+    totalAllocatedDays: 0,
+  });
+  const [loading, setLoading] = useState(true);
+
+  // View toggle: 'cards' or 'table'
+  const [viewMode, setViewMode] = useState<"cards" | "table">("cards");
+
+  // Search & Filter state
+  const [search, setSearch] = useState("");
+  const [filterCategory, setFilterCategory] = useState("ALL");
+  const [filterStatus, setFilterStatus] = useState<"ALL" | "ACTIVE" | "INACTIVE">("ALL");
+  const [filterPaid, setFilterPaid] = useState<"ALL" | "PAID" | "UNPAID">("ALL");
+
+  // Action Menu state
+  const [openMenuId, setOpenMenuId] = useState<number | null>(null);
+
+  // Modals state
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [viewModalOpen, setViewModalOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [selectedLeaveType, setSelectedLeaveType] = useState<LeaveTypeItem | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [toastMessage, setToastMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  // Form state
+  const [formData, setFormData] = useState({
+    name: "",
+    code: "",
+    description: "",
+    category: "Annual",
+    annualAllocation: 12,
+    isPaid: true,
+    carryForward: false,
+    maxCarryForwardDays: 0,
+    maxConsecutiveDays: 14,
+    requiresApproval: true,
+    requiresAttachment: false,
+    minimumNoticeDays: 1,
+    isActive: true,
+  });
+
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  const showToast = (text: string, type: "success" | "error" = "success") => {
+    setToastMessage({ text, type });
+    setTimeout(() => setToastMessage(null), 4500);
+  };
+
+  // Close menus when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setOpenMenuId(null);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const fetchLeaveTypes = useCallback(async () => {
+    try {
+      setLoading(true);
+      const params = new URLSearchParams({
+        search: search.trim(),
+        category: filterCategory,
+        status: filterStatus,
+        paid: filterPaid,
+      });
+
+      const res = await fetch(`/api/admin/leave-types?${params.toString()}`);
+      const data = await res.json();
+
+      if (data.success) {
+        setLeaveTypes(data.leaveTypes || []);
+        if (data.summary) setSummary(data.summary);
+      } else {
+        showToast(data.error || "Failed to load leave types", "error");
+      }
+    } catch (err: any) {
+      showToast("Error connecting to server", "error");
+    } finally {
+      setLoading(false);
+    }
+  }, [search, filterCategory, filterStatus, filterPaid]);
+
+  useEffect(() => {
+    fetchLeaveTypes();
+  }, [fetchLeaveTypes]);
+
+  // Create Leave Type
+  const handleCreateLeaveType = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.name || !formData.code) {
+      showToast("Leave Name and Code are required", "error");
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      const res = await fetch("/api/admin/leave-types", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        showToast(data.message || "Leave type created successfully!");
+        setCreateModalOpen(false);
+        resetForm();
+        fetchLeaveTypes();
+      } else {
+        showToast(data.error || "Failed to create leave type", "error");
+      }
+    } catch (err) {
+      showToast("Network error creating leave type", "error");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Edit Leave Type
+  const handleEditLeaveType = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedLeaveType) return;
+
+    try {
+      setSubmitting(true);
+      const res = await fetch(`/api/admin/leave-types/${selectedLeaveType.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        showToast(data.message || "Leave policy updated successfully!");
+        setEditModalOpen(false);
+        setSelectedLeaveType(null);
+        fetchLeaveTypes();
+      } else {
+        showToast(data.error || "Failed to update leave policy", "error");
+      }
+    } catch (err) {
+      showToast("Network error updating leave policy", "error");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Toggle Active/Inactive Status
+  const handleToggleStatus = async (lt: LeaveTypeItem) => {
+    const newStatus = !lt.isActive;
+    try {
+      const res = await fetch(`/api/admin/leave-types/${lt.id}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isActive: newStatus }),
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        showToast(data.message || `Leave type '${lt.name}' is now ${newStatus ? "Active" : "Inactive"}`);
+        setOpenMenuId(null);
+        fetchLeaveTypes();
+      } else {
+        showToast(data.error || "Failed to toggle status", "error");
+      }
+    } catch (err) {
+      showToast("Error updating status", "error");
+    }
+  };
+
+  // Delete Leave Type
+  const handleDeleteLeaveType = async () => {
+    if (!selectedLeaveType) return;
+
+    try {
+      setSubmitting(true);
+      const res = await fetch(`/api/admin/leave-types/${selectedLeaveType.id}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        showToast(data.message || "Leave type deleted permanently!");
+        setDeleteModalOpen(false);
+        setSelectedLeaveType(null);
+        fetchLeaveTypes();
+      } else {
+        showToast(data.error || "Failed to delete leave type", "error");
+      }
+    } catch (err) {
+      showToast("Network error deleting leave type", "error");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const openViewModal = (lt: LeaveTypeItem) => {
+    setSelectedLeaveType(lt);
+    setViewModalOpen(true);
+    setOpenMenuId(null);
+  };
+
+  const openEditModal = (lt: LeaveTypeItem) => {
+    setSelectedLeaveType(lt);
+    setFormData({
+      name: lt.name,
+      code: lt.code,
+      description: lt.description || "",
+      category: lt.category || "Annual",
+      annualAllocation: lt.annualAllocation || 0,
+      isPaid: lt.isPaid ?? true,
+      carryForward: lt.carryForward ?? false,
+      maxCarryForwardDays: lt.maxCarryForwardDays || 0,
+      maxConsecutiveDays: lt.maxConsecutiveDays || 14,
+      requiresApproval: lt.requiresApproval ?? true,
+      requiresAttachment: lt.requiresAttachment ?? false,
+      minimumNoticeDays: lt.minimumNoticeDays || 0,
+      isActive: lt.isActive ?? true,
+    });
+    setEditModalOpen(true);
+    setOpenMenuId(null);
+  };
+
+  const openDeleteModal = (lt: LeaveTypeItem) => {
+    setSelectedLeaveType(lt);
+    setDeleteModalOpen(true);
+    setOpenMenuId(null);
+  };
+
+  const resetForm = () => {
+    setFormData({
+      name: "",
+      code: "",
+      description: "",
+      category: "Annual",
+      annualAllocation: 12,
+      isPaid: true,
+      carryForward: false,
+      maxCarryForwardDays: 0,
+      maxConsecutiveDays: 14,
+      requiresApproval: true,
+      requiresAttachment: false,
+      minimumNoticeDays: 1,
+      isActive: true,
+    });
+  };
+
+  const isReferenced = (lt: LeaveTypeItem) => {
+    return (lt._count?.leaveBalances || 0) > 0 || (lt._count?.leaveRequests || 0) > 0;
+  };
 
   return (
     <div className="space-y-6">
-      <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs">
-        <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
-          Leave Types & Policies
-        </h1>
-        <p className="text-sm text-slate-500 mt-0.5">
-          Configure annual quotas, allowance carryover rules, and leave categories.
-        </p>
+      {/* Toast Notification Alert */}
+      {toastMessage && (
+        <div
+          className={`fixed bottom-5 right-5 z-50 flex items-center gap-2.5 px-4 py-2.5 rounded-lg shadow-sm border text-xs font-medium ${
+            toastMessage.type === "success"
+              ? "bg-white text-slate-800 border-slate-200"
+              : "bg-white text-rose-700 border-rose-200"
+          }`}
+        >
+          {toastMessage.type === "success" ? (
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+          ) : (
+            <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+          )}
+          <span>{toastMessage.text}</span>
+          <button
+            onClick={() => setToastMessage(null)}
+            className="ml-1 text-slate-400 hover:text-slate-700"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
+
+      {/* 1. PAGE HEADER */}
+      <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-bold text-slate-900 tracking-tight">
+            Leave Types & Policies
+          </h1>
+          <p className="text-xs text-slate-500 mt-0.5">
+            Manage leave categories, annual allocations, and leave policies.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2.5 self-start sm:self-auto">
+          {/* View Mode Toggle: Cards / Table */}
+          <div className="flex items-center p-0.5 bg-slate-100 rounded-lg border border-slate-200 text-xs">
+            <button
+              onClick={() => setViewMode("cards")}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md transition-all ${
+                viewMode === "cards"
+                  ? "bg-white text-slate-900 font-semibold shadow-2xs"
+                  : "text-slate-500 hover:text-slate-800"
+              }`}
+            >
+              <LayoutGrid className="w-3.5 h-3.5" />
+              <span>Cards</span>
+            </button>
+            <button
+              onClick={() => setViewMode("table")}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md transition-all ${
+                viewMode === "table"
+                  ? "bg-white text-slate-900 font-semibold shadow-2xs"
+                  : "text-slate-500 hover:text-slate-800"
+              }`}
+            >
+              <List className="w-3.5 h-3.5" />
+              <span>Table</span>
+            </button>
+          </div>
+
+          {/* Primary Create Button */}
+          <button
+            onClick={() => {
+              resetForm();
+              setCreateModalOpen(true);
+            }}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-medium shadow-2xs transition-all active:scale-95 shrink-0"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Create Leave Type</span>
+          </button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-        {leaveTypes.map((t) => (
-          <div key={t.code} className="p-6 rounded-2xl bg-white border border-slate-200/80 shadow-xs space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200">
-                {t.code}
-              </span>
-              <span className="text-sm font-extrabold text-slate-900">{t.quota} Days/Year</span>
+      {/* 2. SUMMARY METRIC CARDS */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+        {/* Total Leave Types */}
+        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-xs">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+              Total Leave Types
+            </span>
+            <FileSpreadsheet className="w-4 h-4 text-slate-400" />
+          </div>
+          <div className="mt-2.5">
+            <div className="text-2xl font-bold text-slate-900">
+              {loading ? "--" : summary.totalLeaveTypes}
             </div>
-            <div>
-              <h3 className="font-bold text-base text-slate-900">{t.name}</h3>
-              <p className="text-xs text-slate-500 mt-1">{t.desc}</p>
+            <div className="text-[11px] text-slate-400 mt-0.5">
+              Defined policy categories
             </div>
           </div>
-        ))}
+        </div>
+
+        {/* Active Leave Types */}
+        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-xs">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+              Active Leave Types
+            </span>
+            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+          </div>
+          <div className="mt-2.5">
+            <div className="text-2xl font-bold text-slate-900">
+              {loading ? "--" : summary.activeLeaveTypes}
+            </div>
+            <div className="text-[11px] text-emerald-600 font-medium mt-0.5">
+              Available for staff requests
+            </div>
+          </div>
+        </div>
+
+        {/* Inactive Leave Types */}
+        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-xs">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+              Inactive Leave Types
+            </span>
+            <Power className="w-4 h-4 text-slate-400" />
+          </div>
+          <div className="mt-2.5">
+            <div className="text-2xl font-bold text-slate-900">
+              {loading ? "--" : summary.inactiveLeaveTypes}
+            </div>
+            <div className="text-[11px] text-slate-400 mt-0.5">
+              Disabled from request dropdowns
+            </div>
+          </div>
+        </div>
+
+        {/* Total Allocated Days */}
+        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-xs">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+              Total Allocated Days
+            </span>
+            <Calendar className="w-4 h-4 text-slate-400" />
+          </div>
+          <div className="mt-2.5">
+            <div className="text-2xl font-bold text-slate-900">
+              {loading ? "--" : `${summary.totalAllocatedDays} Days`}
+            </div>
+            <div className="text-[11px] text-slate-400 mt-0.5">
+              Cumulative annual allowances
+            </div>
+          </div>
+        </div>
       </div>
+
+      {/* 3. UNIFIED SEARCH & MULTI-FILTER BAR */}
+      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs space-y-3">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+          {/* Search */}
+          <div className="relative flex-1 max-w-sm">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              placeholder="Search by code, name, description..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-9 pr-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-slate-400 focus:bg-white"
+            />
+          </div>
+
+          {/* Filters Cluster */}
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Status Filter Tabs */}
+            <div className="flex items-center gap-0.5 p-0.5 bg-slate-100 rounded-lg text-xs">
+              <button
+                onClick={() => setFilterStatus("ALL")}
+                className={`px-2.5 py-1 rounded-md transition-all ${
+                  filterStatus === "ALL"
+                    ? "bg-white text-slate-900 font-semibold shadow-2xs"
+                    : "text-slate-500 hover:text-slate-800"
+                }`}
+              >
+                All ({summary.totalLeaveTypes})
+              </button>
+              <button
+                onClick={() => setFilterStatus("ACTIVE")}
+                className={`px-2.5 py-1 rounded-md transition-all ${
+                  filterStatus === "ACTIVE"
+                    ? "bg-white text-slate-900 font-semibold shadow-2xs"
+                    : "text-slate-500 hover:text-slate-800"
+                }`}
+              >
+                Active ({summary.activeLeaveTypes})
+              </button>
+              <button
+                onClick={() => setFilterStatus("INACTIVE")}
+                className={`px-2.5 py-1 rounded-md transition-all ${
+                  filterStatus === "INACTIVE"
+                    ? "bg-white text-slate-900 font-semibold shadow-2xs"
+                    : "text-slate-500 hover:text-slate-800"
+                }`}
+              >
+                Inactive ({summary.inactiveLeaveTypes})
+              </button>
+            </div>
+
+            {/* Paid / Unpaid Filter Tabs */}
+            <div className="flex items-center gap-0.5 p-0.5 bg-slate-100 rounded-lg text-xs">
+              {(["ALL", "PAID", "UNPAID"] as const).map((p) => (
+                <button
+                  key={p}
+                  onClick={() => setFilterPaid(p)}
+                  className={`px-2.5 py-1 rounded-md transition-all ${
+                    filterPaid === p
+                      ? "bg-white text-slate-900 font-semibold shadow-2xs"
+                      : "text-slate-500 hover:text-slate-800"
+                  }`}
+                >
+                  {p === "ALL" ? "All Types" : p.charAt(0) + p.slice(1).toLowerCase()}
+                </button>
+              ))}
+            </div>
+
+            {/* Category Dropdown Filter */}
+            <select
+              value={filterCategory}
+              onChange={(e) => setFilterCategory(e.target.value)}
+              className="px-2.5 py-1 rounded-lg bg-slate-100 border border-slate-200 text-xs text-slate-700 font-medium focus:outline-none focus:border-slate-400"
+            >
+              <option value="ALL">All Categories</option>
+              <option value="Annual">Annual</option>
+              <option value="Casual">Casual</option>
+              <option value="Sick">Sick</option>
+              <option value="Maternity">Maternity</option>
+              <option value="Paternity">Paternity</option>
+              <option value="Compensatory">Compensatory</option>
+              <option value="Other">Other / Unpaid</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {/* 4. CONTENT DISPLAY: CARDS VIEW OR TABLE VIEW */}
+      {loading ? (
+        <div className="p-12 text-center text-xs text-slate-400 bg-white border border-slate-200 rounded-xl">
+          Loading leave types and policy settings...
+        </div>
+      ) : leaveTypes.length === 0 ? (
+        <div className="p-12 text-center bg-white border border-slate-200 rounded-xl">
+          <FileSpreadsheet className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+          <p className="font-semibold text-xs text-slate-700">No leave types found</p>
+          <p className="text-[11px] text-slate-400 mt-0.5">
+            Try adjusting your search criteria or create a new leave policy.
+          </p>
+        </div>
+      ) : viewMode === "cards" ? (
+        /* CARDS VIEW */
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {leaveTypes.map((lt) => {
+            const isMenuOpen = openMenuId === lt.id;
+            return (
+              <div
+                key={lt.id}
+                className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs hover:shadow-sm transition-all relative flex flex-col justify-between"
+              >
+                <div>
+                  {/* Top: Code Badge, Quota, & Three-dot menu */}
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-mono font-bold px-2.5 py-0.5 rounded bg-slate-100 text-slate-800 border border-slate-200">
+                        {lt.code}
+                      </span>
+                      <span className="text-xs font-bold text-slate-900">
+                        {lt.annualAllocation > 0 ? `${lt.annualAllocation} Days/Year` : "Variable / 0 Days"}
+                      </span>
+                    </div>
+
+                    {/* Three-dot actions menu button */}
+                    <div className="relative">
+                      <button
+                        onClick={() => setOpenMenuId(isMenuOpen ? null : lt.id)}
+                        className="p-1 rounded-md text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+                        title="Options"
+                      >
+                        <MoreVertical className="w-4 h-4" />
+                      </button>
+
+                      {/* Dropdown Menu */}
+                      {isMenuOpen && (
+                        <div
+                          ref={menuRef}
+                          className="absolute right-0 top-full mt-1 w-44 bg-white border border-slate-200 rounded-xl shadow-lg py-1 z-30 animate-fadeIn text-xs"
+                        >
+                          <button
+                            onClick={() => openViewModal(lt)}
+                            className="w-full flex items-center gap-2 px-3 py-2 text-slate-700 hover:bg-slate-50 text-left font-medium"
+                          >
+                            <Eye className="w-3.5 h-3.5 text-slate-400" />
+                            <span>View Details</span>
+                          </button>
+
+                          <button
+                            onClick={() => openEditModal(lt)}
+                            className="w-full flex items-center gap-2 px-3 py-2 text-slate-700 hover:bg-slate-50 text-left font-medium"
+                          >
+                            <Edit2 className="w-3.5 h-3.5 text-slate-400" />
+                            <span>Edit Policy</span>
+                          </button>
+
+                          <button
+                            onClick={() => handleToggleStatus(lt)}
+                            className="w-full flex items-center gap-2 px-3 py-2 text-slate-700 hover:bg-slate-50 text-left font-medium"
+                          >
+                            <Power className="w-3.5 h-3.5 text-slate-400" />
+                            <span>{lt.isActive ? "Deactivate" : "Activate"}</span>
+                          </button>
+
+                          <div className="h-px bg-slate-100 my-1" />
+
+                          <button
+                            onClick={() => openDeleteModal(lt)}
+                            className="w-full flex items-center gap-2 px-3 py-2 text-rose-600 hover:bg-rose-50 text-left font-medium"
+                          >
+                            <Trash2 className="w-3.5 h-3.5 text-rose-500" />
+                            <span>Delete</span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Title & Description */}
+                  <div className="mt-3">
+                    <h3 className="font-bold text-sm text-slate-900">{lt.name}</h3>
+                    <p className="text-[11px] text-slate-500 mt-1 line-clamp-2 leading-relaxed">
+                      {lt.description || "No description provided."}
+                    </p>
+                  </div>
+
+                  {/* Policy Chips */}
+                  <div className="mt-3.5 flex flex-wrap items-center gap-1.5 text-[10px]">
+                    <span
+                      className={`px-2 py-0.5 rounded font-medium ${
+                        lt.isPaid
+                          ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                          : "bg-slate-100 text-slate-600 border border-slate-200"
+                      }`}
+                    >
+                      {lt.isPaid ? "Paid Leave" : "Unpaid"}
+                    </span>
+
+                    <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200 font-medium">
+                      {lt.category}
+                    </span>
+
+                    {lt.carryForward && (
+                      <span className="px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200 font-medium">
+                        Carryover: {lt.maxCarryForwardDays}d
+                      </span>
+                    )}
+
+                    {lt.requiresAttachment && (
+                      <span className="px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200 font-medium flex items-center gap-1">
+                        <Paperclip className="w-2.5 h-2.5" />
+                        Attachment Req.
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Card Footer: Status & Quick Info */}
+                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                  <span
+                    className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-medium ${
+                      lt.isActive
+                        ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                        : "bg-slate-100 text-slate-500 border border-slate-200"
+                    }`}
+                  >
+                    <span
+                      className={`w-1.5 h-1.5 rounded-full ${
+                        lt.isActive ? "bg-emerald-500" : "bg-slate-400"
+                      }`}
+                    />
+                    <span>{lt.isActive ? "Active" : "Inactive"}</span>
+                  </span>
+
+                  <span className="text-[11px] text-slate-400">
+                    Notice: {lt.minimumNoticeDays} {lt.minimumNoticeDays === 1 ? "day" : "days"}
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        /* TABLE VIEW */
+        <div className="rounded-xl bg-white border border-slate-200 overflow-hidden shadow-xs">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-slate-200 bg-slate-50/70 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                  <th className="py-3 px-4">Code</th>
+                  <th className="py-3 px-4">Leave Type</th>
+                  <th className="py-3 px-4">Description</th>
+                  <th className="py-3 px-3">Days / Year</th>
+                  <th className="py-3 px-3">Paid</th>
+                  <th className="py-3 px-3">Carry Forward</th>
+                  <th className="py-3 px-3">Status</th>
+                  <th className="py-3 px-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-xs">
+                {leaveTypes.map((lt) => {
+                  const isMenuOpen = openMenuId === lt.id;
+                  return (
+                    <tr
+                      key={lt.id}
+                      className="hover:bg-slate-50/50 transition-colors"
+                    >
+                      {/* Code */}
+                      <td className="py-3 px-4">
+                        <span className="font-mono font-bold text-xs px-2 py-0.5 rounded bg-slate-100 text-slate-800 border border-slate-200">
+                          {lt.code}
+                        </span>
+                      </td>
+
+                      {/* Name & Category */}
+                      <td className="py-3 px-4">
+                        <div className="font-semibold text-slate-900">{lt.name}</div>
+                        <div className="text-[10px] text-slate-400">{lt.category}</div>
+                      </td>
+
+                      {/* Description */}
+                      <td className="py-3 px-4 text-slate-500 max-w-xs truncate">
+                        {lt.description || "—"}
+                      </td>
+
+                      {/* Days / Year */}
+                      <td className="py-3 px-3 font-semibold text-slate-800">
+                        {lt.annualAllocation > 0 ? `${lt.annualAllocation} Days` : "0 / Variable"}
+                      </td>
+
+                      {/* Paid */}
+                      <td className="py-3 px-3">
+                        <span
+                          className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold ${
+                            lt.isPaid
+                              ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                              : "bg-slate-100 text-slate-600 border border-slate-200"
+                          }`}
+                        >
+                          {lt.isPaid ? "Yes" : "No"}
+                        </span>
+                      </td>
+
+                      {/* Carry Forward */}
+                      <td className="py-3 px-3 text-slate-600">
+                        {lt.carryForward ? (
+                          <span className="text-emerald-700 font-medium">
+                            Yes ({lt.maxCarryForwardDays}d max)
+                          </span>
+                        ) : (
+                          <span className="text-slate-400">No</span>
+                        )}
+                      </td>
+
+                      {/* Status */}
+                      <td className="py-3 px-3">
+                        <span
+                          className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-medium ${
+                            lt.isActive
+                              ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                              : "bg-slate-100 text-slate-500 border border-slate-200"
+                          }`}
+                        >
+                          <span
+                            className={`w-1.5 h-1.5 rounded-full ${
+                              lt.isActive ? "bg-emerald-500" : "bg-slate-400"
+                            }`}
+                          />
+                          <span>{lt.isActive ? "Active" : "Inactive"}</span>
+                        </span>
+                      </td>
+
+                      {/* Three-dot Actions Menu */}
+                      <td className="py-3 px-4 text-right">
+                        <div className="relative inline-block text-left">
+                          <button
+                            onClick={() => setOpenMenuId(isMenuOpen ? null : lt.id)}
+                            className="p-1.5 rounded-md text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+                            title="Actions"
+                          >
+                            <MoreVertical className="w-4 h-4" />
+                          </button>
+
+                          {/* Dropdown Menu */}
+                          {isMenuOpen && (
+                            <div
+                              ref={menuRef}
+                              className="absolute right-0 top-full mt-1 w-44 bg-white border border-slate-200 rounded-xl shadow-lg py-1 z-30 animate-fadeIn text-xs"
+                            >
+                              <button
+                                onClick={() => openViewModal(lt)}
+                                className="w-full flex items-center gap-2 px-3 py-2 text-slate-700 hover:bg-slate-50 text-left font-medium"
+                              >
+                                <Eye className="w-3.5 h-3.5 text-slate-400" />
+                                <span>View</span>
+                              </button>
+
+                              <button
+                                onClick={() => openEditModal(lt)}
+                                className="w-full flex items-center gap-2 px-3 py-2 text-slate-700 hover:bg-slate-50 text-left font-medium"
+                              >
+                                <Edit2 className="w-3.5 h-3.5 text-slate-400" />
+                                <span>Edit</span>
+                              </button>
+
+                              <button
+                                onClick={() => handleToggleStatus(lt)}
+                                className="w-full flex items-center gap-2 px-3 py-2 text-slate-700 hover:bg-slate-50 text-left font-medium"
+                              >
+                                <Power className="w-3.5 h-3.5 text-slate-400" />
+                                <span>{lt.isActive ? "Deactivate" : "Activate"}</span>
+                              </button>
+
+                              <div className="h-px bg-slate-100 my-1" />
+
+                              <button
+                                onClick={() => openDeleteModal(lt)}
+                                className="w-full flex items-center gap-2 px-3 py-2 text-rose-600 hover:bg-rose-50 text-left font-medium"
+                              >
+                                <Trash2 className="w-3.5 h-3.5 text-rose-500" />
+                                <span>Delete</span>
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* CREATE LEAVE TYPE MODAL */}
+      {createModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/30 backdrop-blur-2xs animate-fadeIn">
+          <form
+            onSubmit={handleCreateLeaveType}
+            className="w-full max-w-lg bg-white border border-slate-200 rounded-xl p-5 shadow-lg space-y-4 max-h-[90vh] overflow-y-auto"
+          >
+            <div className="flex items-center justify-between pb-2.5 border-b border-slate-100">
+              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <FileSpreadsheet className="w-4 h-4 text-slate-800" />
+                <span>Create New Leave Type & Policy</span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => setCreateModalOpen(false)}
+                className="text-slate-400 hover:text-slate-700"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {/* SECTION: Basic Information */}
+              <div>
+                <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">
+                  Basic Information
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 mb-1">
+                      Leave Code <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. MAT, PAT, AL"
+                      value={formData.code}
+                      onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
+                      className="w-full px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-900 font-mono focus:outline-none focus:border-slate-400"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 mb-1">
+                      Leave Name <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Maternity Leave"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      className="w-full px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-slate-400"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 mb-1">
+                      Category
+                    </label>
+                    <select
+                      value={formData.category}
+                      onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                      className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-slate-400"
+                    >
+                      <option value="Annual">Annual</option>
+                      <option value="Casual">Casual</option>
+                      <option value="Sick">Sick</option>
+                      <option value="Maternity">Maternity</option>
+                      <option value="Paternity">Paternity</option>
+                      <option value="Compensatory">Compensatory</option>
+                      <option value="Other">Other / Special</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 mb-1">
+                      Annual Allocation (Days)
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={formData.annualAllocation}
+                      onChange={(e) => setFormData({ ...formData, annualAllocation: Number(e.target.value) })}
+                      className="w-full px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-slate-400"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 mb-1">
+                      Paid / Unpaid
+                    </label>
+                    <select
+                      value={formData.isPaid ? "true" : "false"}
+                      onChange={(e) => setFormData({ ...formData, isPaid: e.target.value === "true" })}
+                      className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-slate-400"
+                    >
+                      <option value="true">Paid Leave</option>
+                      <option value="false">Unpaid Leave</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 mb-1">
+                      Initial Status
+                    </label>
+                    <select
+                      value={formData.isActive ? "true" : "false"}
+                      onChange={(e) => setFormData({ ...formData, isActive: e.target.value === "true" })}
+                      className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-slate-400"
+                    >
+                      <option value="true">Active</option>
+                      <option value="false">Inactive</option>
+                    </select>
+                  </div>
+
+                  <div className="sm:col-span-2">
+                    <label className="block text-xs font-medium text-slate-700 mb-1">
+                      Description
+                    </label>
+                    <textarea
+                      rows={2}
+                      placeholder="Brief purpose, eligibility, and policy details..."
+                      value={formData.description}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      className="w-full px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-slate-400"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* SECTION: Policy Settings */}
+              <div className="pt-2 border-t border-slate-100">
+                <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">
+                  Policy Rules & Restrictions
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 mb-1">
+                      Carry Forward to Next Year?
+                    </label>
+                    <select
+                      value={formData.carryForward ? "true" : "false"}
+                      onChange={(e) => setFormData({ ...formData, carryForward: e.target.value === "true" })}
+                      className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-slate-400"
+                    >
+                      <option value="false">No Carry Forward</option>
+                      <option value="true">Yes, Allow Carry Forward</option>
+                    </select>
+                  </div>
+
+                  {formData.carryForward && (
+                    <div>
+                      <label className="block text-xs font-medium text-slate-700 mb-1">
+                        Max Carry Forward Days
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={formData.maxCarryForwardDays}
+                        onChange={(e) => setFormData({ ...formData, maxCarryForwardDays: Number(e.target.value) })}
+                        className="w-full px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-slate-400"
+                      />
+                    </div>
+                  )}
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 mb-1">
+                      Max Consecutive Days
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={formData.maxConsecutiveDays}
+                      onChange={(e) => setFormData({ ...formData, maxConsecutiveDays: Number(e.target.value) })}
+                      className="w-full px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-slate-400"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 mb-1">
+                      Minimum Notice Period (Days)
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={formData.minimumNoticeDays}
+                      onChange={(e) => setFormData({ ...formData, minimumNoticeDays: Number(e.target.value) })}
+                      className="w-full px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-slate-400"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 mb-1">
+                      Requires Manager Approval?
+                    </label>
+                    <select
+                      value={formData.requiresApproval ? "true" : "false"}
+                      onChange={(e) => setFormData({ ...formData, requiresApproval: e.target.value === "true" })}
+                      className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-slate-400"
+                    >
+                      <option value="true">Yes, Requires Approval</option>
+                      <option value="false">No, Auto-Approved</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 mb-1">
+                      Requires Document Attachment?
+                    </label>
+                    <select
+                      value={formData.requiresAttachment ? "true" : "false"}
+                      onChange={(e) => setFormData({ ...formData, requiresAttachment: e.target.value === "true" })}
+                      className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-slate-400"
+                    >
+                      <option value="false">No (Optional)</option>
+                      <option value="true">Yes, Attachment Required</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setCreateModalOpen(false)}
+                className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={submitting}
+                className="px-3.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-medium disabled:opacity-50"
+              >
+                {submitting ? "Saving..." : "Create Leave Type"}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* VIEW LEAVE TYPE MODAL / DRAWER */}
+      {viewModalOpen && selectedLeaveType && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/30 backdrop-blur-2xs animate-fadeIn">
+          <div className="w-full max-w-lg bg-white border border-slate-200 rounded-xl p-5 shadow-lg space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-2.5 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <span className="font-mono font-bold text-xs px-2.5 py-1 rounded bg-slate-100 text-slate-800 border border-slate-200">
+                  {selectedLeaveType.code}
+                </span>
+                <h3 className="text-sm font-bold text-slate-900">{selectedLeaveType.name}</h3>
+              </div>
+              <button
+                onClick={() => setViewModalOpen(false)}
+                className="text-slate-400 hover:text-slate-700"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-600 leading-relaxed">
+              {selectedLeaveType.description || "No description provided."}
+            </p>
+
+            {/* Policy Breakdown Grid */}
+            <div className="grid grid-cols-2 gap-3 text-xs bg-slate-50 p-3.5 rounded-lg border border-slate-200">
+              <div>
+                <span className="text-slate-400 block text-[10px]">Annual Allocation</span>
+                <span className="font-semibold text-slate-900">
+                  {selectedLeaveType.annualAllocation} Days / Year
+                </span>
+              </div>
+              <div>
+                <span className="text-slate-400 block text-[10px]">Leave Category</span>
+                <span className="font-semibold text-slate-900">{selectedLeaveType.category}</span>
+              </div>
+              <div>
+                <span className="text-slate-400 block text-[10px]">Compensation Type</span>
+                <span className="font-semibold text-slate-900">
+                  {selectedLeaveType.isPaid ? "Paid Leave" : "Unpaid Leave"}
+                </span>
+              </div>
+              <div>
+                <span className="text-slate-400 block text-[10px]">Status</span>
+                <span
+                  className={`inline-flex items-center gap-1 font-semibold ${
+                    selectedLeaveType.isActive ? "text-emerald-700" : "text-slate-500"
+                  }`}
+                >
+                  <span
+                    className={`w-1.5 h-1.5 rounded-full ${
+                      selectedLeaveType.isActive ? "bg-emerald-500" : "bg-slate-400"
+                    }`}
+                  />
+                  {selectedLeaveType.isActive ? "Active" : "Inactive"}
+                </span>
+              </div>
+            </div>
+
+            {/* Policy Rules */}
+            <div className="space-y-2 text-xs">
+              <h4 className="font-bold text-[11px] uppercase tracking-wider text-slate-400">
+                Rule Restrictions
+              </h4>
+              <div className="grid grid-cols-2 gap-2 text-slate-700">
+                <div className="p-2.5 bg-white border border-slate-200 rounded-lg">
+                  <span className="text-[10px] text-slate-400 block">Carry Forward</span>
+                  <span className="font-medium">
+                    {selectedLeaveType.carryForward
+                      ? `Allowed (${selectedLeaveType.maxCarryForwardDays}d max)`
+                      : "Not Allowed"}
+                  </span>
+                </div>
+                <div className="p-2.5 bg-white border border-slate-200 rounded-lg">
+                  <span className="text-[10px] text-slate-400 block">Max Consecutive Days</span>
+                  <span className="font-medium">{selectedLeaveType.maxConsecutiveDays} Days</span>
+                </div>
+                <div className="p-2.5 bg-white border border-slate-200 rounded-lg">
+                  <span className="text-[10px] text-slate-400 block">Notice Period</span>
+                  <span className="font-medium">
+                    {selectedLeaveType.minimumNoticeDays} {selectedLeaveType.minimumNoticeDays === 1 ? "day" : "days"} in advance
+                  </span>
+                </div>
+                <div className="p-2.5 bg-white border border-slate-200 rounded-lg">
+                  <span className="text-[10px] text-slate-400 block">Approval Required</span>
+                  <span className="font-medium">
+                    {selectedLeaveType.requiresApproval ? "Yes (Manager/TL)" : "No (Auto-approved)"}
+                  </span>
+                </div>
+                <div className="p-2.5 bg-white border border-slate-200 rounded-lg sm:col-span-2">
+                  <span className="text-[10px] text-slate-400 block">Medical / Proof Attachment</span>
+                  <span className="font-medium">
+                    {selectedLeaveType.requiresAttachment
+                      ? "Mandatory documentation attachment required"
+                      : "Optional attachment"}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Historical Usage Stats */}
+            <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
+              <div>
+                Active Balances:{" "}
+                <strong className="text-slate-700">
+                  {selectedLeaveType._count?.leaveBalances || 0}
+                </strong>
+              </div>
+              <div>
+                Total Requests:{" "}
+                <strong className="text-slate-700">
+                  {selectedLeaveType._count?.leaveRequests || 0}
+                </strong>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setViewModalOpen(false)}
+                className="px-3.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium"
+              >
+                Close
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setViewModalOpen(false);
+                  openEditModal(selectedLeaveType);
+                }}
+                className="px-3.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-medium"
+              >
+                Edit Policy
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* EDIT LEAVE TYPE MODAL */}
+      {editModalOpen && selectedLeaveType && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/30 backdrop-blur-2xs animate-fadeIn">
+          <form
+            onSubmit={handleEditLeaveType}
+            className="w-full max-w-lg bg-white border border-slate-200 rounded-xl p-5 shadow-lg space-y-4 max-h-[90vh] overflow-y-auto"
+          >
+            <div className="flex items-center justify-between pb-2.5 border-b border-slate-100">
+              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <Edit2 className="w-4 h-4 text-slate-800" />
+                <span>Edit Leave Policy: {selectedLeaveType.name}</span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => setEditModalOpen(false)}
+                className="text-slate-400 hover:text-slate-700"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {/* Basic Information */}
+              <div>
+                <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">
+                  Basic Information
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 mb-1">
+                      Leave Code
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      disabled={isReferenced(selectedLeaveType)}
+                      value={formData.code}
+                      onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
+                      className={`w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-mono focus:outline-none ${
+                        isReferenced(selectedLeaveType)
+                          ? "bg-slate-50 text-slate-500 cursor-not-allowed"
+                          : "bg-white text-slate-900"
+                      }`}
+                    />
+                    {isReferenced(selectedLeaveType) && (
+                      <span className="text-[10px] text-slate-400 mt-0.5 block">
+                        Locked (Referenced by employee records)
+                      </span>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 mb-1">
+                      Leave Name
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      className="w-full px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-slate-400"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 mb-1">
+                      Category
+                    </label>
+                    <select
+                      value={formData.category}
+                      onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                      className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-slate-400"
+                    >
+                      <option value="Annual">Annual</option>
+                      <option value="Casual">Casual</option>
+                      <option value="Sick">Sick</option>
+                      <option value="Maternity">Maternity</option>
+                      <option value="Paternity">Paternity</option>
+                      <option value="Compensatory">Compensatory</option>
+                      <option value="Other">Other / Special</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 mb-1">
+                      Annual Allocation (Days)
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={formData.annualAllocation}
+                      onChange={(e) => setFormData({ ...formData, annualAllocation: Number(e.target.value) })}
+                      className="w-full px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-slate-400"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 mb-1">
+                      Paid / Unpaid
+                    </label>
+                    <select
+                      value={formData.isPaid ? "true" : "false"}
+                      onChange={(e) => setFormData({ ...formData, isPaid: e.target.value === "true" })}
+                      className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-slate-400"
+                    >
+                      <option value="true">Paid Leave</option>
+                      <option value="false">Unpaid Leave</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 mb-1">
+                      Status
+                    </label>
+                    <select
+                      value={formData.isActive ? "true" : "false"}
+                      onChange={(e) => setFormData({ ...formData, isActive: e.target.value === "true" })}
+                      className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-slate-400"
+                    >
+                      <option value="true">Active</option>
+                      <option value="false">Inactive</option>
+                    </select>
+                  </div>
+
+                  <div className="sm:col-span-2">
+                    <label className="block text-xs font-medium text-slate-700 mb-1">
+                      Description
+                    </label>
+                    <textarea
+                      rows={2}
+                      value={formData.description}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      className="w-full px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-slate-400"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Policy Settings */}
+              <div className="pt-2 border-t border-slate-100">
+                <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">
+                  Policy Rules & Restrictions
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 mb-1">
+                      Carry Forward to Next Year?
+                    </label>
+                    <select
+                      value={formData.carryForward ? "true" : "false"}
+                      onChange={(e) => setFormData({ ...formData, carryForward: e.target.value === "true" })}
+                      className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-slate-400"
+                    >
+                      <option value="false">No Carry Forward</option>
+                      <option value="true">Yes, Allow Carry Forward</option>
+                    </select>
+                  </div>
+
+                  {formData.carryForward && (
+                    <div>
+                      <label className="block text-xs font-medium text-slate-700 mb-1">
+                        Max Carry Forward Days
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={formData.maxCarryForwardDays}
+                        onChange={(e) => setFormData({ ...formData, maxCarryForwardDays: Number(e.target.value) })}
+                        className="w-full px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-slate-400"
+                      />
+                    </div>
+                  )}
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 mb-1">
+                      Max Consecutive Days
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={formData.maxConsecutiveDays}
+                      onChange={(e) => setFormData({ ...formData, maxConsecutiveDays: Number(e.target.value) })}
+                      className="w-full px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-slate-400"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 mb-1">
+                      Minimum Notice Period (Days)
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={formData.minimumNoticeDays}
+                      onChange={(e) => setFormData({ ...formData, minimumNoticeDays: Number(e.target.value) })}
+                      className="w-full px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-slate-400"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 mb-1">
+                      Requires Manager Approval?
+                    </label>
+                    <select
+                      value={formData.requiresApproval ? "true" : "false"}
+                      onChange={(e) => setFormData({ ...formData, requiresApproval: e.target.value === "true" })}
+                      className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-slate-400"
+                    >
+                      <option value="true">Yes, Requires Approval</option>
+                      <option value="false">No, Auto-Approved</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 mb-1">
+                      Requires Document Attachment?
+                    </label>
+                    <select
+                      value={formData.requiresAttachment ? "true" : "false"}
+                      onChange={(e) => setFormData({ ...formData, requiresAttachment: e.target.value === "true" })}
+                      className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-slate-400"
+                    >
+                      <option value="false">No (Optional)</option>
+                      <option value="true">Yes, Attachment Required</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setEditModalOpen(false)}
+                className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={submitting}
+                className="px-3.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-medium disabled:opacity-50"
+              >
+                {submitting ? "Saving Changes..." : "Save Changes"}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* DELETE CONFIRMATION MODAL */}
+      {deleteModalOpen && selectedLeaveType && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/30 backdrop-blur-2xs animate-fadeIn">
+          <div className="w-full max-w-md bg-white border border-slate-200 rounded-xl p-5 shadow-lg space-y-3.5">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+              <h3 className="text-sm font-bold text-rose-600 flex items-center gap-1.5">
+                <Trash2 className="w-4 h-4" />
+                <span>Delete Leave Type</span>
+              </h3>
+              <button
+                onClick={() => setDeleteModalOpen(false)}
+                className="text-slate-400 hover:text-slate-700"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Check if referenced by records */}
+            {isReferenced(selectedLeaveType) ? (
+              <div className="space-y-2.5">
+                <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-2.5 text-xs text-amber-800">
+                  <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                  <div>
+                    <strong className="block font-semibold">Cannot Delete Leave Type</strong>
+                    <span>
+                      This leave type is already associated with employee leave balances (
+                      {selectedLeaveType._count?.leaveBalances || 0}) or leave requests (
+                      {selectedLeaveType._count?.leaveRequests || 0}).
+                    </span>
+                  </div>
+                </div>
+
+                <p className="text-xs text-slate-600">
+                  Historical employee records must be preserved. Would you like to{" "}
+                  <strong>deactivate</strong> it instead so it no longer appears in request dropdowns?
+                </p>
+
+                <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => setDeleteModalOpen(false)}
+                    className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDeleteModalOpen(false);
+                      handleToggleStatus(selectedLeaveType);
+                    }}
+                    className="px-3.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-medium"
+                  >
+                    Deactivate Instead
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  Are you sure you want to permanently delete{" "}
+                  <strong className="text-slate-900">{selectedLeaveType.name}</strong> ({selectedLeaveType.code})?
+                  This unused leave type will be permanently removed.
+                </p>
+
+                <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => setDeleteModalOpen(false)}
+                    className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDeleteLeaveType}
+                    disabled={submitting}
+                    className="px-3.5 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-medium disabled:opacity-50"
+                  >
+                    {submitting ? "Deleting..." : "Permanently Delete"}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
