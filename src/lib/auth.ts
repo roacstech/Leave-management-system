@@ -1,6 +1,14 @@
-import NextAuth from "next-auth";
+import NextAuth, { CredentialsSignin } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { prisma } from "./db";
+
+export class InactiveAccountError extends CredentialsSignin {
+  code = "inactive_account";
+}
+
+export class InvalidCredentialsError extends CredentialsSignin {
+  code = "invalid_credentials";
+}
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   pages: {
@@ -21,7 +29,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const password = String(credentials?.password ?? "");
 
         if (!email || !password) {
-          return null;
+          throw new InvalidCredentialsError();
         }
 
         const user = await prisma.user.findUnique({
@@ -31,12 +39,16 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         });
 
         if (!user) {
-          return null;
+          throw new InvalidCredentialsError();
+        }
+
+        if (!user.isActive) {
+          throw new InactiveAccountError();
         }
 
         // Temporary testing password check
         if (password !== user.password) {
-          return null;
+          throw new InvalidCredentialsError();
         }
 
         return {
