@@ -172,7 +172,7 @@ model AuditLog {
   action    String
   entity    String
   entityId  Int?
-  details   String?
+  details   String?  @db.Text
   createdAt DateTime @default(now())
 
   user User? @relation(fields: [userId], references: [id])
