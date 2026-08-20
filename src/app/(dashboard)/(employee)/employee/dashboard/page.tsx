@@ -57,7 +57,9 @@ interface LeaveRequestItem {
 interface HolidayItem {
   id: number;
   name: string;
-  date: string;
+  fromDate?: string;
+  toDate?: string;
+  date?: string;
   description: string | null;
 }
 
@@ -702,7 +704,14 @@ export default function EmployeeDashboardPage() {
                     </div>
                     <div className="text-[11px] text-purple-700 flex items-center gap-1">
                       <Calendar className="w-3 h-3 text-purple-500" />
-                      <span>{formatDate(holiday.date)}</span>
+                      <span>
+                        {formatDate(holiday.fromDate || holiday.date)}
+                        {holiday.toDate &&
+                          holiday.fromDate &&
+                          new Date(holiday.fromDate).toDateString() !==
+                            new Date(holiday.toDate).toDateString() &&
+                          ` - ${formatDate(holiday.toDate)}`}
+                      </span>
                     </div>
                   </div>
                 ))

@@ -41,7 +41,9 @@ interface LeaveEvent {
 interface HolidayEvent {
   id: number;
   name: string;
-  date: string;
+  fromDate?: string;
+  toDate?: string;
+  date?: string;
   description: string | null;
 }
 
@@ -155,14 +157,20 @@ export default function TLTeamCalendarPage() {
 
   // Helper to check if holiday on date
   const getHolidayForDate = (dateObj: Date) => {
-    const y = dateObj.getFullYear();
-    const m = dateObj.getMonth();
-    const d = dateObj.getDate();
+    const time = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate()).getTime();
 
-    return holidays.find((h) => {
-      const hd = new Date(h.date);
-      return hd.getFullYear() === y && hd.getMonth() === m && hd.getDate() === d;
-    }) || null;
+    return (
+      holidays.find((h) => {
+        const fromStr = h.fromDate || h.date;
+        const toStr = h.toDate || h.fromDate || h.date;
+        if (!fromStr) return false;
+        const from = new Date(fromStr);
+        const to = new Date(toStr || fromStr);
+        const s = new Date(from.getFullYear(), from.getMonth(), from.getDate()).getTime();
+        const e = new Date(to.getFullYear(), to.getMonth(), to.getDate()).getTime();
+        return time >= s && time <= e;
+      }) || null
+    );
   };
 
   const daysCells = [];
