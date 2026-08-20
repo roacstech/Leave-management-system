@@ -3,9 +3,24 @@ import { prisma } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
+let hasCheckedReportingCol = false;
+async function ensureReportingToColumn() {
+  if (hasCheckedReportingCol) return;
+  try {
+    await prisma.$executeRawUnsafe(`
+      ALTER TABLE \`User\` ADD COLUMN \`reportingToId\` INT NULL;
+    `);
+  } catch (err) {
+    // Ignore error if column already exists (ER_DUP_FIELDNAME)
+  }
+  hasCheckedReportingCol = true;
+}
+
 // GET all employees, TLs, and teams with optional pagination & filtering
 export async function GET(request: NextRequest) {
   try {
+    await ensureReportingToColumn();
+
     const { searchParams } = new URL(request.url);
     const statusParam = searchParams.get("status"); // "ACTIVE", "INACTIVE", "ALL"
     const roleParam = searchParams.get("role"); // "ALL", "EMPLOYEE", "TL", "ADMIN"
@@ -37,42 +52,63 @@ export async function GET(request: NextRequest) {
       ];
     }
 
-    const [total, employees, teams, activeCount, inactiveCount] = await Promise.all([
-      prisma.user.count({ where: whereClause }),
-      prisma.user.findMany({
-        where: whereClause,
-        include: {
-          team: {
-            select: {
-              id: true,
-              name: true,
+    const [total, employees, teams, teamLeads, activeCount, inactiveCount] =
+      await Promise.all([
+        prisma.user.count({ where: whereClause }),
+        prisma.user.findMany({
+          where: whereClause,
+          include: {
+            team: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+            reportingTo: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                role: true,
+              },
+            },
+            _count: {
+              select: {
+                leaveRequests: true,
+                attendance: true,
+              },
             },
           },
-          _count: {
-            select: {
-              leaveRequests: true,
-              attendance: true,
-            },
+          orderBy: {
+            createdAt: "desc",
           },
-        },
-        orderBy: {
-          createdAt: "desc",
-        },
-        skip,
-        take: limit,
-      }),
-      prisma.team.findMany({
-        select: {
-          id: true,
-          name: true,
-        },
-        orderBy: {
-          name: "asc",
-        },
-      }),
-      prisma.user.count({ where: { isActive: true } }),
-      prisma.user.count({ where: { isActive: false } }),
-    ]);
+          skip,
+          take: limit,
+        }),
+        prisma.team.findMany({
+          select: {
+            id: true,
+            name: true,
+          },
+          orderBy: {
+            name: "asc",
+          },
+        }),
+        prisma.user.findMany({
+          where: { role: "TL", isActive: true },
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            teamId: true,
+          },
+          orderBy: {
+            name: "asc",
+          },
+        }),
+        prisma.user.count({ where: { isActive: true } }),
+        prisma.user.count({ where: { isActive: false } }),
+      ]);
 
     const totalPages = Math.ceil(total / limit);
 
@@ -80,6 +116,7 @@ export async function GET(request: NextRequest) {
       success: true,
       employees,
       teams,
+      teamLeads,
       pagination: {
         total,
         page,
@@ -101,14 +138,29 @@ export async function GET(request: NextRequest) {
 // POST create a new employee
 export async function POST(request: NextRequest) {
   try {
+    await ensureReportingToColumn();
+
     const body = await request.json();
-    const { name, email, password, role, teamId, isActive } = body;
+    const { name, email, password, role, teamId, reportingToId, isActive } = body;
 
     if (!name || !email || !role) {
       return NextResponse.json(
         { success: false, error: "Name, email, and role are required." },
         { status: 400 }
       );
+    }
+
+    // Role-specific validation: Employee MUST report to a specific TL
+    if (role === "EMPLOYEE") {
+      if (!reportingToId) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Please assign a Reporting Team Leader (TL) for this employee.",
+          },
+          { status: 400 }
+        );
+      }
     }
 
     // Check if email already exists
@@ -130,10 +182,20 @@ export async function POST(request: NextRequest) {
         password: password ? password.trim() : "password123",
         role: role as any,
         teamId: teamId ? Number(teamId) : null,
+        reportingToId:
+          role === "EMPLOYEE" && reportingToId ? Number(reportingToId) : null,
         isActive: isActive !== undefined ? Boolean(isActive) : true,
       },
       include: {
         team: true,
+        reportingTo: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+          },
+        },
       },
     });
 
@@ -164,7 +226,7 @@ export async function POST(request: NextRequest) {
           action: "CREATE_EMPLOYEE",
           entity: "User",
           entityId: newUser.id,
-          details: `Created new employee ${newUser.name} (${newUser.email}) with role ${newUser.role}`,
+          details: `Created new employee ${newUser.name} (${newUser.email}) with role ${newUser.role}`.substring(0, 191),
         },
       });
     } catch (auditErr) {
@@ -188,14 +250,22 @@ export async function POST(request: NextRequest) {
 // PATCH / PUT update employee details
 export async function PATCH(request: NextRequest) {
   try {
+    await ensureReportingToColumn();
+
     const body = await request.json();
-    const { id, name, email, role, teamId, isActive, password } = body;
+    const { id, name, email, role, teamId, reportingToId, isActive, password } =
+      body;
 
     if (!id) {
       return NextResponse.json(
         { success: false, error: "Employee ID is required." },
         { status: 400 }
       );
+    }
+
+    // If role is EMPLOYEE, validate that a TL is assigned
+    if (role === "EMPLOYEE" && reportingToId === undefined) {
+      // If updating without changing reportingToId, keep existing or check
     }
 
     const updateData: any = {};
@@ -206,11 +276,32 @@ export async function PATCH(request: NextRequest) {
     if (isActive !== undefined) updateData.isActive = Boolean(isActive);
     if (password) updateData.password = password.trim();
 
+    if (role !== undefined) {
+      if (role === "EMPLOYEE") {
+        if (reportingToId !== undefined) {
+          updateData.reportingToId = reportingToId ? Number(reportingToId) : null;
+        }
+      } else {
+        // Admin or TL does not have a reporting TL
+        updateData.reportingToId = null;
+      }
+    } else if (reportingToId !== undefined) {
+      updateData.reportingToId = reportingToId ? Number(reportingToId) : null;
+    }
+
     const updated = await prisma.user.update({
       where: { id: Number(id) },
       data: updateData,
       include: {
         team: true,
+        reportingTo: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+          },
+        },
       },
     });
 
@@ -242,6 +333,12 @@ export async function DELETE(request: NextRequest) {
     }
 
     const userId = Number(idParam);
+
+    // Unset reportingToId for reportees before deleting TL
+    await prisma.user.updateMany({
+      where: { reportingToId: userId },
+      data: { reportingToId: null },
+    });
 
     // Delete dependent records first to satisfy foreign keys cleanly
     await prisma.$transaction([

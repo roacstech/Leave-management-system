@@ -19,14 +19,28 @@ interface Team {
   name: string;
 }
 
+interface TeamLead {
+  id: number;
+  name: string;
+  email: string;
+  teamId?: number | null;
+}
+
 interface EmployeeItem {
   id: number;
   name: string;
   email: string;
   role: "EMPLOYEE" | "TL" | "ADMIN" | "CEO";
   teamId: number | null;
+  reportingToId?: number | null;
   isActive: boolean;
   team?: Team | null;
+  reportingTo?: {
+    id: number;
+    name: string;
+    email: string;
+    role?: string;
+  } | null;
   createdAt: string;
   _count?: {
     leaveRequests: number;
@@ -37,6 +51,7 @@ interface EmployeeItem {
 export default function EmployeesPage() {
   const [employees, setEmployees] = useState<EmployeeItem[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
+  const [teamLeads, setTeamLeads] = useState<TeamLead[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filterRole, setFilterRole] = useState("ALL");
@@ -68,6 +83,7 @@ export default function EmployeesPage() {
     password: "password123",
     role: "EMPLOYEE",
     teamId: "",
+    reportingToId: "",
     isActive: true,
   });
 
@@ -92,6 +108,7 @@ export default function EmployeesPage() {
       if (data.success) {
         setEmployees(data.employees || []);
         setTeams(data.teams || []);
+        setTeamLeads(data.teamLeads || []);
         if (data.pagination) {
           setPaginationInfo({
             total: data.pagination.total || 0,
@@ -138,6 +155,11 @@ export default function EmployeesPage() {
       return;
     }
 
+    if (formData.role === "EMPLOYEE" && !formData.reportingToId) {
+      showToast("Please select a Reporting Team Leader (TL) for this employee", "error");
+      return;
+    }
+
     try {
       setSubmitting(true);
       const res = await fetch("/api/admin/employees", {
@@ -146,6 +168,10 @@ export default function EmployeesPage() {
         body: JSON.stringify({
           ...formData,
           teamId: formData.teamId ? Number(formData.teamId) : null,
+          reportingToId:
+            formData.role === "EMPLOYEE" && formData.reportingToId
+              ? Number(formData.reportingToId)
+              : null,
         }),
       });
       const data = await res.json();
@@ -170,6 +196,11 @@ export default function EmployeesPage() {
     e.preventDefault();
     if (!selectedEmployee) return;
 
+    if (formData.role === "EMPLOYEE" && !formData.reportingToId) {
+      showToast("Please select a Reporting Team Leader (TL) for this employee", "error");
+      return;
+    }
+
     try {
       setSubmitting(true);
       const res = await fetch("/api/admin/employees", {
@@ -181,6 +212,10 @@ export default function EmployeesPage() {
           email: formData.email,
           role: formData.role,
           teamId: formData.teamId ? Number(formData.teamId) : null,
+          reportingToId:
+            formData.role === "EMPLOYEE" && formData.reportingToId
+              ? Number(formData.reportingToId)
+              : null,
           isActive: formData.isActive,
         }),
       });
@@ -267,6 +302,11 @@ export default function EmployeesPage() {
       password: "",
       role: emp.role,
       teamId: emp.teamId ? String(emp.teamId) : "",
+      reportingToId: emp.reportingToId
+        ? String(emp.reportingToId)
+        : emp.reportingTo?.id
+        ? String(emp.reportingTo.id)
+        : "",
       isActive: emp.isActive ?? true,
     });
     setEditModalOpen(true);
@@ -284,6 +324,7 @@ export default function EmployeesPage() {
       password: "password123",
       role: "EMPLOYEE",
       teamId: "",
+      reportingToId: "",
       isActive: true,
     });
   };
@@ -459,6 +500,14 @@ export default function EmployeesPage() {
                           <div className="text-[11px] text-slate-400">
                             {emp.email}
                           </div>
+                          {emp.role === "EMPLOYEE" && (
+                            <div className="text-[10px] text-indigo-600 font-medium mt-0.5 flex items-center gap-1">
+                              <span className="text-slate-400">Reporting TL:</span>
+                              <span className="font-semibold text-slate-700">
+                                {emp.reportingTo ? emp.reportingTo.name : "Unassigned"}
+                              </span>
+                            </div>
+                          )}
                         </div>
                       </td>
 
@@ -692,6 +741,33 @@ export default function EmployeesPage() {
                 </div>
               </div>
 
+              {/* Conditional Reporting TL field: ONLY for EMPLOYEE role */}
+              {formData.role === "EMPLOYEE" && (
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 mb-1">
+                    Assign Reporting TL <span className="text-rose-500">*</span>
+                  </label>
+                  <select
+                    required
+                    value={formData.reportingToId}
+                    onChange={(e) =>
+                      setFormData({ ...formData, reportingToId: e.target.value })
+                    }
+                    className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-slate-400"
+                  >
+                    <option value="">-- Select Team Leader (TL) --</option>
+                    {teamLeads.map((tl) => (
+                      <option key={tl.id} value={tl.id}>
+                        {tl.name} ({tl.email})
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-[10px] text-slate-400 mt-1">
+                    Employee will report to this specific TL for leaves & attendance.
+                  </p>
+                </div>
+              )}
+
               <div>
                 <label className="block text-xs font-medium text-slate-700 mb-1">
                   Status
@@ -808,6 +884,33 @@ export default function EmployeesPage() {
                   </select>
                 </div>
               </div>
+
+              {/* Conditional Reporting TL field: ONLY for EMPLOYEE role */}
+              {formData.role === "EMPLOYEE" && (
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 mb-1">
+                    Assign Reporting TL <span className="text-rose-500">*</span>
+                  </label>
+                  <select
+                    required
+                    value={formData.reportingToId}
+                    onChange={(e) =>
+                      setFormData({ ...formData, reportingToId: e.target.value })
+                    }
+                    className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-slate-400"
+                  >
+                    <option value="">-- Select Team Leader (TL) --</option>
+                    {teamLeads.map((tl) => (
+                      <option key={tl.id} value={tl.id}>
+                        {tl.name} ({tl.email})
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-[10px] text-slate-400 mt-1">
+                    Employee will report to this specific TL for leaves & attendance.
+                  </p>
+                </div>
+              )}
 
               <div>
                 <label className="block text-xs font-medium text-slate-700 mb-1">

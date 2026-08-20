@@ -17,21 +17,24 @@ enum Role {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  name      String
-  email     String   @unique
-  password  String
-  role      Role
-  teamId    Int?
-  isActive  Boolean  @default(true)
-  team      Team?   @relation(fields: [teamId], references: [id])
+  id            Int            @id @default(autoincrement())
+  name          String
+  email         String         @unique
+  password      String
+  role          Role
+  teamId        Int?
+  reportingToId Int?
+  isActive      Boolean        @default(true)
+  team          Team?          @relation(fields: [teamId], references: [id])
+  reportingTo   User?          @relation("UserReportingHierarchy", fields: [reportingToId], references: [id])
+  reportees     User[]         @relation("UserReportingHierarchy")
   leaveBalances LeaveBalance[]
   leaveRequests LeaveRequest[]
-  attendance Attendance[]
+  attendance    Attendance[]
   notifications Notification[]
-  auditLogs AuditLog[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  auditLogs     AuditLog[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 }
 
 //--------Team model-------------
