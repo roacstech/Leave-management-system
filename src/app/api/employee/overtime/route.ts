@@ -52,18 +52,8 @@ export async function GET(request: NextRequest) {
       }),
       prisma.holiday.findMany({
         where: {
-          OR: [
-            {
-              date: {
-                gte: startOfMonth,
-                lte: endOfMonth,
-              },
-            },
-            {
-              fromDate: { lte: endOfMonth },
-              toDate: { gte: startOfMonth },
-            },
-          ],
+          fromDate: { lte: endOfMonth },
+          toDate: { gte: startOfMonth },
         },
       }),
     ]);
@@ -85,15 +75,11 @@ export async function GET(request: NextRequest) {
 
       const isWeekend = attDate.getDay() === 0 || attDate.getDay() === 6;
       const isHoliday = holidays.some((h) => {
-        if (h.date && new Date(h.date).toDateString() === attDate.toDateString()) return true;
-        if (h.fromDate && h.toDate) {
-          const s = new Date(h.fromDate);
-          s.setHours(0, 0, 0, 0);
-          const e = new Date(h.toDate);
-          e.setHours(23, 59, 59, 999);
-          return attDate >= s && attDate <= e;
-        }
-        return false;
+        const s = new Date(h.fromDate);
+        s.setHours(0, 0, 0, 0);
+        const e = new Date(h.toDate);
+        e.setHours(23, 59, 59, 999);
+        return attDate >= s && attDate <= e;
       });
 
       let eligible = false;
@@ -235,18 +221,8 @@ export async function POST(request: NextRequest) {
     const isWeekend = claimDate.getDay() === 0 || claimDate.getDay() === 6;
     const holiday = await prisma.holiday.findFirst({
       where: {
-        OR: [
-          {
-            date: {
-              gte: startOfClaimDate,
-              lte: endOfClaimDate,
-            },
-          },
-          {
-            fromDate: { lte: endOfClaimDate },
-            toDate: { gte: startOfClaimDate },
-          },
-        ],
+        fromDate: { lte: endOfClaimDate },
+        toDate: { gte: startOfClaimDate },
       },
     });
 

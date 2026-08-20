@@ -55,25 +55,21 @@ export async function GET(request: NextRequest) {
 
       prisma.holiday.findMany({
         where: {
-          OR: [
-            { date: { gte: startOfMonth, lte: endOfMonth } },
-            { fromDate: { lte: endOfMonth }, toDate: { gte: startOfMonth } },
-          ],
+          fromDate: { lte: endOfMonth },
+          toDate: { gte: startOfMonth },
         },
         orderBy: {
-          createdAt: "asc",
+          fromDate: "asc",
         },
       }),
 
       prisma.holiday.findMany({
         where: {
-          OR: [
-            { date: { gte: startOfYear, lte: endOfYear } },
-            { fromDate: { lte: endOfYear }, toDate: { gte: startOfYear } },
-          ],
+          fromDate: { lte: endOfYear },
+          toDate: { gte: startOfYear },
         },
         orderBy: {
-          createdAt: "asc",
+          fromDate: "asc",
         },
       }),
 

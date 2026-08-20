@@ -25,20 +25,17 @@ export async function GET() {
 
     const holidays = await prisma.holiday.findMany({
       where: {
-        OR: [
-          { date: { gte: startOfYear, lte: endOfYear } },
-          { fromDate: { lte: endOfYear }, toDate: { gte: startOfYear } },
-        ],
+        fromDate: { lte: endOfYear },
+        toDate: { gte: startOfYear },
       },
       orderBy: {
-        createdAt: "asc",
+        fromDate: "asc",
       },
     });
 
     const formattedHolidays = holidays.map((h) => {
-      const holidayDate = h.date || h.fromDate || new Date();
-      const from = h.fromDate || h.date || new Date();
-      const to = h.toDate || h.date || new Date();
+      const from = h.fromDate || new Date();
+      const to = h.toDate || from;
 
       const diffMs = new Date(to).getTime() - new Date(from).getTime();
       const durationDays = Math.max(1, Math.ceil(diffMs / (1000 * 60 * 60 * 24)) + 1);
@@ -53,7 +50,7 @@ export async function GET() {
       return {
         id: h.id,
         name: h.name,
-        date: holidayDate.toISOString(),
+        date: from.toISOString(),
         fromDate: from.toISOString(),
         toDate: to.toISOString(),
         durationDays,
