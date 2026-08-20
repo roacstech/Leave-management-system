@@ -25,19 +25,6 @@ export async function GET() {
       where: { id: userId },
       include: {
         team: true,
-        leaveBalances: {
-          where: { year: currentYear },
-          include: {
-            leaveType: {
-              select: {
-                id: true,
-                name: true,
-                code: true,
-                isPaid: true,
-              },
-            },
-          },
-        },
       },
     });
 
@@ -48,7 +35,65 @@ export async function GET() {
       );
     }
 
-    // 2. Fetch Team Leader if assigned to a team
+    // 2. Fetch all active leave types from DB and ensure user has a balance record for each
+    const allLeaveTypes = await prisma.leaveType.findMany({
+      where: { isActive: true },
+      orderBy: { id: "asc" },
+    });
+
+    let existingBalances = await prisma.leaveBalance.findMany({
+      where: { userId, year: currentYear },
+      include: {
+        leaveType: {
+          select: {
+            id: true,
+            name: true,
+            code: true,
+            isPaid: true,
+          },
+        },
+      },
+      orderBy: { leaveTypeId: "asc" },
+    });
+
+    // Auto-create any missing leave balances for active leave types
+    const existingTypeIds = new Set(existingBalances.map((b) => b.leaveTypeId));
+    const missingTypes = allLeaveTypes.filter((lt) => !existingTypeIds.has(lt.id));
+
+    if (missingTypes.length > 0) {
+      await Promise.all(
+        missingTypes.map((lt) =>
+          prisma.leaveBalance.create({
+            data: {
+              userId,
+              leaveTypeId: lt.id,
+              year: currentYear,
+              total: lt.annualAllocation,
+              used: 0,
+              remaining: lt.annualAllocation,
+            },
+          })
+        )
+      );
+
+      // Re-fetch all updated balances
+      existingBalances = await prisma.leaveBalance.findMany({
+        where: { userId, year: currentYear },
+        include: {
+          leaveType: {
+            select: {
+              id: true,
+              name: true,
+              code: true,
+              isPaid: true,
+            },
+          },
+        },
+        orderBy: { leaveTypeId: "asc" },
+      });
+    }
+
+    // 3. Fetch Team Leader if assigned to a team
     let teamLead = null;
     if (employee.teamId) {
       teamLead = await prisma.user.findFirst({
@@ -65,7 +110,7 @@ export async function GET() {
       });
     }
 
-    // 3. Fetch today's attendance record
+    // 4. Fetch today's attendance record
     const todayAttendance = await prisma.attendance.findFirst({
       where: {
         userId,
@@ -84,7 +129,7 @@ export async function GET() {
       }
     }
 
-    // 4. Fetch recent requests, upcoming approved leaves, and upcoming holidays
+    // 5. Fetch recent requests, upcoming approved leaves, and upcoming holidays
     const [recentRequests, upcomingLeaves, upcomingHolidays] = await Promise.all([
       prisma.leaveRequest.findMany({
         where: { userId },
@@ -134,12 +179,12 @@ export async function GET() {
       }),
     ]);
 
-    // 5. Compute leave balances summary
+    // 6. Compute leave balances summary
     let totalDays = 0;
     let usedDays = 0;
     let remainingDays = 0;
 
-    employee.leaveBalances.forEach((bal) => {
+    existingBalances.forEach((bal) => {
       totalDays += bal.total;
       usedDays += bal.used;
       remainingDays += bal.remaining;
@@ -169,7 +214,7 @@ export async function GET() {
         pendingCount,
         approvedCount,
       },
-      leaveBalances: employee.leaveBalances,
+      leaveBalances: existingBalances,
       todayAttendance: todayAttendance
         ? {
             id: todayAttendance.id,

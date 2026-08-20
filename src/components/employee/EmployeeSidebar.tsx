@@ -6,11 +6,8 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   PlusCircle,
-  FileSpreadsheet,
-  PieChart,
   CalendarDays,
   Clock3,
-  Building2,
   User,
   CalendarCheck2,
   Settings,
@@ -72,7 +69,7 @@ export default function EmployeeSidebar({
       {/* Mobile Backdrop */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-40 bg-slate-900/20 backdrop-blur-xs lg:hidden transition-opacity"
+          className="fixed inset-0 z-40 bg-slate-900/30 backdrop-blur-xs lg:hidden transition-opacity"
           onClick={onCloseMobile}
         />
       )}
@@ -85,7 +82,7 @@ export default function EmployeeSidebar({
         {/* Brand Header */}
         <div className="px-5 py-5 border-b border-slate-100 bg-white">
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-emerald-600 text-white shadow-xs">
+            <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-[#1e293b] text-white shadow-xs">
               <User className="w-5 h-5" />
             </div>
             <div>
@@ -93,7 +90,7 @@ export default function EmployeeSidebar({
                 <span className="font-bold text-sm tracking-tight text-slate-900">
                   LMS Portal
                 </span>
-                <span className="text-[10px] font-semibold px-1.5 py-0.2 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+                <span className="text-[10px] font-semibold px-1.5 py-0.2 rounded bg-slate-100 text-slate-700 border border-slate-200">
                   Staff
                 </span>
               </div>
@@ -105,7 +102,7 @@ export default function EmployeeSidebar({
         </div>
 
         {/* Menu Navigation */}
-        <div className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+        <div className="flex-1 overflow-y-auto px-3 py-4 space-y-1 custom-scrollbar">
           <div className="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">
             Employee Workspace
           </div>
@@ -121,10 +118,10 @@ export default function EmployeeSidebar({
                 key={item.name}
                 href={item.href}
                 onClick={onCloseMobile}
-                className={`flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+                className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-all ${
                   isActive
-                    ? "bg-slate-900 text-white font-semibold shadow-xs"
-                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                    ? "bg-[#1e293b] text-white font-semibold shadow-xs"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80"
                 }`}
               >
                 <div className="flex items-center gap-2.5">
@@ -142,21 +139,21 @@ export default function EmployeeSidebar({
 
         {/* Profile Footer */}
         <div className="p-3.5 border-t border-slate-100 bg-white">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-full bg-emerald-600 flex items-center justify-center font-bold text-white text-xs shadow-2xs">
+          <div className="flex items-center justify-between p-2 rounded-xl bg-slate-50 border border-slate-200/60">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-7 h-7 rounded-lg bg-[#1e293b] flex items-center justify-center font-bold text-white text-xs shrink-0">
                 EMP
               </div>
-              <div className="overflow-hidden">
+              <div className="min-w-0">
                 <div className="text-xs font-semibold text-slate-900 truncate">
                   Employee
                 </div>
-                <div className="flex items-center gap-1 text-[11px] text-slate-500">
+                <div className="flex items-center gap-1.5 text-[10px] text-slate-500">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
                   <span>Active Member</span>
                 </div>
               </div>
             </div>
-            <span className="w-2 h-2 rounded-full bg-emerald-500" title="Online" />
           </div>
         </div>
       </aside>

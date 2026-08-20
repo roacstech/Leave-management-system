@@ -10,11 +10,8 @@ import {
   PlusCircle,
   CheckCircle2,
   Clock,
-  XCircle,
   ArrowRight,
-  Sparkles,
   Building2,
-  User,
   ShieldCheck,
   AlertCircle,
   X,
@@ -22,6 +19,8 @@ import {
   Calendar,
   LogOut,
   LogIn,
+  PartyPopper,
+  Sparkles,
 } from "lucide-react";
 import { useSettings } from "@/contexts/SettingsContext";
 import DatePicker from "@/components/ui/DatePicker";
@@ -300,19 +299,35 @@ export default function EmployeeDashboardPage() {
     return Math.max(1, diff);
   };
 
-  // Selected balance for live calculation in modal
+  // Helper for calendar block date rendering
+  const getCalendarBlockData = (fromDateStr?: string, toDateStr?: string, singleDateStr?: string) => {
+    const from = new Date(fromDateStr || singleDateStr || new Date());
+    const to = toDateStr ? new Date(toDateStr) : from;
+
+    const month = from.toLocaleDateString("en-US", { month: "short" }).toUpperCase();
+    const fromDay = from.getDate();
+    const toDay = to.getDate();
+    const isMultiDay = from.toDateString() !== to.toDateString();
+    const dayDisplay = isMultiDay ? `${fromDay}-${toDay}` : `${fromDay}`;
+    const weekday = from.toLocaleDateString("en-US", { weekday: "short" });
+
+    const diffDays = Math.max(1, Math.ceil((to.getTime() - from.getTime()) / (1000 * 60 * 60 * 24)) + 1);
+
+    return { month, dayDisplay, weekday, isMultiDay, diffDays };
+  };
+
   const selectedBalance = data?.leaveBalances.find(
     (b) => b.leaveType.id.toString() === applyForm.leaveTypeId
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 text-slate-900">
       {/* Toast Alert */}
       {toast && (
         <div
-          className={`fixed bottom-5 right-5 z-50 flex items-center gap-2.5 px-4 py-2.5 rounded-lg shadow-sm border text-xs font-medium ${
+          className={`fixed bottom-5 right-5 z-50 flex items-center gap-2.5 px-4 py-2.5 rounded-xl shadow-lg border text-xs font-medium ${
             toast.type === "success"
-              ? "bg-white text-slate-800 border-slate-200"
+              ? "bg-white text-[#1a2333] border-slate-200"
               : "bg-white text-rose-700 border-rose-200"
           }`}
         >
@@ -324,7 +339,7 @@ export default function EmployeeDashboardPage() {
           <span>{toast.text}</span>
           <button
             onClick={() => setToast(null)}
-            className="ml-1 text-slate-400 hover:text-slate-700"
+            className="ml-1 text-slate-400 hover:text-slate-700 cursor-pointer"
           >
             <X className="w-3.5 h-3.5" />
           </button>
@@ -332,26 +347,26 @@ export default function EmployeeDashboardPage() {
       )}
 
       {/* 1. WELCOME BANNER & FAST ACTION */}
-      <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-white p-6 rounded-2xl border border-slate-200/90 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="flex flex-wrap items-center gap-2 mb-1">
-            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-semibold">
-              <Building2 className="w-3 h-3" />
+          <div className="flex flex-wrap items-center gap-2 mb-1.5">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-slate-100/90 text-[#1e293b] border border-slate-200 text-[11px] font-semibold">
+              <Building2 className="w-3.5 h-3.5 text-slate-500" />
               <span>{data?.employee?.teamName || "General Department"}</span>
             </span>
 
             {data?.employee?.teamLead && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-slate-100 text-slate-600 text-[10px] font-medium border border-slate-200">
-                <ShieldCheck className="w-3 h-3 text-slate-400" />
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-slate-50 text-slate-600 text-[11px] font-medium border border-slate-200">
+                <ShieldCheck className="w-3.5 h-3.5 text-slate-400" />
                 <span>Lead: {data.employee.teamLead.name}</span>
               </span>
             )}
           </div>
 
-          <h1 className="text-xl font-bold text-slate-900 tracking-tight">
+          <h1 className="text-xl sm:text-2xl font-bold text-[#1a2333] tracking-tight">
             Welcome, {data?.employee?.name || "Employee"}! 👋
           </h1>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-xs text-slate-500 mt-1">
             Track your annual leave balances, submit leave applications, and punch daily attendance.
           </p>
         </div>
@@ -359,104 +374,92 @@ export default function EmployeeDashboardPage() {
         <div className="flex items-center gap-2.5 self-start md:self-auto">
           <button
             onClick={() => setApplyModalOpen(true)}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-2xs transition-all active:scale-95 shrink-0"
+            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#1e293b] hover:bg-[#28354c] text-white text-xs font-semibold shadow-xs transition-all active:scale-[0.99] shrink-0 cursor-pointer"
           >
-            <PlusCircle className="w-4 h-4" />
+            <PlusCircle className="w-4 h-4 text-slate-200" />
             <span>Apply for Leave</span>
           </button>
 
           <Link
             href="/employee/leave-calendar"
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-medium shadow-2xs transition-all shrink-0"
+            className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-[#1e293b] text-xs font-semibold shadow-xs transition-all shrink-0 cursor-pointer"
           >
-            <CalendarDays className="w-4 h-4 text-slate-400" />
+            <CalendarDays className="w-4 h-4 text-slate-500" />
             <span>My Calendar</span>
           </Link>
         </div>
       </div>
 
-      {/* 2. ATTENDANCE PUNCH & METRIC CARDS */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-        {/* Attendance Self Punch Card */}
-        <div className="bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-xl p-4 shadow-sm flex flex-col justify-between">
+      {/* 2. ATTENDANCE PUNCH & METRIC CARDS (LIGHT NAVY BLUE-BLACK PALETTE) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Attendance Punch Card */}
+        <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-xs hover:border-slate-300 transition-all flex flex-col justify-between group">
           <div>
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                Today&apos;s Punch
+              <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                Today's Attendance
               </span>
-              {data?.todayAttendance?.checkIn && !data?.todayAttendance?.checkOut ? (
-                <span className="flex items-center gap-1.5 text-[10px] font-semibold text-emerald-400 bg-emerald-950/70 border border-emerald-500/30 px-2 py-0.5 rounded-full">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  <span>Working</span>
-                </span>
-              ) : (
-                <Clock3 className="w-4 h-4 text-emerald-400" />
-              )}
+              <div className="w-8 h-8 rounded-xl bg-slate-100 text-[#1e293b] flex items-center justify-center">
+                <Clock3 className="w-4 h-4" />
+              </div>
             </div>
 
-            <div className="mt-2.5 space-y-2">
-              <div className="text-base font-bold text-white flex items-center justify-between">
-                {data?.todayAttendance?.checkIn ? (
-                  <span>In: {formatTime(data.todayAttendance.checkIn)}</span>
-                ) : (
-                  <span className="text-amber-300 text-sm">Not Punched In</span>
-                )}
-
-                {data?.todayAttendance?.checkOut && (
-                  <span className="text-xs font-semibold text-slate-300">
-                    Out: {formatTime(data.todayAttendance.checkOut)}
-                  </span>
-                )}
+            <div className="mt-3">
+              <div className="flex items-center gap-2">
+                <span
+                  className={`w-2 h-2 rounded-full ${
+                    data?.todayAttendance?.checkIn
+                      ? data?.todayAttendance?.checkOut
+                        ? "bg-slate-400"
+                        : "bg-emerald-500 animate-pulse"
+                      : "bg-amber-400"
+                  }`}
+                />
+                <span className="text-base font-bold text-[#1a2333]">
+                  {data?.todayAttendance?.checkIn ? (
+                    data?.todayAttendance?.checkOut ? (
+                      `Logged: ${data.todayAttendance.workHours || 0} hrs`
+                    ) : (
+                      `In: ${formatTime(data.todayAttendance.checkIn)}`
+                    )
+                  ) : (
+                    "Not Punched In"
+                  )}
+                </span>
               </div>
 
-              {/* Live Login Hours Display */}
-              {liveHours && (
-                <div className="bg-slate-800/90 rounded-lg p-2 border border-slate-700/60 flex items-center justify-between">
-                  <span className="text-[11px] text-slate-400 font-medium">Login Hours:</span>
-                  <div className="flex items-center gap-1.5 font-mono">
-                    <Clock className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                    <span className="text-xs font-bold text-emerald-300 tracking-wider">
-                      {liveHours.timerStr}
-                    </span>
-                    <span className="text-[10px] text-slate-400">
-                      ({liveHours.decimalHours})
-                    </span>
-                  </div>
-                </div>
-              )}
-
-              <div className="text-[11px] text-slate-300">
+              <div className="text-[11px] text-slate-500 mt-1">
                 {data?.todayAttendance?.checkOut
-                  ? `Shift completed • Total ${data.todayAttendance.workHours || liveHours?.decimalHours || "0 hrs"} logged`
+                  ? `Out: ${formatTime(data.todayAttendance.checkOut)} • Completed`
                   : data?.todayAttendance?.checkIn
-                  ? "Currently working • Punch out when leaving"
-                  : "Tap below to check in for today"}
+                  ? "Shift active • Punch out when leaving"
+                  : "Tap below to mark check-in"}
               </div>
             </div>
           </div>
 
-          <div className="mt-3.5 pt-3 border-t border-slate-700/60 flex items-center gap-2">
+          <div className="mt-4 pt-3 border-t border-slate-100">
             {!data?.todayAttendance?.checkIn ? (
               <button
                 onClick={() => handlePunch("CHECK_IN")}
                 disabled={punching}
-                className="w-full py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold text-xs shadow-xs transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                className="w-full py-2 px-3 rounded-xl bg-[#1e293b] hover:bg-[#28354c] text-white font-semibold text-xs shadow-xs transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer"
               >
-                <LogIn className="w-3.5 h-3.5" />
+                <LogIn className="w-3.5 h-3.5 text-emerald-400" />
                 <span>{punching ? "Punching..." : "Check In Now"}</span>
               </button>
             ) : !data?.todayAttendance?.checkOut ? (
               <button
                 onClick={() => handlePunch("CHECK_OUT")}
                 disabled={punching}
-                className="w-full py-2 rounded-lg bg-rose-500 hover:bg-rose-600 text-white font-bold text-xs shadow-xs transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer active:scale-95"
+                className="w-full py-2 px-3 rounded-xl bg-[#1e293b] hover:bg-[#28354c] text-white font-semibold text-xs shadow-xs transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer"
               >
-                <LogOut className="w-3.5 h-3.5" />
+                <LogOut className="w-3.5 h-3.5 text-rose-400" />
                 <span>{punching ? "Punching..." : "Check Out"}</span>
               </button>
             ) : (
-              <div className="w-full py-2 rounded-lg bg-slate-800 text-center text-xs font-semibold text-emerald-400 border border-slate-700 flex items-center justify-center gap-1">
-                <CheckCircle2 className="w-3.5 h-3.5" />
+              <div className="w-full py-1.5 px-2 rounded-xl bg-slate-50 text-center text-xs font-semibold text-[#1e293b] border border-slate-200 flex items-center justify-center gap-1.5">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                 <span>Shift Completed</span>
               </div>
             )}
@@ -464,77 +467,87 @@ export default function EmployeeDashboardPage() {
         </div>
 
         {/* Total Available Quota */}
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-xs flex flex-col justify-between">
+        <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-xs hover:border-slate-300 transition-all flex flex-col justify-between group">
           <div>
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
                 Available Quota
               </span>
-              <CalendarCheck2 className="w-4 h-4 text-emerald-600" />
+              <div className="w-8 h-8 rounded-xl bg-slate-100 text-[#1e293b] flex items-center justify-center">
+                <CalendarCheck2 className="w-4 h-4" />
+              </div>
             </div>
-            <div className="mt-2.5">
-              <div className="text-2xl font-bold text-slate-900">
+            <div className="mt-3">
+              <div className="text-2xl font-bold text-[#1a2333]">
                 {loading ? "--" : `${data?.summary?.remainingDays ?? 0} Days`}
               </div>
-              <div className="text-[11px] text-emerald-600 font-medium mt-0.5">
+              <div className="text-[11px] text-slate-500 font-medium mt-1">
                 Ready to be applied
               </div>
             </div>
           </div>
-          <div className="text-[11px] text-slate-400 pt-2 border-t border-slate-100">
+          <div className="text-[11px] text-slate-400 pt-3 border-t border-slate-100">
             Total Allocated: {data?.summary?.totalDays ?? 0} Days
           </div>
         </div>
 
         {/* Used Leaves */}
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-xs flex flex-col justify-between">
+        <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-xs hover:border-slate-300 transition-all flex flex-col justify-between group">
           <div>
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
                 Used Leaves
               </span>
-              <PieChart className="w-4 h-4 text-indigo-600" />
+              <div className="w-8 h-8 rounded-xl bg-slate-100 text-[#1e293b] flex items-center justify-center">
+                <PieChart className="w-4 h-4" />
+              </div>
             </div>
-            <div className="mt-2.5">
-              <div className="text-2xl font-bold text-slate-900">
+            <div className="mt-3">
+              <div className="text-2xl font-bold text-[#1a2333]">
                 {loading ? "--" : `${data?.summary?.usedDays ?? 0} Days`}
               </div>
-              <div className="text-[11px] text-slate-400 mt-0.5">
+              <div className="text-[11px] text-slate-500 mt-1">
                 Consumed this calendar year
               </div>
             </div>
           </div>
-          <div className="text-[11px] text-slate-400 pt-2 border-t border-slate-100">
+          <div className="text-[11px] text-slate-400 pt-3 border-t border-slate-100">
             {data?.summary?.totalDays ? Math.round(((data.summary.usedDays) / data.summary.totalDays) * 100) : 0}% of annual quota used
           </div>
         </div>
 
         {/* Pending Requests */}
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-xs flex flex-col justify-between">
+        <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-xs hover:border-slate-300 transition-all flex flex-col justify-between group">
           <div>
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
                 Pending Requests
               </span>
-              <Clock className="w-4 h-4 text-amber-500" />
+              <div className="w-8 h-8 rounded-xl bg-slate-100 text-[#1e293b] flex items-center justify-center">
+                <Clock className="w-4 h-4" />
+              </div>
             </div>
-            <div className="mt-2.5">
-              <div className="text-2xl font-bold text-slate-900 flex items-center gap-2">
+            <div className="mt-3">
+              <div className="text-2xl font-bold text-[#1a2333] flex items-center gap-2">
                 <span>{loading ? "--" : data?.summary?.pendingCount ?? 0}</span>
-                {(data?.summary?.pendingCount ?? 0) > 0 && (
+                {((data?.summary?.pendingCount ?? 0) > 0) && (
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
                     In Review
                   </span>
                 )}
               </div>
-              <div className="text-[11px] text-slate-400 mt-0.5">
+              <div className="text-[11px] text-slate-500 mt-1">
                 Awaiting TL or Admin decision
               </div>
             </div>
           </div>
-          <div className="text-[11px] text-slate-400 pt-2 border-t border-slate-100">
-            <Link href="/employee/my-leaves" className="text-indigo-600 font-semibold hover:underline">
-              View all requests &rarr;
+          <div className="pt-3 border-t border-slate-100">
+            <Link
+              href="/employee/my-leaves"
+              className="text-[11px] font-semibold text-[#1e293b] hover:text-[#28354c] flex items-center gap-1"
+            >
+              <span>View all requests</span>
+              <ArrowRight className="w-3 h-3" />
             </Link>
           </div>
         </div>
@@ -543,12 +556,12 @@ export default function EmployeeDashboardPage() {
       {/* 3. LEAVE CATEGORY BREAKDOWN CARDS */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-bold text-slate-900">
+          <h2 className="text-sm font-bold text-[#1a2333]">
             Leave Quota Breakdown ({new Date().getFullYear()})
           </h2>
           <Link
             href="/employee/leave-balance"
-            className="text-xs font-semibold text-indigo-600 hover:text-indigo-700"
+            className="text-xs font-semibold text-slate-600 hover:text-[#1a2333]"
           >
             View Policy Details
           </Link>
@@ -560,30 +573,30 @@ export default function EmployeeDashboardPage() {
             return (
               <div
                 key={bal.id}
-                className="bg-white border border-slate-200 rounded-xl p-4 shadow-xs space-y-2.5 hover:shadow-sm transition-all"
+                className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-xs space-y-2.5 hover:border-slate-300 transition-all"
               >
                 <div className="flex items-center justify-between">
-                  <span className="font-bold text-xs text-slate-900">
+                  <span className="font-bold text-xs text-[#1a2333]">
                     {bal.leaveType.name}
                   </span>
-                  <span className="font-mono text-[10px] font-bold px-1.5 py-0.2 rounded bg-slate-100 text-slate-700 border border-slate-200">
+                  <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-[#1e293b] border border-slate-200">
                     {bal.leaveType.code}
                   </span>
                 </div>
 
                 <div className="flex items-baseline justify-between text-xs">
                   <span className="text-slate-500">
-                    Used: <strong className="text-slate-800">{bal.used}</strong> / {bal.total}d
+                    Used: <strong className="text-[#1a2333]">{bal.used}</strong> / {bal.total}d
                   </span>
-                  <span className="text-emerald-700 font-bold">
+                  <span className="text-[#1a2333] font-bold">
                     {bal.remaining} Days Left
                   </span>
                 </div>
 
-                {/* Progress bar */}
+                {/* Clean Navy Progress bar */}
                 <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
                   <div
-                    className="bg-emerald-600 h-1.5 rounded-full transition-all"
+                    className="bg-[#1e293b] h-1.5 rounded-full transition-all"
                     style={{ width: `${Math.min(100, 100 - percentage)}%` }}
                   />
                 </div>
@@ -597,18 +610,20 @@ export default function EmployeeDashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column (2 Cols): Recent Applications */}
         <div className="lg:col-span-2 space-y-6">
-          <div className="bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden">
+          <div className="bg-white border border-slate-200/90 rounded-2xl shadow-xs overflow-hidden">
             <div className="p-4 border-b border-slate-100 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <CalendarCheck2 className="w-4 h-4 text-emerald-600" />
-                <h3 className="text-sm font-bold text-slate-900">
+                <div className="w-7 h-7 rounded-lg bg-slate-100 text-[#1e293b] flex items-center justify-center">
+                  <CalendarCheck2 className="w-4 h-4" />
+                </div>
+                <h3 className="text-sm font-bold text-[#1a2333]">
                   Recent Leave Applications
                 </h3>
               </div>
 
               <Link
                 href="/employee/my-leaves"
-                className="text-xs font-semibold text-indigo-600 hover:text-indigo-700 flex items-center gap-1"
+                className="text-xs font-semibold text-slate-600 hover:text-[#1a2333] flex items-center gap-1"
               >
                 <span>View Full History</span>
                 <ArrowRight className="w-3 h-3" />
@@ -638,10 +653,10 @@ export default function EmployeeDashboardPage() {
                     >
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="font-bold text-xs text-slate-900">
+                          <span className="font-bold text-xs text-[#1a2333]">
                             {req.leaveType.name}
                           </span>
-                          <span className="font-mono text-[10px] font-bold px-1.5 py-0.2 rounded bg-slate-100 text-slate-700 border border-slate-200">
+                          <span className="font-mono text-[10px] font-bold px-1.5 py-0.2 rounded bg-slate-100 text-[#1e293b] border border-slate-200">
                             {req.leaveType.code}
                           </span>
                           <span className="text-[11px] text-slate-500 font-medium">
@@ -671,15 +686,13 @@ export default function EmployeeDashboardPage() {
 
                       <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
                         <span
-                          className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                          className={`px-2.5 py-0.5 rounded-lg text-[10px] font-bold border ${
                             req.status === "APPROVED"
-                              ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                              ? "bg-emerald-50 text-emerald-700 border-emerald-200"
                               : req.status === "PENDING"
-                              ? "bg-amber-50 text-amber-700 border border-amber-200"
+                              ? "bg-amber-50 text-amber-700 border-amber-200"
                               : req.status === "REJECTED"
-                              ? "bg-rose-50 text-rose-700 border border-rose-200"
-                              : req.status === "ESCALATED"
-                              ? "bg-indigo-50 text-indigo-700 border border-indigo-200"
+                              ? "bg-rose-50 text-rose-700 border-rose-200"
                               : "bg-slate-100 text-slate-600 border border-slate-200"
                           }`}
                         >
@@ -689,7 +702,7 @@ export default function EmployeeDashboardPage() {
                         {req.status === "PENDING" && (
                           <button
                             onClick={() => handleCancelRequest(req.id)}
-                            className="text-[11px] text-rose-600 hover:text-rose-700 font-semibold px-2 py-0.5 rounded border border-rose-200 hover:bg-rose-50 transition-colors"
+                            className="text-[11px] text-rose-600 hover:text-rose-700 font-semibold px-2 py-0.5 rounded border border-rose-200 hover:bg-rose-50 transition-colors cursor-pointer"
                           >
                             Cancel
                           </button>
@@ -706,15 +719,17 @@ export default function EmployeeDashboardPage() {
         {/* Right Column (1 Col): Upcoming Approved Leaves & Holidays */}
         <div className="space-y-6">
           {/* Upcoming Scheduled Leaves */}
-          <div className="bg-white rounded-xl border border-slate-200 shadow-xs p-4">
+          <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-5">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2">
-                <CalendarDays className="w-4 h-4 text-emerald-600" />
-                <h3 className="font-bold text-xs text-slate-900">
+                <div className="w-7 h-7 rounded-lg bg-slate-100 text-[#1e293b] flex items-center justify-center">
+                  <CalendarDays className="w-4 h-4" />
+                </div>
+                <h3 className="font-bold text-xs text-[#1a2333]">
                   My Upcoming Leaves
                 </h3>
               </div>
-              <span className="text-[11px] font-semibold text-slate-400">
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200">
                 Approved
               </span>
             </div>
@@ -725,7 +740,7 @@ export default function EmployeeDashboardPage() {
                   Checking schedule...
                 </p>
               ) : !data?.upcomingLeaves?.length ? (
-                <div className="py-4 text-center">
+                <div className="py-5 text-center">
                   <p className="text-xs text-slate-600 font-medium">
                     No upcoming leaves scheduled
                   </p>
@@ -734,71 +749,104 @@ export default function EmployeeDashboardPage() {
                   </p>
                 </div>
               ) : (
-                data.upcomingLeaves.map((leave) => (
-                  <div
-                    key={leave.id}
-                    className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 text-xs space-y-1"
-                  >
-                    <div className="flex items-center justify-between font-semibold text-slate-900">
-                      <span>{leave.leaveType.name}</span>
-                      <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200">
-                        {calculateDays(leave.startDate, leave.endDate)} Days
-                      </span>
-                    </div>
+                data.upcomingLeaves.map((leave) => {
+                  const cal = getCalendarBlockData(leave.startDate, leave.endDate);
+                  return (
+                    <div
+                      key={leave.id}
+                      className="p-3 rounded-xl bg-slate-50/80 border border-slate-200/80 hover:bg-slate-50 hover:border-slate-300 transition-all flex items-center gap-3"
+                    >
+                      {/* Calendar Date Block */}
+                      <div className="w-12 h-12 rounded-xl bg-white border border-slate-200 flex flex-col items-center justify-center shrink-0 shadow-2xs">
+                        <span className="text-[9px] font-bold text-[#1e293b] uppercase tracking-wider">
+                          {cal.month}
+                        </span>
+                        <span className="text-sm font-extrabold text-[#1a2333] leading-none mt-0.5">
+                          {cal.dayDisplay}
+                        </span>
+                      </div>
 
-                    <div className="text-[11px] text-slate-500 flex items-center gap-1">
-                      <Calendar className="w-3 h-3 text-slate-400" />
-                      <span>
-                        {formatDate(leave.startDate)} - {formatDate(leave.endDate)}
-                      </span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-xs text-[#1a2333] truncate">
+                            {leave.leaveType.name}
+                          </span>
+                          <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200 shrink-0">
+                            {calculateDays(leave.startDate, leave.endDate)}d
+                          </span>
+                        </div>
+                        <div className="text-[11px] text-slate-500 mt-0.5 truncate">
+                          {formatDate(leave.startDate)} – {formatDate(leave.endDate)}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           </div>
 
-          {/* Upcoming Public Holidays */}
-          <div className="bg-white rounded-xl border border-slate-200 shadow-xs p-4">
+          {/* 🌟 ENHANCED UPCOMING HOLIDAYS WIDGET */}
+          <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-5">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-purple-600" />
-                <h3 className="font-bold text-xs text-slate-900">
+                <div className="w-7 h-7 rounded-lg bg-slate-100 text-[#1e293b] flex items-center justify-center">
+                  <PartyPopper className="w-4 h-4 text-[#1e293b]" />
+                </div>
+                <h3 className="font-bold text-xs text-[#1a2333]">
                   Upcoming Holidays
                 </h3>
               </div>
-              <span className="text-[11px] font-semibold text-slate-400">
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200">
                 Official
               </span>
             </div>
 
             <div className="mt-3.5 space-y-2.5">
               {!data?.upcomingHolidays?.length ? (
-                <p className="text-xs text-slate-400 text-center py-4">
-                  No upcoming holidays listed
-                </p>
+                <div className="py-5 text-center">
+                  <p className="text-xs text-slate-400">
+                    No upcoming holidays listed
+                  </p>
+                </div>
               ) : (
-                data.upcomingHolidays.map((holiday) => (
-                  <div
-                    key={holiday.id}
-                    className="p-2.5 rounded-lg bg-purple-50/50 border border-purple-100 text-xs space-y-0.5"
-                  >
-                    <div className="font-bold text-purple-950">
-                      {holiday.name}
+                data.upcomingHolidays.map((holiday) => {
+                  const cal = getCalendarBlockData(holiday.fromDate, holiday.toDate, holiday.date);
+                  return (
+                    <div
+                      key={holiday.id}
+                      className="p-3 rounded-xl bg-slate-50/80 border border-slate-200/80 hover:bg-slate-50 hover:border-slate-300 transition-all flex items-center gap-3.5 group"
+                    >
+                      {/* Stylized Calendar Date Block */}
+                      <div className="w-12 h-12 rounded-xl bg-white border border-slate-200 flex flex-col items-center justify-center shrink-0 shadow-2xs group-hover:border-slate-400 transition-colors">
+                        <span className="text-[9px] font-extrabold text-[#1e293b] uppercase tracking-wider">
+                          {cal.month}
+                        </span>
+                        <span className="text-sm font-extrabold text-[#1a2333] leading-none mt-0.5">
+                          {cal.dayDisplay}
+                        </span>
+                      </div>
+
+                      {/* Holiday Details */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-1">
+                          <span className="font-bold text-xs text-[#1a2333] truncate group-hover:text-black">
+                            {holiday.name}
+                          </span>
+                          <span className="text-[10px] font-semibold text-slate-600 bg-white px-1.5 py-0.2 rounded border border-slate-200 shrink-0">
+                            {cal.isMultiDay ? `${cal.diffDays} Days` : "1 Day"}
+                          </span>
+                        </div>
+
+                        <div className="text-[11px] text-slate-500 mt-0.5 flex items-center gap-1.5">
+                          <span>{cal.weekday}</span>
+                          <span className="w-1 h-1 rounded-full bg-slate-300" />
+                          <span>Public Holiday</span>
+                        </div>
+                      </div>
                     </div>
-                    <div className="text-[11px] text-purple-700 flex items-center gap-1">
-                      <Calendar className="w-3 h-3 text-purple-500" />
-                      <span>
-                        {formatDate(holiday.fromDate || holiday.date)}
-                        {holiday.toDate &&
-                          holiday.fromDate &&
-                          new Date(holiday.fromDate).toDateString() !==
-                            new Date(holiday.toDate).toDateString() &&
-                          ` - ${formatDate(holiday.toDate)}`}
-                      </span>
-                    </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           </div>
@@ -808,15 +856,15 @@ export default function EmployeeDashboardPage() {
       {/* 5. QUICK APPLY LEAVE MODAL */}
       {applyModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
-          <div className="w-full max-w-lg bg-white rounded-2xl border border-slate-200 shadow-xl overflow-hidden animate-in fade-in zoom-in-95">
+          <div className="w-full max-w-lg bg-white rounded-2xl border border-slate-200 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95">
             {/* Header */}
-            <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-emerald-50/60">
+            <div className="p-5 border-b border-slate-100 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-xs">
+                <div className="w-8 h-8 rounded-xl bg-[#1e293b] text-white flex items-center justify-center font-bold text-xs">
                   <PlusCircle className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-sm text-slate-900">
+                  <h3 className="font-bold text-sm text-[#1a2333]">
                     Apply for Leave
                   </h3>
                   <p className="text-[11px] text-slate-500">
@@ -827,7 +875,7 @@ export default function EmployeeDashboardPage() {
 
               <button
                 onClick={() => setApplyModalOpen(false)}
-                className="text-slate-400 hover:text-slate-700 p-1 rounded-lg"
+                className="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -845,7 +893,7 @@ export default function EmployeeDashboardPage() {
                   onChange={(e) =>
                     setApplyForm({ ...applyForm, leaveTypeId: e.target.value })
                   }
-                  className="w-full rounded-xl border border-slate-200 p-2.5 text-xs text-slate-900 bg-white outline-none focus:border-slate-400 cursor-pointer"
+                  className="w-full rounded-xl border border-slate-200 p-2.5 text-xs text-slate-900 bg-white outline-none focus:border-[#1e293b] cursor-pointer"
                   required
                 >
                   {data?.leaveBalances.map((bal) => (
@@ -894,7 +942,7 @@ export default function EmployeeDashboardPage() {
                   onChange={(e) =>
                     setApplyForm({ ...applyForm, isHalfDay: e.target.checked })
                   }
-                  className="rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                  className="rounded text-[#1e293b] focus:ring-[#1e293b] cursor-pointer"
                 />
                 <label
                   htmlFor="halfDayCheck"
@@ -916,7 +964,7 @@ export default function EmployeeDashboardPage() {
                     setApplyForm({ ...applyForm, reason: e.target.value })
                   }
                   placeholder="Provide a reason for taking time off..."
-                  className="w-full rounded-xl border border-slate-200 p-2.5 text-xs text-slate-900 outline-none focus:border-slate-400 bg-white resize-none"
+                  className="w-full rounded-xl border border-slate-200 p-2.5 text-xs text-slate-900 outline-none focus:border-[#1e293b] bg-white resize-none"
                 />
               </div>
 
@@ -924,7 +972,7 @@ export default function EmployeeDashboardPage() {
               {selectedBalance && (
                 <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between text-xs">
                   <span className="text-slate-500">Available Quota:</span>
-                  <span className="font-bold text-emerald-700">
+                  <span className="font-bold text-[#1a2333]">
                     {selectedBalance.remaining} Days Remaining
                   </span>
                 </div>
@@ -936,7 +984,7 @@ export default function EmployeeDashboardPage() {
                   type="button"
                   onClick={() => setApplyModalOpen(false)}
                   disabled={submitting}
-                  className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-all"
+                  className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-all cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -944,7 +992,7 @@ export default function EmployeeDashboardPage() {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-xs transition-all flex items-center gap-1.5 disabled:opacity-50"
+                  className="px-4 py-2 rounded-xl bg-[#1e293b] hover:bg-[#28354c] text-white text-xs font-semibold shadow-xs transition-all flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
                 >
                   {submitting ? (
                     <span>Submitting...</span>

@@ -24,13 +24,49 @@ export async function GET(request: NextRequest) {
     const startOfYear = new Date(year, 0, 1, 0, 0, 0, 0);
     const endOfYear = new Date(year, 11, 31, 23, 59, 59, 999);
 
-    const [settings, balances, approvedLeaves, employee] = await Promise.all([
-      getSystemSettings(),
-      prisma.leaveBalance.findMany({
-        where: {
-          userId,
-          year,
+    // Auto-sync any missing leave types into leaveBalance for this user
+    const allLeaveTypes = await prisma.leaveType.findMany({
+      where: { isActive: true },
+      orderBy: { id: "asc" },
+    });
+
+    let currentBalances = await prisma.leaveBalance.findMany({
+      where: { userId, year },
+      include: {
+        leaveType: {
+          select: {
+            id: true,
+            name: true,
+            code: true,
+            description: true,
+            isPaid: true,
+          },
         },
+      },
+      orderBy: { leaveTypeId: "asc" },
+    });
+
+    const existingTypeIds = new Set(currentBalances.map((b) => b.leaveTypeId));
+    const missingTypes = allLeaveTypes.filter((lt) => !existingTypeIds.has(lt.id));
+
+    if (missingTypes.length > 0) {
+      await Promise.all(
+        missingTypes.map((lt) =>
+          prisma.leaveBalance.create({
+            data: {
+              userId,
+              leaveTypeId: lt.id,
+              year,
+              total: lt.annualAllocation,
+              used: 0,
+              remaining: lt.annualAllocation,
+            },
+          })
+        )
+      );
+
+      currentBalances = await prisma.leaveBalance.findMany({
+        where: { userId, year },
         include: {
           leaveType: {
             select: {
@@ -42,12 +78,12 @@ export async function GET(request: NextRequest) {
             },
           },
         },
-        orderBy: {
-          leaveType: {
-            name: "asc",
-          },
-        },
-      }),
+        orderBy: { leaveTypeId: "asc" },
+      });
+    }
+
+    const [settings, approvedLeaves, employee] = await Promise.all([
+      getSystemSettings(),
       prisma.leaveRequest.findMany({
         where: {
           userId,
@@ -72,65 +108,74 @@ export async function GET(request: NextRequest) {
       }),
       prisma.user.findUnique({
         where: { id: userId },
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          team: {
-            select: { name: true },
-          },
-        },
+        include: { team: true },
       }),
     ]);
 
-    // Compute totals
+    // Aggregate overall metrics
     let totalAllocated = 0;
     let totalUsed = 0;
     let totalRemaining = 0;
 
-    const enrichedBalances = balances.map((bal) => {
-      totalAllocated += bal.total;
-      totalUsed += bal.used;
-      totalRemaining += bal.remaining;
+    const detailedBalances = currentBalances.map((b) => {
+      totalAllocated += b.total;
+      totalUsed += b.used;
+      totalRemaining += b.remaining;
 
-      const categoryUsage = approvedLeaves.filter((l) => l.leaveTypeId === bal.leaveTypeId);
+      const percentageUsed = b.total > 0 ? Math.round((b.used / b.total) * 100) : 0;
+
+      // Filter usage logs for this specific leave type
+      const typeUsage = approvedLeaves.filter((l) => l.leaveTypeId === b.leaveTypeId);
 
       return {
-        id: bal.id,
-        year: bal.year,
-        total: bal.total,
-        used: bal.used,
-        remaining: bal.remaining,
-        leaveType: bal.leaveType,
-        usageHistory: categoryUsage,
+        id: b.id,
+        leaveTypeId: b.leaveTypeId,
+        name: b.leaveType.name,
+        code: b.leaveType.code,
+        description: b.leaveType.description,
+        isPaid: b.leaveType.isPaid,
+        total: b.total,
+        used: b.used,
+        remaining: b.remaining,
+        percentageUsed,
+        recentUsage: typeUsage.slice(0, 3).map((u) => ({
+          id: u.id,
+          startDate: u.startDate,
+          endDate: u.endDate,
+          reason: u.reason,
+        })),
       };
     });
-
-    const utilizationRate =
-      totalAllocated > 0 ? Math.round((totalUsed / totalAllocated) * 100) : 0;
 
     return NextResponse.json({
       success: true,
       year,
-      employee,
       summary: {
         totalAllocated,
         totalUsed,
         totalRemaining,
-        utilizationRate,
-        approvedApplicationsCount: approvedLeaves.length,
+        categoriesCount: currentBalances.length,
+        overallPercentageUsed:
+          totalAllocated > 0 ? Math.round((totalUsed / totalAllocated) * 100) : 0,
       },
-      balances: enrichedBalances,
-      recentApprovedUsage: approvedLeaves.slice(0, 10),
-      policyRules: {
-        leaveYear: settings.leaveYear || "January - December",
-        allowHalfDayLeave: settings.allowHalfDayLeave ?? true,
-        carryForwardLeave: settings.carryForwardLeave ?? true,
-        allowNegativeLeaveBalance: settings.allowNegativeLeaveBalance ?? false,
+      balances: detailedBalances,
+      employee: employee
+        ? {
+            id: employee.id,
+            name: employee.name,
+            email: employee.email,
+            teamName: employee.team?.name || "General Team",
+          }
+        : null,
+      policies: {
+        allowHalfDayLeave: settings.allowHalfDayLeave,
+        allowBackdatedLeave: settings.allowBackdatedLeave,
+        carryForwardLeave: settings.carryForwardLeave,
+        allowNegativeLeaveBalance: settings.allowNegativeLeaveBalance,
       },
     });
   } catch (error: any) {
-    console.error("Fetch leave balance error:", error);
+    console.error("Employee leave-balance API error:", error);
     return NextResponse.json(
       { success: false, error: error.message || "Failed to load leave balances" },
       { status: 500 }
