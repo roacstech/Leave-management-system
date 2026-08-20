@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { getSystemSettings, calculateAttendanceStatus } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
 

@@ -101,6 +101,8 @@ model LeaveBalance {
   leaveType LeaveType @relation(fields: [leaveTypeId], references: [id])
 
   @@unique([userId, leaveTypeId, year])
+  @@index([leaveTypeId])
+  @@index([userId])
 }
 
 //-----Leave status and request
@@ -127,6 +129,9 @@ model LeaveRequest {
 
   user          User       @relation(fields: [userId], references: [id])
   leaveType     LeaveType  @relation(fields: [leaveTypeId], references: [id])
+
+  @@index([userId])
+  @@index([leaveTypeId])
 }
 
 model Attendance {
@@ -142,6 +147,7 @@ model Attendance {
   user User @relation(fields: [userId], references: [id])
 
   @@unique([userId, date])
+  @@index([userId])
 }
 
 model Holiday {
@@ -179,4 +185,41 @@ model AuditLog {
 
   @@index([entity, entityId])
   @@index([userId])
+}
+
+//--------System Settings model-------------
+
+model SystemSettings {
+  id                         Int      @id @default(autoincrement())
+  
+  // Organization Settings
+  companyName                String   @default("Roacs Corporation")
+  companyEmail               String   @default("admin@company.com")
+  timezone                   String   @default("Asia/Kolkata")
+  dateFormat                 String   @default("DD/MM/YYYY")
+
+  // Attendance Settings
+  officeStartTime            String   @default("09:00 AM")
+  officeEndTime              String   @default("06:00 PM")
+  gracePeriodMinutes         Int      @default(10)
+  halfDayHours               Float    @default(4.0)
+  workingDays                String   @default("Monday,Tuesday,Wednesday,Thursday,Friday")
+
+  // Leave Settings
+  leaveYear                  String   @default("January - December")
+  allowHalfDayLeave          Boolean  @default(true)
+  allowBackdatedLeave        Boolean  @default(false)
+  allowNegativeLeaveBalance  Boolean  @default(false)
+  carryForwardLeave          Boolean  @default(true)
+
+  // Notification Settings
+  emailNotificationsEnabled  Boolean  @default(true)
+  inAppNotificationsEnabled  Boolean  @default(true)
+  notifyLeaveApproved        Boolean  @default(true)
+  notifyLeaveRejected        Boolean  @default(true)
+  notifyNewLeaveRequest      Boolean  @default(true)
+  notifyLeaveCancellation    Boolean  @default(true)
+
+  createdAt                  DateTime @default(now())
+  updatedAt                  DateTime @updatedAt
 }
