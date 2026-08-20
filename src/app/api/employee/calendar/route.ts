@@ -4,7 +4,7 @@ import { prisma } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
-// GET personal monthly calendar data (leaves, month holidays, and full-year holidays list)
+// GET personal monthly calendar data (leaves, month holidays, full-year holidays list, and attendance records)
 export async function GET(request: NextRequest) {
   try {
     const session = await auth();
@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
     const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
     const thirtyDaysAhead = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 30, 23, 59, 59, 999);
 
-    const [monthLeaves, monthHolidays, yearHolidays, upcomingLeaves] = await Promise.all([
+    const [monthLeaves, monthHolidays, yearHolidays, upcomingLeaves, monthAttendances] = await Promise.all([
       prisma.leaveRequest.findMany({
         where: {
           userId,
@@ -92,6 +92,19 @@ export async function GET(request: NextRequest) {
           startDate: "asc",
         },
       }),
+
+      prisma.attendance.findMany({
+        where: {
+          userId,
+          date: {
+            gte: startOfMonth,
+            lte: endOfMonth,
+          },
+        },
+        orderBy: {
+          date: "asc",
+        },
+      }),
     ]);
 
     return NextResponse.json({
@@ -102,6 +115,7 @@ export async function GET(request: NextRequest) {
       holidays: monthHolidays,
       yearHolidays,
       upcomingLeaves,
+      attendances: monthAttendances,
     });
   } catch (error: any) {
     console.error("Fetch employee calendar error:", error);

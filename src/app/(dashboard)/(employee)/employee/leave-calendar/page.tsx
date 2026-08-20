@@ -18,6 +18,8 @@ import {
   UserCheck,
   ArrowRight,
   Flag,
+  Check,
+  AlertCircle,
 } from "lucide-react";
 import { useSettings } from "@/contexts/SettingsContext";
 
@@ -37,7 +39,9 @@ interface LeaveEvent {
 interface HolidayEvent {
   id: number;
   name: string;
-  date: string;
+  fromDate?: string;
+  toDate?: string;
+  date?: string;
   description: string | null;
 }
 
@@ -52,6 +56,14 @@ interface UpcomingLeaveItem {
   };
 }
 
+interface AttendanceItem {
+  id: number;
+  date: string;
+  status: string; // "PRESENT" | "LATE" | "HALF_DAY" | "ABSENT" | "ON_LEAVE"
+  checkIn: string | null;
+  checkOut: string | null;
+}
+
 const MONTH_NAMES = [
   "January", "February", "March", "April", "May", "June",
   "July", "August", "September", "October", "November", "December"
@@ -61,7 +73,7 @@ const WEEK_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 export default function EmployeeLeaveCalendarPage() {
   const router = useRouter();
-  const { formatDate } = useSettings();
+  const { formatDate, formatTime } = useSettings();
   const today = new Date();
 
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
@@ -71,6 +83,7 @@ export default function EmployeeLeaveCalendarPage() {
   const [holidays, setHolidays] = useState<HolidayEvent[]>([]);
   const [yearHolidays, setYearHolidays] = useState<HolidayEvent[]>([]);
   const [upcomingLeaves, setUpcomingLeaves] = useState<UpcomingLeaveItem[]>([]);
+  const [attendances, setAttendances] = useState<AttendanceItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Active Tab on Right Panel ("UPCOMING_LEAVES" | "ALL_HOLIDAYS")
@@ -81,6 +94,7 @@ export default function EmployeeLeaveCalendarPage() {
     date: Date;
     leaves: LeaveEvent[];
     holiday: HolidayEvent | null;
+    attendance: AttendanceItem | null;
   } | null>(null);
 
   const fetchCalendarData = useCallback(async () => {
@@ -96,6 +110,7 @@ export default function EmployeeLeaveCalendarPage() {
         setHolidays(data.holidays || []);
         setYearHolidays(data.yearHolidays || []);
         setUpcomingLeaves(data.upcomingLeaves || []);
+        setAttendances(data.attendances || []);
       }
     } catch (err) {
       console.error("Error loading employee calendar:", err);
@@ -151,24 +166,52 @@ export default function EmployeeLeaveCalendarPage() {
 
   // Helper: holiday for date
   const getHolidayForDate = (dateObj: Date) => {
+    const time = dateObj.getTime();
+    return holidays.find((h) => {
+      if (h.fromDate && h.toDate) {
+        const s = new Date(h.fromDate);
+        s.setHours(0, 0, 0, 0);
+        const e = new Date(h.toDate);
+        e.setHours(23, 59, 59, 999);
+        return time >= s.getTime() && time <= e.getTime();
+      }
+      if (h.date) {
+        const hd = new Date(h.date);
+        return (
+          hd.getFullYear() === dateObj.getFullYear() &&
+          hd.getMonth() === dateObj.getMonth() &&
+          hd.getDate() === dateObj.getDate()
+        );
+      }
+      return false;
+    }) || null;
+  };
+
+  // Helper: attendance for date
+  const getAttendanceForDate = (dateObj: Date) => {
     const y = dateObj.getFullYear();
     const m = dateObj.getMonth();
     const d = dateObj.getDate();
 
-    return holidays.find((h) => {
-      const hd = new Date(h.date);
-      return hd.getFullYear() === y && hd.getMonth() === m && hd.getDate() === d;
+    return attendances.find((a) => {
+      const ad = new Date(a.date);
+      return ad.getFullYear() === y && ad.getMonth() === m && ad.getDate() === d;
     }) || null;
   };
 
-  const calculateDays = (start: string, end: string) => {
-    const s = new Date(start);
-    const e = new Date(end);
-    const diff = Math.round((e.getTime() - s.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-    return Math.max(1, diff);
-  };
+  const todayMidnight = new Date();
+  todayMidnight.setHours(0, 0, 0, 0);
 
-  const daysCells = [];
+  const daysCells: Array<{
+    dateObj: Date;
+    dayNum: number;
+    isCurrentMonth: boolean;
+    isToday: boolean;
+    isPastDate: boolean;
+    leaves: LeaveEvent[];
+    holiday: HolidayEvent | null;
+    attendance: AttendanceItem | null;
+  }> = [];
 
   // Previous month trailing days
   for (let i = firstDayOfMonth - 1; i >= 0; i--) {
@@ -179,8 +222,10 @@ export default function EmployeeLeaveCalendarPage() {
       dayNum,
       isCurrentMonth: false,
       isToday: false,
+      isPastDate: true,
       leaves: [],
       holiday: null,
+      attendance: null,
     });
   }
 
@@ -191,14 +236,17 @@ export default function EmployeeLeaveCalendarPage() {
       today.getFullYear() === currentYear &&
       today.getMonth() + 1 === currentMonth &&
       today.getDate() === dayNum;
+    const isPastDate = dateObj.getTime() < todayMidnight.getTime();
 
     daysCells.push({
       dateObj,
       dayNum,
       isCurrentMonth: true,
       isToday: isDateToday,
+      isPastDate,
       leaves: getLeavesForDate(dateObj),
       holiday: getHolidayForDate(dateObj),
+      attendance: getAttendanceForDate(dateObj),
     });
   }
 
@@ -206,15 +254,108 @@ export default function EmployeeLeaveCalendarPage() {
   const remainingCells = (7 - (daysCells.length % 7)) % 7;
   for (let dayNum = 1; dayNum <= remainingCells; dayNum++) {
     const dateObj = new Date(currentYear, currentMonth, dayNum, 0, 0, 0, 0);
+    const isPastDate = dateObj.getTime() < todayMidnight.getTime();
     daysCells.push({
       dateObj,
       dayNum,
       isCurrentMonth: false,
       isToday: false,
+      isPastDate,
       leaves: [],
       holiday: null,
+      attendance: null,
     });
   }
+
+  // Function to render the top-right status term for each day
+  const renderDayStatus = (cell: (typeof daysCells)[0]) => {
+    if (!cell.isCurrentMonth) return null;
+
+    const isWeekend = cell.dateObj.getDay() === 0 || cell.dateObj.getDay() === 6;
+
+    // 1. If explicit Attendance record exists for the day
+    if (cell.attendance) {
+      const st = cell.attendance.status?.toUpperCase();
+      if (st === "PRESENT") {
+        return (
+          <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200/80">
+            Present
+          </span>
+        );
+      }
+      if (st === "LATE") {
+        return (
+          <span className="text-[10px] font-semibold text-amber-700 bg-amber-50 px-1.5 py-0.2 rounded border border-amber-200/80">
+            Late
+          </span>
+        );
+      }
+      if (st === "HALF_DAY" || st === "HALF DAY") {
+        return (
+          <span className="text-[10px] font-semibold text-sky-700 bg-sky-50 px-1.5 py-0.2 rounded border border-sky-200/80">
+            Half Day
+          </span>
+        );
+      }
+      if (st === "ABSENT") {
+        return (
+          <span className="text-[10px] font-semibold text-rose-700 bg-rose-50 px-1.5 py-0.2 rounded border border-rose-200/80">
+            Absent
+          </span>
+        );
+      }
+      if (st === "ON_LEAVE" || st === "LEAVE") {
+        return (
+          <span className="text-[10px] font-semibold text-indigo-700 bg-indigo-50 px-1.5 py-0.2 rounded border border-indigo-200/80">
+            Leave
+          </span>
+        );
+      }
+    }
+
+    // 2. If approved Leave on this day
+    if (cell.leaves.some((l) => l.status === "APPROVED")) {
+      return (
+        <span className="text-[10px] font-semibold text-indigo-700 bg-indigo-50 px-1.5 py-0.2 rounded border border-indigo-200/80">
+          Leave
+        </span>
+      );
+    }
+
+    // 3. If Public Holiday
+    if (cell.holiday) {
+      return (
+        <span className="text-[10px] font-semibold text-purple-700 bg-purple-50 px-1.5 py-0.2 rounded border border-purple-200/80">
+          Holiday
+        </span>
+      );
+    }
+
+    // 4. If Weekend
+    if (isWeekend) {
+      return <span className="text-[10px] font-normal text-slate-400">Off</span>;
+    }
+
+    // 5. If Today
+    if (cell.isToday) {
+      return (
+        <span className="text-[10px] font-bold text-slate-700 bg-slate-100 px-1.5 py-0.2 rounded border border-slate-200">
+          Today
+        </span>
+      );
+    }
+
+    // 6. If Past Weekday with no attendance punch, holiday, or approved leave
+    if (cell.isPastDate) {
+      return (
+        <span className="text-[10px] font-medium text-rose-600 bg-rose-50/70 px-1.5 py-0.2 rounded border border-rose-200/60">
+          Absent
+        </span>
+      );
+    }
+
+    return null;
+  };
 
   return (
     <div className="space-y-6">
@@ -225,44 +366,44 @@ export default function EmployeeLeaveCalendarPage() {
             My Leave & Holiday Calendar
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
-            View your approved time-off schedule, pending requests, and upcoming company holidays.
+            View personal approved leaves, daily attendance records, and organization holidays.
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5 self-start sm:self-auto">
-          {/* Month Switcher Controls */}
-          <div className="flex items-center gap-1.5 bg-slate-50 p-1.5 rounded-xl border border-slate-200">
+        {/* Month Navigation Toolbar */}
+        <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-1 bg-slate-50 p-1 rounded-xl border border-slate-200">
             <button
               onClick={prevMonth}
+              className="p-1.5 rounded-lg text-slate-600 hover:bg-white hover:text-slate-900 transition-all cursor-pointer"
               title="Previous Month"
-              className="p-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 shadow-2xs transition-all cursor-pointer"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
 
-            <span className="font-bold text-xs text-slate-900 px-2 min-w-[130px] text-center">
+            <span className="px-3 py-1 text-xs font-bold text-slate-800 min-w-[130px] text-center">
               {MONTH_NAMES[currentMonth - 1]} {currentYear}
             </span>
 
             <button
               onClick={nextMonth}
+              className="p-1.5 rounded-lg text-slate-600 hover:bg-white hover:text-slate-900 transition-all cursor-pointer"
               title="Next Month"
-              className="p-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 shadow-2xs transition-all cursor-pointer"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
-
-            <button
-              onClick={goToToday}
-              className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-2xs transition-all ml-1 cursor-pointer"
-            >
-              Today
-            </button>
           </div>
+
+          <button
+            onClick={goToToday}
+            className="px-3 py-2 text-xs font-medium text-slate-700 bg-slate-50 border border-slate-200 rounded-xl hover:bg-slate-100 transition-all cursor-pointer"
+          >
+            Today
+          </button>
 
           <Link
             href="/employee/apply-leave"
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-2xs transition-all active:scale-95 shrink-0"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-2xs transition-all cursor-pointer shrink-0"
           >
             <PlusCircle className="w-4 h-4" />
             <span>Apply for Leave</span>
@@ -297,25 +438,28 @@ export default function EmployeeLeaveCalendarPage() {
                         date: cell.dateObj,
                         leaves: cell.leaves,
                         holiday: cell.holiday,
+                        attendance: cell.attendance,
                       });
                     }
                   }}
-                  className={`min-h-[90px] p-2 transition-all flex flex-col justify-between cursor-pointer ${
+                  className={`min-h-[95px] p-2 transition-all flex flex-col justify-between cursor-pointer ${
                     !cell.isCurrentMonth
                       ? "bg-slate-50/40 text-slate-300 pointer-events-none"
+                      : cell.isPastDate
+                      ? "bg-slate-50/40 hover:bg-slate-50/80"
                       : isWeekend
                       ? "bg-slate-50/30 hover:bg-slate-50"
                       : "bg-white hover:bg-slate-50/70"
                   } ${
-                    cell.isToday ? "ring-2 ring-emerald-500 ring-inset bg-emerald-50/20" : ""
+                    cell.isToday ? "ring-2 ring-slate-900 ring-inset bg-slate-50/60" : ""
                   }`}
                 >
-                  {/* Day Header */}
-                  <div className="flex items-center justify-between">
+                  {/* Day Header with Number and Status Term */}
+                  <div className="flex items-center justify-between gap-1">
                     <span
                       className={`text-xs font-bold ${
                         cell.isToday
-                          ? "w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[11px]"
+                          ? "w-6 h-6 rounded-full bg-slate-900 text-white flex items-center justify-center text-[11px]"
                           : !cell.isCurrentMonth
                           ? "text-slate-300"
                           : isWeekend
@@ -325,6 +469,9 @@ export default function EmployeeLeaveCalendarPage() {
                     >
                       {cell.dayNum}
                     </span>
+
+                    {/* Dynamic Status Term Badge */}
+                    {renderDayStatus(cell)}
                   </div>
 
                   {/* Events / Chips in cell */}
@@ -332,7 +479,7 @@ export default function EmployeeLeaveCalendarPage() {
                     {/* Holiday Chip */}
                     {cell.holiday && (
                       <div
-                        className="px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200 text-[10px] font-bold truncate flex items-center gap-1"
+                        className="px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200 text-[10px] font-semibold truncate flex items-center gap-1"
                         title={`Holiday: ${cell.holiday.name}`}
                       >
                         <Sparkles className="w-2.5 h-2.5 shrink-0" />
@@ -362,102 +509,74 @@ export default function EmployeeLeaveCalendarPage() {
               );
             })}
           </div>
-
-          {/* Calendar Legend Footer */}
-          <div className="p-3 border-t border-slate-100 bg-slate-50/50 flex flex-wrap items-center gap-4 text-xs">
-            <div className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded-full bg-emerald-500" />
-              <span className="text-slate-600 font-medium">My Approved Leave</span>
-            </div>
-
-            <div className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded-full bg-amber-400" />
-              <span className="text-slate-600 font-medium">Pending Application</span>
-            </div>
-
-            <div className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded-full bg-purple-500" />
-              <span className="text-slate-600 font-medium">Company Public Holiday</span>
-            </div>
-
-            <div className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded-full bg-emerald-600" />
-              <span className="text-slate-600 font-medium">Today</span>
-            </div>
-          </div>
         </div>
 
-        {/* Right Column (1 Col): Tabbed Panel (Upcoming Absences & Public Holidays) */}
-        <div className="space-y-6">
-          <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
-            {/* Tab Switcher */}
-            <div className="flex border-b border-slate-100 bg-slate-50/60 p-1 text-xs">
+        {/* Right Sidebar (1 Col: Tabs for Upcoming Leaves & Holidays) */}
+        <div className="space-y-4">
+          <div className="bg-white rounded-xl border border-slate-200 shadow-xs p-4 space-y-4">
+            {/* Toggle Tabs */}
+            <div className="flex items-center p-1 bg-slate-100 rounded-lg text-xs font-semibold">
               <button
                 onClick={() => setActiveSideTab("UPCOMING_LEAVES")}
-                className={`flex-1 py-1.5 rounded-lg text-center font-bold transition-all cursor-pointer ${
+                className={`flex-1 py-1.5 rounded-md transition-all cursor-pointer ${
                   activeSideTab === "UPCOMING_LEAVES"
-                    ? "bg-white text-slate-900 shadow-2xs border border-slate-200"
-                    : "text-slate-500 hover:text-slate-800"
+                    ? "bg-white text-slate-900 shadow-xs"
+                    : "text-slate-500 hover:text-slate-900"
                 }`}
               >
                 My Leaves
               </button>
               <button
                 onClick={() => setActiveSideTab("ALL_HOLIDAYS")}
-                className={`flex-1 py-1.5 rounded-lg text-center font-bold transition-all cursor-pointer ${
+                className={`flex-1 py-1.5 rounded-md transition-all cursor-pointer ${
                   activeSideTab === "ALL_HOLIDAYS"
-                    ? "bg-white text-slate-900 shadow-2xs border border-slate-200"
-                    : "text-slate-500 hover:text-slate-800"
+                    ? "bg-white text-slate-900 shadow-xs"
+                    : "text-slate-500 hover:text-slate-900"
                 }`}
               >
-                Holidays ({currentYear})
+                Holidays ({yearHolidays.length})
               </button>
             </div>
 
-            {/* Tab 1: My Upcoming Approved Leaves */}
-            {activeSideTab === "UPCOMING_LEAVES" && (
-              <div className="p-4 space-y-3">
-                <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                    Next 30 Days
-                  </span>
-                  <span className="text-xs font-semibold text-emerald-700">
-                    {upcomingLeaves.length} Approved
+            {/* Tab 1: Upcoming Leaves */}
+            {activeSideTab === "UPCOMING_LEAVES" ? (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                    Upcoming Leaves (30d)
+                  </h3>
+                  <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-full bg-slate-100 text-slate-600">
+                    {upcomingLeaves.length}
                   </span>
                 </div>
 
-                {loading ? (
-                  <p className="text-xs text-slate-400 text-center py-4">
-                    Checking schedule...
-                  </p>
-                ) : upcomingLeaves.length === 0 ? (
-                  <div className="text-center py-5">
-                    <CalendarCheck className="w-7 h-7 text-emerald-500 mx-auto mb-1.5" />
-                    <p className="text-xs font-semibold text-slate-800">
-                      No Upcoming Leaves
-                    </p>
-                    <p className="text-[10px] text-slate-400 mt-0.5">
-                      You are scheduled to work normal shifts.
+                {upcomingLeaves.length === 0 ? (
+                  <div className="text-center py-6 text-slate-400">
+                    <CalendarCheck className="w-7 h-7 mx-auto mb-1.5 text-slate-300" />
+                    <p className="text-xs font-medium text-slate-600">No upcoming leaves</p>
+                    <p className="text-[11px] text-slate-400 mt-0.5">
+                      Apply when you need time off.
                     </p>
                   </div>
                 ) : (
-                  <div className="space-y-2">
-                    {upcomingLeaves.map((leave) => (
+                  <div className="space-y-2.5">
+                    {upcomingLeaves.map((item) => (
                       <div
-                        key={leave.id}
-                        className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 text-xs space-y-1"
+                        key={item.id}
+                        className="p-3 rounded-xl border border-slate-200 bg-slate-50/60 hover:bg-slate-50 transition-all space-y-1"
                       >
-                        <div className="flex items-center justify-between font-bold text-slate-900">
-                          <span>{leave.leaveType.name}</span>
-                          <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200">
-                            {calculateDays(leave.startDate, leave.endDate)} Days
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-xs text-slate-900">
+                            {item.leaveType.name}
+                          </span>
+                          <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            Approved
                           </span>
                         </div>
-
                         <div className="text-[11px] text-slate-500 flex items-center gap-1">
-                          <Calendar className="w-3 h-3 text-slate-400" />
+                          <Clock className="w-3 h-3 text-slate-400" />
                           <span>
-                            {formatDate(leave.startDate)} - {formatDate(leave.endDate)}
+                            {formatDate(item.startDate)} - {formatDate(item.endDate)}
                           </span>
                         </div>
                       </div>
@@ -465,46 +584,58 @@ export default function EmployeeLeaveCalendarPage() {
                   </div>
                 )}
               </div>
-            )}
-
-            {/* Tab 2: Company Holidays for the Year */}
-            {activeSideTab === "ALL_HOLIDAYS" && (
-              <div className="p-4 space-y-3">
-                <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                    Official Calendar
-                  </span>
-                  <span className="text-xs font-semibold text-purple-700">
-                    {yearHolidays.length} Holidays
+            ) : (
+              /* Tab 2: Full Year Holidays List */
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                    {currentYear} Holidays
+                  </h3>
+                  <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-full bg-purple-50 text-purple-700 border border-purple-200">
+                    {yearHolidays.length} Days
                   </span>
                 </div>
 
                 {yearHolidays.length === 0 ? (
-                  <p className="text-xs text-slate-400 text-center py-4">
-                    No public holidays listed for {currentYear}.
+                  <p className="text-xs text-slate-400 py-4 text-center">
+                    No holidays listed for this year.
                   </p>
                 ) : (
-                  <div className="space-y-2 max-h-[350px] overflow-y-auto pr-1">
-                    {yearHolidays.map((holiday) => (
-                      <div
-                        key={holiday.id}
-                        className="p-2.5 rounded-lg bg-purple-50/50 border border-purple-100 text-xs space-y-0.5"
-                      >
-                        <div className="font-bold text-purple-950 flex items-center gap-1.5">
-                          <Sparkles className="w-3 h-3 text-purple-600 shrink-0" />
-                          <span>{holiday.name}</span>
+                  <div className="space-y-2 max-h-[380px] overflow-y-auto pr-1">
+                    {yearHolidays.map((h) => {
+                      const hDate = new Date(h.fromDate || h.date || "");
+                      const isPast = hDate.getTime() < todayMidnight.getTime();
+
+                      return (
+                        <div
+                          key={h.id}
+                          className={`p-2.5 rounded-xl border text-xs flex items-center justify-between ${
+                            isPast
+                              ? "bg-slate-50/50 border-slate-200 opacity-60"
+                              : "bg-purple-50/30 border-purple-100 hover:border-purple-200"
+                          }`}
+                        >
+                          <div>
+                            <span className="font-semibold text-slate-900 block leading-tight">
+                              {h.name}
+                            </span>
+                            <span className="text-[11px] text-slate-500">
+                              {h.fromDate ? formatDate(h.fromDate) : formatDate(h.date || "")}
+                            </span>
+                          </div>
+
+                          <span
+                            className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                              isPast
+                                ? "bg-slate-100 text-slate-500"
+                                : "bg-purple-100 text-purple-800"
+                            }`}
+                          >
+                            {isPast ? "Past" : "Upcoming"}
+                          </span>
                         </div>
-                        <div className="text-[11px] text-purple-700 flex items-center gap-1">
-                          <Calendar className="w-3 h-3 text-purple-500" />
-                          <span>{formatDate(holiday.date)}</span>
-                        </div>
-                        {holiday.description && (
-                          <p className="text-[10px] text-slate-500 italic mt-0.5">
-                            {holiday.description}
-                          </p>
-                        )}
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -513,15 +644,15 @@ export default function EmployeeLeaveCalendarPage() {
         </div>
       </div>
 
-      {/* 3. DAY SCHEDULE INSPECTOR MODAL */}
+      {/* 3. DAY INSPECTOR MODAL */}
       {selectedDay && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
-          <div className="w-full max-w-md bg-white rounded-2xl border border-slate-200 shadow-xl overflow-hidden animate-in fade-in zoom-in-95">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-2xs animate-in fade-in">
+          <div className="bg-white rounded-2xl max-w-md w-full shadow-xl border border-slate-200 overflow-hidden">
             {/* Header */}
-            <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-xs">
-                  <Calendar className="w-4 h-4" />
+            <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/60">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700 font-bold text-xs">
+                  {selectedDay.date.getDate()}
                 </div>
                 <div>
                   <h3 className="font-bold text-sm text-slate-900">
@@ -536,7 +667,7 @@ export default function EmployeeLeaveCalendarPage() {
 
               <button
                 onClick={() => setSelectedDay(null)}
-                className="text-slate-400 hover:text-slate-700 p-1 rounded-lg"
+                className="text-slate-400 hover:text-slate-700 p-1 rounded-lg cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -544,6 +675,61 @@ export default function EmployeeLeaveCalendarPage() {
 
             {/* Body */}
             <div className="p-5 space-y-4 text-xs">
+              {/* Daily Attendance Card */}
+              <div>
+                <h4 className="font-bold text-xs text-slate-800 uppercase tracking-wider mb-2">
+                  Daily Attendance Record
+                </h4>
+                {selectedDay.attendance ? (
+                  <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-500 font-medium">Status:</span>
+                      <span
+                        className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                          selectedDay.attendance.status === "PRESENT"
+                            ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                            : selectedDay.attendance.status === "LATE"
+                            ? "bg-amber-50 text-amber-700 border border-amber-200"
+                            : selectedDay.attendance.status === "HALF_DAY"
+                            ? "bg-sky-50 text-sky-700 border border-sky-200"
+                            : "bg-rose-50 text-rose-700 border border-rose-200"
+                        }`}
+                      >
+                        {selectedDay.attendance.status}
+                      </span>
+                    </div>
+                    {selectedDay.attendance.checkIn && (
+                      <div className="flex items-center justify-between text-[11px] text-slate-600">
+                        <span>Check In:</span>
+                        <span className="font-semibold text-slate-800">
+                          {formatTime(selectedDay.attendance.checkIn)}
+                        </span>
+                      </div>
+                    )}
+                    {selectedDay.attendance.checkOut && (
+                      <div className="flex items-center justify-between text-[11px] text-slate-600">
+                        <span>Check Out:</span>
+                        <span className="font-semibold text-slate-800">
+                          {formatTime(selectedDay.attendance.checkOut)}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-600">
+                    <p className="font-medium text-slate-800">
+                      {selectedDay.date.getDay() === 0 || selectedDay.date.getDay() === 6
+                        ? "Weekend Off"
+                        : selectedDay.holiday
+                        ? "Public Holiday"
+                        : selectedDay.date.getTime() < todayMidnight.getTime()
+                        ? "No Attendance Punched (Absent)"
+                        : "Scheduled Working Day"}
+                    </p>
+                  </div>
+                )}
+              </div>
+
               {/* Holiday Alert */}
               {selectedDay.holiday && (
                 <div className="p-3.5 bg-purple-50 border border-purple-200 rounded-xl flex items-start gap-2.5 text-purple-900">
@@ -564,15 +750,12 @@ export default function EmployeeLeaveCalendarPage() {
               {/* Personal Leave Scheduled */}
               <div>
                 <h4 className="font-bold text-xs text-slate-800 uppercase tracking-wider mb-2">
-                  My Schedule for this Day
+                  My Leave Schedule
                 </h4>
 
                 {selectedDay.leaves.length === 0 ? (
-                  <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-600">
-                    <p className="font-medium text-slate-800">Regular Working Day</p>
-                    <p className="text-[11px] text-slate-400 mt-0.5">
-                      No personal leaves scheduled for this date.
-                    </p>
+                  <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-500">
+                    <span>No personal leaves applied for this date.</span>
                   </div>
                 ) : (
                   <div className="space-y-2">
@@ -592,7 +775,7 @@ export default function EmployeeLeaveCalendarPage() {
                           </div>
                           {leave.reason && (
                             <p className="text-[11px] text-slate-500 italic mt-0.5">
-                              "{leave.reason}"
+                              &quot;{leave.reason}&quot;
                             </p>
                           )}
                         </div>
@@ -615,18 +798,27 @@ export default function EmployeeLeaveCalendarPage() {
 
             {/* Footer */}
             <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
-              <Link
-                href="/employee/apply-leave"
-                className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-2xs transition-all flex items-center gap-1"
-              >
-                <PlusCircle className="w-3.5 h-3.5" />
-                <span>Apply for Leave</span>
-              </Link>
+              {selectedDay.date.getTime() < todayMidnight.getTime() ? (
+                <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium">
+                  <Clock className="w-3.5 h-3.5" />
+                  <span>Past Date (Applications Closed)</span>
+                </div>
+              ) : (
+                <Link
+                  href={`/employee/apply-leave?startDate=${selectedDay.date.getFullYear()}-${String(
+                    selectedDay.date.getMonth() + 1
+                  ).padStart(2, "0")}-${String(selectedDay.date.getDate()).padStart(2, "0")}`}
+                  className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-2xs transition-all flex items-center gap-1 cursor-pointer"
+                >
+                  <PlusCircle className="w-3.5 h-3.5" />
+                  <span>Apply for Leave on this Date</span>
+                </Link>
+              )}
 
               <button
                 type="button"
                 onClick={() => setSelectedDay(null)}
-                className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-white transition-all"
+                className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-white transition-all cursor-pointer"
               >
                 Close
               </button>

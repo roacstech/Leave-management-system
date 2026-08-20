@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Calendar, Plus, Edit2, Trash2, X, Search, Loader2 } from "lucide-react";
+import DatePicker from "@/components/ui/DatePicker";
 
 export default function HolidaysPage() {
   const [holidays, setHolidays] = useState<any[]>([]);
@@ -374,33 +375,28 @@ export default function HolidaysPage() {
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-medium text-slate-700 mb-1">
-                    From Date <span className="text-rose-500">*</span>
-                  </label>
-                  <input
-                    type="date"
-                    required
-                    value={formData.fromDate}
-                    onChange={(e) => setFormData({ ...formData, fromDate: e.target.value })}
-                    className="w-full px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-slate-400"
-                    disabled={isSaving}
-                  />
-                </div>
+                <DatePicker
+                  label="From Date"
+                  required
+                  value={formData.fromDate}
+                  disabled={isSaving}
+                  onChange={(val) =>
+                    setFormData((f) => ({
+                      ...f,
+                      fromDate: val,
+                      toDate: f.toDate && val > f.toDate ? val : f.toDate,
+                    }))
+                  }
+                />
 
-                <div>
-                  <label className="block text-xs font-medium text-slate-700 mb-1">
-                    To Date <span className="text-rose-500">*</span>
-                  </label>
-                  <input
-                    type="date"
-                    required
-                    value={formData.toDate}
-                    onChange={(e) => setFormData({ ...formData, toDate: e.target.value })}
-                    className="w-full px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-slate-400"
-                    disabled={isSaving}
-                  />
-                </div>
+                <DatePicker
+                  label="To Date"
+                  required
+                  value={formData.toDate}
+                  minDate={formData.fromDate}
+                  disabled={isSaving}
+                  onChange={(val) => setFormData((f) => ({ ...f, toDate: val }))}
+                />
               </div>
             </div>
 

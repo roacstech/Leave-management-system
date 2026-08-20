@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import {
+  getSystemSettings,
+  canSendNotification,
+  formatDateWithPattern,
+  validateLeaveApplication,
+} from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +23,20 @@ export async function GET(request: NextRequest) {
       whereClause.status = status;
     }
 
-    const [totalItems, leaveRequests] = await Promise.all([
+    const [
+      totalAll,
+      pendingCount,
+      escalatedCount,
+      approvedCount,
+      rejectedCount,
+      filteredTotal,
+      leaveRequests,
+    ] = await Promise.all([
+      prisma.leaveRequest.count(),
+      prisma.leaveRequest.count({ where: { status: "PENDING" } }),
+      prisma.leaveRequest.count({ where: { status: "ESCALATED" } }),
+      prisma.leaveRequest.count({ where: { status: "APPROVED" } }),
+      prisma.leaveRequest.count({ where: { status: "REJECTED" } }),
       prisma.leaveRequest.count({ where: whereClause }),
       prisma.leaveRequest.findMany({
         where: whereClause,
@@ -36,6 +55,13 @@ export async function GET(request: NextRequest) {
                   name: true,
                 },
               },
+              reportingTo: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true,
+                },
+              },
             },
           },
           leaveType: true,
@@ -46,13 +72,21 @@ export async function GET(request: NextRequest) {
       }),
     ]);
 
-    const totalPages = Math.ceil(totalItems / limit);
+    const totalPages = Math.ceil(filteredTotal / limit) || 1;
 
     return NextResponse.json({
       success: true,
       leaveRequests,
+      summary: {
+        all: totalAll,
+        pending: pendingCount,
+        escalated: escalatedCount,
+        approved: approvedCount,
+        rejected: rejectedCount,
+        actionable: pendingCount + escalatedCount,
+      },
       pagination: {
-        totalItems,
+        totalItems: filteredTotal,
         totalPages,
         currentPage: page,
         limit,
@@ -66,13 +100,6 @@ export async function GET(request: NextRequest) {
     );
   }
 }
-
-import {
-  getSystemSettings,
-  canSendNotification,
-  formatDateWithPattern,
-  validateLeaveApplication,
-} from "@/lib/settings";
 
 // POST create a leave request
 export async function POST(request: NextRequest) {
@@ -200,7 +227,14 @@ export async function PATCH(request: NextRequest) {
     // Check if leave request exists
     const existing = await prisma.leaveRequest.findUnique({
       where: { id: Number(id) },
-      include: { user: true, leaveType: true },
+      include: {
+        user: {
+          include: {
+            reportingTo: true,
+          },
+        },
+        leaveType: true,
+      },
     });
 
     if (!existing) {
@@ -210,12 +244,19 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
+    const wasEscalated = existing.status === "ESCALATED";
+
     // Update leave request status in Prisma
     const updated = await prisma.leaveRequest.update({
       where: { id: Number(id) },
       data: {
         status: status,
-        rejectionReason: status === "REJECTED" ? rejectionReason || "Rejected by Administrator" : null,
+        rejectionReason:
+          status === "REJECTED"
+            ? rejectionReason || "Rejected by Administrator"
+            : status === "ESCALATED"
+            ? rejectionReason || "Escalated to Administrator for review"
+            : null,
       },
       include: {
         user: {
@@ -223,6 +264,14 @@ export async function PATCH(request: NextRequest) {
             id: true,
             name: true,
             email: true,
+            reportingToId: true,
+            reportingTo: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
           },
         },
         leaveType: true,
@@ -265,33 +314,40 @@ export async function PATCH(request: NextRequest) {
       }
     }
 
-    // Create Notification for the user if enabled in settings
-    const shouldNotify =
-      status === "APPROVED"
-        ? canSendNotification("LEAVE_APPROVED", "IN_APP", settings)
-        : status === "REJECTED"
-        ? canSendNotification("LEAVE_REJECTED", "IN_APP", settings)
-        : status === "CANCELLED"
-        ? canSendNotification("LEAVE_CANCELLATION", "IN_APP", settings)
-        : true;
+    // Notifications
+    try {
+      const formattedStart = formatDateWithPattern(existing.startDate, settings.dateFormat, settings.timezone);
+      const formattedEnd = formatDateWithPattern(existing.endDate, settings.dateFormat, settings.timezone);
 
-    if (shouldNotify) {
-      try {
-        const formattedStart = formatDateWithPattern(existing.startDate, settings.dateFormat, settings.timezone);
-        const formattedEnd = formatDateWithPattern(existing.endDate, settings.dateFormat, settings.timezone);
+      // 1. Notify the Employee
+      await prisma.notification.create({
+        data: {
+          userId: existing.userId,
+          title: `Leave Request ${status === "APPROVED" ? "Approved" : "Rejected"}`,
+          message: wasEscalated
+            ? `Your escalated ${existing.leaveType.name} request (${formattedStart} - ${formattedEnd}) has been ${status.toLowerCase()} by Administration.${
+                status === "REJECTED" && rejectionReason ? ` Reason: ${rejectionReason}` : ""
+              }`
+            : `Your ${existing.leaveType.name} request (${formattedStart} - ${formattedEnd}) has been ${status.toLowerCase()} by Administrator.${
+                status === "REJECTED" && rejectionReason ? ` Reason: ${rejectionReason}` : ""
+              }`,
+        },
+      });
 
+      // 2. If escalated and employee has a Reporting TL, notify the TL of the Admin's final decision
+      if (wasEscalated && existing.user.reportingToId) {
         await prisma.notification.create({
           data: {
-            userId: existing.userId,
-            title: `Leave Request ${status}`,
-            message: `Your ${existing.leaveType.name} request from ${formattedStart} to ${formattedEnd} has been ${status.toLowerCase()}.${
-              status === "REJECTED" && rejectionReason ? ` Reason: ${rejectionReason}` : ""
+            userId: existing.user.reportingToId,
+            title: `Escalated Leave ${status === "APPROVED" ? "Approved" : "Rejected"} by Admin`,
+            message: `Administrator ${status.toLowerCase()} the escalated ${existing.leaveType.name} request for ${existing.user.name} (${formattedStart} - ${formattedEnd}).${
+              status === "REJECTED" && rejectionReason ? ` Note: ${rejectionReason}` : ""
             }`,
           },
         });
-      } catch (notifErr) {
-        console.warn("Could not create notification:", notifErr);
       }
+    } catch (notifErr) {
+      console.warn("Could not create notification:", notifErr);
     }
 
     // Create Audit Log
@@ -302,7 +358,7 @@ export async function PATCH(request: NextRequest) {
           action: `LEAVE_STATUS_${status}`,
           entity: "LeaveRequest",
           entityId: Number(id),
-          details: `Admin changed leave request status to ${status} for user ${existing.user.name}`.substring(0, 191),
+          details: `Admin ${status.toLowerCase()} ${wasEscalated ? "escalated " : ""}leave request for ${existing.user.name}`.substring(0, 191),
         },
       });
     } catch (auditErr) {
@@ -311,7 +367,9 @@ export async function PATCH(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: `Leave request has been successfully ${status.toLowerCase()}.`,
+      message: wasEscalated
+        ? `Escalated leave request has been successfully ${status.toLowerCase()} by Admin.`
+        : `Leave request has been successfully ${status.toLowerCase()}.`,
       leaveRequest: updated,
     });
   } catch (error: any) {

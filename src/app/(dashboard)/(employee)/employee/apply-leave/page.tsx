@@ -23,6 +23,7 @@ import {
   HelpCircle,
 } from "lucide-react";
 import { useSettings } from "@/contexts/SettingsContext";
+import DatePicker from "@/components/ui/DatePicker";
 
 interface LeaveBalance {
   id: number;
@@ -56,13 +57,22 @@ export default function EmployeeApplyLeavePage() {
   const [employee, setEmployee] = useState<EmployeeData | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const getTodayDateString = () => {
+    const d = new Date();
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+  const todayStr = getTodayDateString();
+
   // Form State
   const [leaveTypeId, setLeaveTypeId] = useState<string>("");
   const [startDate, setStartDate] = useState<string>(() => {
-    return new Date().toISOString().slice(0, 10);
+    return getTodayDateString();
   });
   const [endDate, setEndDate] = useState<string>(() => {
-    return new Date().toISOString().slice(0, 10);
+    return getTodayDateString();
   });
   const [isHalfDay, setIsHalfDay] = useState(false);
   const [halfDaySession, setHalfDaySession] = useState<"FIRST_HALF" | "SECOND_HALF">("FIRST_HALF");
@@ -122,16 +132,25 @@ export default function EmployeeApplyLeavePage() {
   const remainingAfter = selectedBalance ? selectedBalance.remaining - requestedDays : 0;
   const isInsufficientBalance = selectedBalance ? requestedDays > selectedBalance.remaining : false;
   const isInvalidDates = new Date(endDate) < new Date(startDate);
+  const isPastStartDate = startDate < todayStr;
 
   // Quick date shortcuts
   const applyShortcut = (daysFromToday: number, durationDays: number = 1) => {
     const start = new Date();
-    start.setDate(start.getDate() + daysFromToday);
+    start.setDate(start.getDate() + Math.max(0, daysFromToday));
     const end = new Date(start);
     end.setDate(start.getDate() + durationDays - 1);
 
-    setStartDate(start.toISOString().slice(0, 10));
-    setEndDate(end.toISOString().slice(0, 10));
+    const sYear = start.getFullYear();
+    const sMonth = String(start.getMonth() + 1).padStart(2, "0");
+    const sDay = String(start.getDate()).padStart(2, "0");
+
+    const eYear = end.getFullYear();
+    const eMonth = String(end.getMonth() + 1).padStart(2, "0");
+    const eDay = String(end.getDate()).padStart(2, "0");
+
+    setStartDate(`${sYear}-${sMonth}-${sDay}`);
+    setEndDate(`${eYear}-${eMonth}-${eDay}`);
     setIsHalfDay(false);
   };
 
@@ -140,6 +159,11 @@ export default function EmployeeApplyLeavePage() {
 
     if (!leaveTypeId || !startDate || !endDate) {
       showToast("Please fill in all mandatory fields.", "error");
+      return;
+    }
+
+    if (isPastStartDate) {
+      showToast("Cannot apply for past dates. Please select today or a future date.", "error");
       return;
     }
 
@@ -395,35 +419,33 @@ export default function EmployeeApplyLeavePage() {
               </div>
 
               {/* Date Inputs (Start & End) */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                    Start Date <span className="text-rose-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="date"
-                      value={startDate}
-                      onChange={(e) => setStartDate(e.target.value)}
-                      className="w-full rounded-xl border border-slate-200 p-2.5 text-xs text-slate-900 outline-none focus:border-slate-400 bg-white cursor-pointer"
-                      required
-                    />
-                  </div>
+              <div className="space-y-1.5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <DatePicker
+                    label="Start Date"
+                    required
+                    value={startDate}
+                    minDate={todayStr}
+                    onChange={(val) => {
+                      setStartDate(val);
+                      if (endDate && val > endDate) {
+                        setEndDate(val);
+                      }
+                    }}
+                  />
+
+                  <DatePicker
+                    label="End Date"
+                    required
+                    value={endDate}
+                    minDate={startDate || todayStr}
+                    onChange={(val) => setEndDate(val)}
+                  />
                 </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                    End Date <span className="text-rose-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="date"
-                      value={endDate}
-                      onChange={(e) => setEndDate(e.target.value)}
-                      className="w-full rounded-xl border border-slate-200 p-2.5 text-xs text-slate-900 outline-none focus:border-slate-400 bg-white cursor-pointer"
-                      required
-                    />
-                  </div>
+                <div className="flex items-center gap-1.5 text-[11px] text-slate-400 pt-0.5">
+                  <Info className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  <span>Past dates are disabled. Please choose today ({formatDate(new Date())}) or a future date.</span>
                 </div>
               </div>
 

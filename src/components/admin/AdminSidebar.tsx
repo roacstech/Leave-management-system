@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -31,13 +31,27 @@ export default function AdminSidebar({
 }: AdminSidebarProps) {
   const pathname = usePathname();
   const { settings } = useSettings();
+  const [liveCount, setLiveCount] = useState(pendingCount);
+
+  useEffect(() => {
+    fetch("/api/admin/leaves?limit=1")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.summary) {
+          setLiveCount(data.summary.actionable ?? (data.summary.pending + data.summary.escalated));
+        }
+      })
+      .catch(() => {});
+  }, [pathname]);
+
+  const effectiveCount = pendingCount > 0 ? pendingCount : liveCount;
 
   const navItems = [
     {
       name: "Dashboard",
       href: "/admin/dashboard",
       icon: LayoutDashboard,
-      badge: pendingCount > 0 ? `${pendingCount}` : null,
+      badge: effectiveCount > 0 ? `${effectiveCount}` : null,
     },
     {
       name: "Employees",
@@ -61,7 +75,7 @@ export default function AdminSidebar({
       name: "Leave Requests",
       href: "/admin/leaves",
       icon: CalendarCheck2,
-      badge: pendingCount > 0 ? `${pendingCount}` : null,
+      badge: effectiveCount > 0 ? `${effectiveCount}` : null,
     },
     {
       name: "Leave Types",
