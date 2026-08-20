@@ -4,13 +4,19 @@ import { prisma } from "@/lib/db";
 export const dynamic = "force-dynamic";
 
 // PATCH update a holiday
-export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     const { id } = await params;
     const holidayId = parseInt(id, 10);
-    
+
     if (isNaN(holidayId)) {
-      return NextResponse.json({ success: false, error: "Invalid holiday ID" }, { status: 400 });
+      return NextResponse.json(
+        { success: false, error: "Invalid holiday ID" },
+        { status: 400 }
+      );
     }
 
     const body = await request.json();
@@ -33,10 +39,10 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const holiday = await prisma.holiday.update({
       where: { id: holidayId },
       data: {
-        name,
+        name: name.trim(),
         fromDate: new Date(fromDate),
         toDate: new Date(toDate),
-        description: description || null,
+        description: description ? description.trim() : null,
       },
     });
 
@@ -55,13 +61,19 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 }
 
 // DELETE a holiday
-export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     const { id } = await params;
     const holidayId = parseInt(id, 10);
-    
+
     if (isNaN(holidayId)) {
-      return NextResponse.json({ success: false, error: "Invalid holiday ID" }, { status: 400 });
+      return NextResponse.json(
+        { success: false, error: "Invalid holiday ID" },
+        { status: 400 }
+      );
     }
 
     await prisma.holiday.delete({

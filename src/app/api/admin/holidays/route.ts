@@ -3,9 +3,58 @@ import { prisma } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
+let hasCheckedHolidayCols = false;
+async function ensureHolidayTable() {
+  if (hasCheckedHolidayCols) return;
+  try {
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS \`Holiday\` (
+        \`id\` INT NOT NULL AUTO_INCREMENT,
+        \`name\` VARCHAR(191) NOT NULL,
+        \`fromDate\` DATETIME(3) NOT NULL,
+        \`toDate\` DATETIME(3) NOT NULL,
+        \`description\` VARCHAR(191) NULL,
+        \`createdAt\` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+        \`updatedAt\` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+        PRIMARY KEY (\`id\`)
+      ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    `);
+  } catch (err) {
+    // Ignore if table already exists
+  }
+
+  try {
+    await prisma.$executeRawUnsafe(`
+      ALTER TABLE \`Holiday\` ADD COLUMN \`fromDate\` DATETIME(3) NULL;
+    `);
+  } catch (err) {}
+
+  try {
+    await prisma.$executeRawUnsafe(`
+      ALTER TABLE \`Holiday\` ADD COLUMN \`toDate\` DATETIME(3) NULL;
+    `);
+  } catch (err) {}
+
+  try {
+    await prisma.$executeRawUnsafe(`
+      ALTER TABLE \`Holiday\` MODIFY COLUMN \`date\` DATETIME NULL;
+    `);
+  } catch (err) {}
+
+  try {
+    await prisma.$executeRawUnsafe(`
+      UPDATE \`Holiday\` SET \`fromDate\` = \`date\`, \`toDate\` = \`date\` WHERE \`fromDate\` IS NULL AND \`date\` IS NOT NULL;
+    `);
+  } catch (err) {}
+
+  hasCheckedHolidayCols = true;
+}
+
 // GET all holidays
 export async function GET(request: NextRequest) {
   try {
+    await ensureHolidayTable();
+
     const holidays = await prisma.holiday.findMany({
       orderBy: {
         fromDate: "asc",
@@ -28,6 +77,8 @@ export async function GET(request: NextRequest) {
 // POST create a new holiday
 export async function POST(request: NextRequest) {
   try {
+    await ensureHolidayTable();
+
     const body = await request.json();
     const { name, fromDate, toDate, description } = body;
 
@@ -48,10 +99,10 @@ export async function POST(request: NextRequest) {
 
     const holiday = await prisma.holiday.create({
       data: {
-        name,
+        name: name.trim(),
         fromDate: new Date(fromDate),
         toDate: new Date(toDate),
-        description: description || null,
+        description: description ? description.trim() : null,
       },
     });
 
