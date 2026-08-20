@@ -59,8 +59,18 @@ export async function GET(request: NextRequest) {
       }),
       prisma.holiday.findMany({
         where: {
-          fromDate: { lte: endOfMonth },
-          toDate: { gte: startOfMonth },
+          OR: [
+            {
+              date: {
+                gte: startOfMonth,
+                lte: endOfMonth,
+              },
+            },
+            {
+              fromDate: { lte: endOfMonth },
+              toDate: { gte: startOfMonth },
+            },
+          ],
         },
       }),
       prisma.attendance.findFirst({
@@ -93,13 +103,17 @@ export async function GET(request: NextRequest) {
         (a) => new Date(a.date).toDateString() === curDate.toDateString()
       );
 
-      // Find holiday for this day
+      // Find holiday for this day (supports date or fromDate/toDate)
       const holiday = holidays.find((h) => {
-        const s = new Date(h.fromDate);
-        s.setHours(0, 0, 0, 0);
-        const e = new Date(h.toDate);
-        e.setHours(23, 59, 59, 999);
-        return curDate >= s && curDate <= e;
+        if (h.date && new Date(h.date).toDateString() === curDate.toDateString()) return true;
+        if (h.fromDate && h.toDate) {
+          const from = new Date(h.fromDate);
+          from.setHours(0, 0, 0, 0);
+          const to = new Date(h.toDate);
+          to.setHours(23, 59, 59, 999);
+          return curDate >= from && curDate <= to;
+        }
+        return false;
       });
 
       // Find approved leave for this day
