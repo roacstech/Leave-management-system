@@ -15,6 +15,7 @@ interface DatePickerProps {
   onChange: (value: string) => void;
   minDate?: string; // "YYYY-MM-DD"
   maxDate?: string; // "YYYY-MM-DD"
+  disableSundays?: boolean;
   placeholder?: string;
   label?: string;
   required?: boolean;
@@ -61,6 +62,7 @@ export default function DatePicker({
   onChange,
   minDate,
   maxDate,
+  disableSundays = false,
   placeholder = "Select date",
   label,
   required = false,
@@ -145,6 +147,7 @@ export default function DatePicker({
     isDisabled: boolean;
     isSelected: boolean;
     isToday: boolean;
+    isSunday: boolean;
   }> = [];
 
   // Trailing previous month days
@@ -158,6 +161,7 @@ export default function DatePicker({
       isDisabled: true,
       isSelected: false,
       isToday: false,
+      isSunday: date.getDay() === 0,
     });
   }
 
@@ -166,12 +170,16 @@ export default function DatePicker({
     const date = new Date(viewYear, viewMonth, dayNum, 0, 0, 0, 0);
     const isToday = date.getTime() === today.getTime();
     const isSelected = selectedDateObj ? date.getTime() === selectedDateObj.getTime() : false;
+    const isSunday = date.getDay() === 0;
 
     let isDisabled = false;
     if (minDateObj && date.getTime() < minDateObj.getTime()) {
       isDisabled = true;
     }
     if (maxDateObj && date.getTime() > maxDateObj.getTime()) {
+      isDisabled = true;
+    }
+    if (disableSundays && isSunday) {
       isDisabled = true;
     }
 
@@ -182,6 +190,7 @@ export default function DatePicker({
       isDisabled,
       isSelected,
       isToday,
+      isSunday,
     });
   }
 
@@ -196,6 +205,7 @@ export default function DatePicker({
       isDisabled: true,
       isSelected: false,
       isToday: false,
+      isSunday: date.getDay() === 0,
     });
   }
 
@@ -210,6 +220,7 @@ export default function DatePicker({
     e.stopPropagation();
     if (minDateObj && today.getTime() < minDateObj.getTime()) return;
     if (maxDateObj && today.getTime() > maxDateObj.getTime()) return;
+    if (disableSundays && today.getDay() === 0) return;
     onChange(formatToISODate(today));
     setViewYear(today.getFullYear());
     setViewMonth(today.getMonth());
@@ -313,6 +324,7 @@ export default function DatePicker({
               const isCellToday = cell.isToday;
               const isCellSelected = cell.isSelected;
               const isCellDisabled = cell.isDisabled;
+              const isSunday = cell.date.getDay() === 0;
 
               return (
                 <button
@@ -320,13 +332,22 @@ export default function DatePicker({
                   type="button"
                   disabled={isCellDisabled}
                   onClick={() => handleSelectDate(cell.date, isCellDisabled)}
+                  title={
+                    disableSundays && isSunday
+                      ? "Sundays are weekly off days (applications not allowed)"
+                      : undefined
+                  }
                   className={`h-8 w-8 text-xs font-medium rounded-lg flex items-center justify-center transition-all ${
                     isCellSelected
                       ? "bg-slate-900 text-white font-bold shadow-2xs cursor-pointer"
                       : isCellDisabled
-                      ? "text-slate-300 bg-slate-50/40 cursor-not-allowed pointer-events-none"
+                      ? disableSundays && isSunday
+                        ? "text-slate-300 bg-slate-50/60 cursor-not-allowed pointer-events-none opacity-40"
+                        : "text-slate-300 bg-slate-50/40 cursor-not-allowed pointer-events-none"
                       : isCellToday
                       ? "border border-slate-300 text-slate-900 font-bold hover:bg-slate-100 cursor-pointer"
+                      : isSunday
+                      ? "text-rose-600 hover:bg-rose-50 cursor-pointer font-semibold"
                       : "text-slate-700 hover:bg-slate-100 cursor-pointer"
                   }`}
                 >

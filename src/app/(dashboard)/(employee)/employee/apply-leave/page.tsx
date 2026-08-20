@@ -117,15 +117,23 @@ export default function EmployeeApplyLeavePage() {
   // Selected leave type balance
   const selectedBalance = balances.find((b) => b.leaveType.id.toString() === leaveTypeId);
 
-  // Calculate requested days
+  // Calculate requested working days (excluding Sundays)
   const calculateDays = () => {
     if (!startDate || !endDate) return 0;
     const s = new Date(startDate);
     const e = new Date(endDate);
     if (isNaN(s.getTime()) || isNaN(e.getTime()) || e < s) return 0;
+    if (isHalfDay) return 0.5;
 
-    const diff = Math.round((e.getTime() - s.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-    return isHalfDay ? 0.5 : Math.max(1, diff);
+    let workingDays = 0;
+    const cur = new Date(s);
+    while (cur <= e) {
+      if (cur.getDay() !== 0) {
+        workingDays++;
+      }
+      cur.setDate(cur.getDate() + 1);
+    }
+    return workingDays;
   };
 
   const requestedDays = calculateDays();
@@ -133,13 +141,25 @@ export default function EmployeeApplyLeavePage() {
   const isInsufficientBalance = selectedBalance ? requestedDays > selectedBalance.remaining : false;
   const isInvalidDates = new Date(endDate) < new Date(startDate);
   const isPastStartDate = startDate < todayStr;
+  const isStartSunday = startDate ? new Date(startDate).getDay() === 0 : false;
+  const isEndSunday = endDate ? new Date(endDate).getDay() === 0 : false;
 
-  // Quick date shortcuts
+  // Quick date shortcuts (skipping Sundays)
   const applyShortcut = (daysFromToday: number, durationDays: number = 1) => {
     const start = new Date();
     start.setDate(start.getDate() + Math.max(0, daysFromToday));
+    if (start.getDay() === 0) {
+      start.setDate(start.getDate() + 1); // Move Monday if lands on Sunday
+    }
+
     const end = new Date(start);
-    end.setDate(start.getDate() + durationDays - 1);
+    let added = 1;
+    while (added < durationDays) {
+      end.setDate(end.getDate() + 1);
+      if (end.getDay() !== 0) {
+        added++;
+      }
+    }
 
     const sYear = start.getFullYear();
     const sMonth = String(start.getMonth() + 1).padStart(2, "0");
@@ -159,6 +179,16 @@ export default function EmployeeApplyLeavePage() {
 
     if (!leaveTypeId || !startDate || !endDate) {
       showToast("Please fill in all mandatory fields.", "error");
+      return;
+    }
+
+    if (isStartSunday || isEndSunday) {
+      showToast("Leave cannot start or end on a Sunday (Weekly Off). Please select a working day.", "error");
+      return;
+    }
+
+    if (requestedDays <= 0) {
+      showToast("Selected duration has 0 working days. Please select working days for leave.", "error");
       return;
     }
 
@@ -424,6 +454,7 @@ export default function EmployeeApplyLeavePage() {
                   <DatePicker
                     label="Start Date"
                     required
+                    disableSundays={true}
                     value={startDate}
                     minDate={todayStr}
                     onChange={(val) => {
@@ -437,6 +468,7 @@ export default function EmployeeApplyLeavePage() {
                   <DatePicker
                     label="End Date"
                     required
+                    disableSundays={true}
                     value={endDate}
                     minDate={startDate || todayStr}
                     onChange={(val) => setEndDate(val)}
@@ -445,7 +477,7 @@ export default function EmployeeApplyLeavePage() {
 
                 <div className="flex items-center gap-1.5 text-[11px] text-slate-400 pt-0.5">
                   <Info className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                  <span>Past dates are disabled. Please choose today ({formatDate(new Date())}) or a future date.</span>
+                  <span>Sundays (weekly offs) and past dates are disabled for leave requests.</span>
                 </div>
               </div>
 

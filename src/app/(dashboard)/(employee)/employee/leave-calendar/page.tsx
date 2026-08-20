@@ -803,6 +803,11 @@ export default function EmployeeLeaveCalendarPage() {
                   <Clock className="w-3.5 h-3.5" />
                   <span>Past Date (Applications Closed)</span>
                 </div>
+              ) : selectedDay.date.getDay() === 0 ? (
+                <div className="flex items-center gap-1.5 text-xs text-rose-500 font-medium">
+                  <Clock className="w-3.5 h-3.5" />
+                  <span>Sunday (Weekly Off - Applications Not Allowed)</span>
+                </div>
               ) : (
                 <Link
                   href={`/employee/apply-leave?startDate=${selectedDay.date.getFullYear()}-${String(

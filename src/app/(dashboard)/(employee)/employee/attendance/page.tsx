@@ -147,6 +147,44 @@ export default function EmployeeAttendancePage() {
   const [loading, setLoading] = useState(true);
   const [punching, setPunching] = useState(false);
   const [toast, setToast] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [now, setNow] = useState<Date>(new Date());
+
+  // Live timer tick every second for working hours counter
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setNow(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Calculate live login hours
+  const getLiveLoginHours = () => {
+    if (!todayStatus?.checkIn) return null;
+    const inTime = new Date(todayStatus.checkIn).getTime();
+    const outTime = todayStatus.checkOut
+      ? new Date(todayStatus.checkOut).getTime()
+      : now.getTime();
+    const diffMs = Math.max(0, outTime - inTime);
+
+    const totalSeconds = Math.floor(diffMs / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    const timerStr = `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+    const decimalHours = (diffMs / (1000 * 60 * 60)).toFixed(2);
+
+    return {
+      hours,
+      minutes,
+      seconds,
+      timerStr,
+      decimalHours: `${decimalHours} hrs`,
+      formatted: `${hours}h ${minutes}m`,
+    };
+  };
+
+  const liveHours = getLiveLoginHours();
 
   const showToast = (text: string, type: "success" | "error" = "success") => {
     setToast({ text, type });
@@ -389,10 +427,10 @@ export default function EmployeeAttendancePage() {
         </div>
 
         {/* Live Punch Actions Card */}
-        <div className="bg-slate-800/90 border border-slate-700 p-4 rounded-xl flex flex-col justify-between min-w-[240px] shrink-0">
+        <div className="bg-slate-800/90 border border-slate-700 p-4 rounded-xl flex flex-col justify-between min-w-[250px] shrink-0">
           <div className="flex items-center justify-between border-b border-slate-700/60 pb-2.5 mb-2.5">
             <div className="text-xs font-semibold text-slate-300">
-              Today's Status
+              Today&apos;s Status
             </div>
             <div className="text-[10px] font-mono text-emerald-400 font-bold">
               {formatDate(today)}
@@ -401,7 +439,7 @@ export default function EmployeeAttendancePage() {
 
           <div className="mb-3 text-xs">
             {todayStatus?.checkIn ? (
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 <div className="flex justify-between">
                   <span className="text-slate-400">Check-In:</span>
                   <span className="font-bold text-emerald-400">
@@ -414,6 +452,20 @@ export default function EmployeeAttendancePage() {
                     {todayStatus.checkOut ? formatTime(todayStatus.checkOut) : "In Progress..."}
                   </span>
                 </div>
+
+                {/* Login Hours Display */}
+                {liveHours && (
+                  <div className="bg-slate-900/80 rounded-lg p-2 border border-slate-700/60 flex items-center justify-between mt-1">
+                    <span className="text-[11px] text-slate-400 font-medium">Login Hours:</span>
+                    <div className="flex items-center gap-1 font-mono">
+                      <Clock className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                      <span className="text-xs font-bold text-emerald-300 tracking-wider">
+                        {liveHours.timerStr}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
                 {todayStatus.workHours !== null && (
                   <div className="flex justify-between pt-1 border-t border-slate-700/60">
                     <span className="text-slate-400">Total Hours:</span>
@@ -435,7 +487,7 @@ export default function EmployeeAttendancePage() {
               <button
                 onClick={() => handlePunch("CHECK_IN")}
                 disabled={punching}
-                className="w-full py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold text-xs shadow-xs transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 active:scale-95"
+                className="w-full py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold text-xs shadow-xs transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 active:scale-95 cursor-pointer"
               >
                 <LogIn className="w-4 h-4" />
                 <span>{punching ? "Punching..." : "Check In Now"}</span>
@@ -444,7 +496,7 @@ export default function EmployeeAttendancePage() {
               <button
                 onClick={() => handlePunch("CHECK_OUT")}
                 disabled={punching}
-                className="w-full py-2 rounded-lg bg-rose-500 hover:bg-rose-600 text-white font-bold text-xs shadow-xs transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 active:scale-95"
+                className="w-full py-2 rounded-lg bg-rose-500 hover:bg-rose-600 text-white font-bold text-xs shadow-xs transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 active:scale-95 cursor-pointer"
               >
                 <LogOut className="w-4 h-4" />
                 <span>{punching ? "Punching..." : "Check Out"}</span>

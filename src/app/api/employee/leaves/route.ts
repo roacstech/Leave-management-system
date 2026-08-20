@@ -49,11 +49,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const daysDiff = Math.max(
-      1,
-      Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1
-    );
-    const requestedDays = isHalfDay ? 0.5 : daysDiff;
+    if (start.getDay() === 0 && end.getDay() === 0) {
+      return NextResponse.json(
+        { success: false, error: "Leave cannot be requested for a Sunday (Weekly Off)." },
+        { status: 400 }
+      );
+    }
+
+    let workingDaysCount = 0;
+    const cur = new Date(start);
+    while (cur <= end) {
+      if (cur.getDay() !== 0) {
+        workingDaysCount++;
+      }
+      cur.setDate(cur.getDate() + 1);
+    }
+
+    if (workingDaysCount <= 0) {
+      return NextResponse.json(
+        { success: false, error: "Selected date range contains 0 working days (Sundays only)." },
+        { status: 400 }
+      );
+    }
+
+    const requestedDays = isHalfDay ? 0.5 : workingDaysCount;
 
     const settings = await getSystemSettings();
     const currentYear = new Date().getFullYear();

@@ -110,6 +110,44 @@ export default function EmployeeDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [punching, setPunching] = useState(false);
   const [toast, setToast] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [now, setNow] = useState<Date>(new Date());
+
+  // Live timer tick every second for working hours counter
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setNow(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Calculate live login hours
+  const getLiveLoginHours = () => {
+    if (!data?.todayAttendance?.checkIn) return null;
+    const inTime = new Date(data.todayAttendance.checkIn).getTime();
+    const outTime = data.todayAttendance.checkOut
+      ? new Date(data.todayAttendance.checkOut).getTime()
+      : now.getTime();
+    const diffMs = Math.max(0, outTime - inTime);
+
+    const totalSeconds = Math.floor(diffMs / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    const timerStr = `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+    const decimalHours = (diffMs / (1000 * 60 * 60)).toFixed(2);
+
+    return {
+      hours,
+      minutes,
+      seconds,
+      timerStr,
+      decimalHours: `${decimalHours} hrs`,
+      formatted: `${hours}h ${minutes}m`,
+    };
+  };
+
+  const liveHours = getLiveLoginHours();
 
   // Quick Apply Leave Modal
   const [applyModalOpen, setApplyModalOpen] = useState(false);
@@ -190,6 +228,13 @@ export default function EmployeeDashboardPage() {
 
     if (!applyForm.leaveTypeId || !applyForm.startDate || !applyForm.endDate) {
       showToast("Please fill in all required dates and leave type.", "error");
+      return;
+    }
+
+    const isStartSunday = applyForm.startDate ? new Date(applyForm.startDate).getDay() === 0 : false;
+    const isEndSunday = applyForm.endDate ? new Date(applyForm.endDate).getDay() === 0 : false;
+    if (isStartSunday || isEndSunday) {
+      showToast("Leave cannot start or end on a Sunday (Weekly Off). Please choose a working day.", "error");
       return;
     }
 
@@ -337,23 +382,52 @@ export default function EmployeeDashboardPage() {
           <div>
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                Today's Punch
+                Today&apos;s Punch
               </span>
-              <Clock3 className="w-4 h-4 text-emerald-400" />
+              {data?.todayAttendance?.checkIn && !data?.todayAttendance?.checkOut ? (
+                <span className="flex items-center gap-1.5 text-[10px] font-semibold text-emerald-400 bg-emerald-950/70 border border-emerald-500/30 px-2 py-0.5 rounded-full">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <span>Working</span>
+                </span>
+              ) : (
+                <Clock3 className="w-4 h-4 text-emerald-400" />
+              )}
             </div>
 
-            <div className="mt-2.5">
-              <div className="text-base font-bold text-white flex items-center gap-2">
+            <div className="mt-2.5 space-y-2">
+              <div className="text-base font-bold text-white flex items-center justify-between">
                 {data?.todayAttendance?.checkIn ? (
                   <span>In: {formatTime(data.todayAttendance.checkIn)}</span>
                 ) : (
-                  <span className="text-amber-300">Not Punched In</span>
+                  <span className="text-amber-300 text-sm">Not Punched In</span>
+                )}
+
+                {data?.todayAttendance?.checkOut && (
+                  <span className="text-xs font-semibold text-slate-300">
+                    Out: {formatTime(data.todayAttendance.checkOut)}
+                  </span>
                 )}
               </div>
 
-              <div className="text-[11px] text-slate-300 mt-0.5">
+              {/* Live Login Hours Display */}
+              {liveHours && (
+                <div className="bg-slate-800/90 rounded-lg p-2 border border-slate-700/60 flex items-center justify-between">
+                  <span className="text-[11px] text-slate-400 font-medium">Login Hours:</span>
+                  <div className="flex items-center gap-1.5 font-mono">
+                    <Clock className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                    <span className="text-xs font-bold text-emerald-300 tracking-wider">
+                      {liveHours.timerStr}
+                    </span>
+                    <span className="text-[10px] text-slate-400">
+                      ({liveHours.decimalHours})
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              <div className="text-[11px] text-slate-300">
                 {data?.todayAttendance?.checkOut
-                  ? `Out: ${formatTime(data.todayAttendance.checkOut)} (${data.todayAttendance.workHours || 0} hrs logged)`
+                  ? `Shift completed • Total ${data.todayAttendance.workHours || liveHours?.decimalHours || "0 hrs"} logged`
                   : data?.todayAttendance?.checkIn
                   ? "Currently working • Punch out when leaving"
                   : "Tap below to check in for today"}
@@ -361,12 +435,12 @@ export default function EmployeeDashboardPage() {
             </div>
           </div>
 
-          <div className="mt-4 pt-3 border-t border-slate-700/60 flex items-center gap-2">
+          <div className="mt-3.5 pt-3 border-t border-slate-700/60 flex items-center gap-2">
             {!data?.todayAttendance?.checkIn ? (
               <button
                 onClick={() => handlePunch("CHECK_IN")}
                 disabled={punching}
-                className="w-full py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold text-xs shadow-xs transition-all flex items-center justify-center gap-1.5 disabled:opacity-50"
+                className="w-full py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold text-xs shadow-xs transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer"
               >
                 <LogIn className="w-3.5 h-3.5" />
                 <span>{punching ? "Punching..." : "Check In Now"}</span>
@@ -375,13 +449,13 @@ export default function EmployeeDashboardPage() {
               <button
                 onClick={() => handlePunch("CHECK_OUT")}
                 disabled={punching}
-                className="w-full py-1.5 rounded-lg bg-rose-500 hover:bg-rose-600 text-white font-bold text-xs shadow-xs transition-all flex items-center justify-center gap-1.5 disabled:opacity-50"
+                className="w-full py-2 rounded-lg bg-rose-500 hover:bg-rose-600 text-white font-bold text-xs shadow-xs transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer active:scale-95"
               >
                 <LogOut className="w-3.5 h-3.5" />
                 <span>{punching ? "Punching..." : "Check Out"}</span>
               </button>
             ) : (
-              <div className="w-full py-1.5 rounded-lg bg-slate-800 text-center text-xs font-semibold text-emerald-400 border border-slate-700 flex items-center justify-center gap-1">
+              <div className="w-full py-2 rounded-lg bg-slate-800 text-center text-xs font-semibold text-emerald-400 border border-slate-700 flex items-center justify-center gap-1">
                 <CheckCircle2 className="w-3.5 h-3.5" />
                 <span>Shift Completed</span>
               </div>
@@ -787,6 +861,7 @@ export default function EmployeeDashboardPage() {
                 <DatePicker
                   label="Start Date"
                   required
+                  disableSundays={true}
                   value={applyForm.startDate}
                   minDate={todayStr}
                   onChange={(val) =>
@@ -801,6 +876,7 @@ export default function EmployeeDashboardPage() {
                 <DatePicker
                   label="End Date"
                   required
+                  disableSundays={true}
                   value={applyForm.endDate}
                   minDate={applyForm.startDate || todayStr}
                   onChange={(val) =>
