@@ -28,13 +28,14 @@ model User {
   team          Team?          @relation(fields: [teamId], references: [id])
   reportingTo   User?          @relation("UserReportingHierarchy", fields: [reportingToId], references: [id])
   reportees     User[]         @relation("UserReportingHierarchy")
-  leaveBalances LeaveBalance[]
-  leaveRequests LeaveRequest[]
-  attendance    Attendance[]
-  notifications Notification[]
-  auditLogs     AuditLog[]
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  leaveBalances   LeaveBalance[]
+  leaveRequests   LeaveRequest[]
+  attendance      Attendance[]
+  overtimeRecords OvertimeRecord[]
+  notifications   Notification[]
+  auditLogs       AuditLog[]
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
 }
 
 //--------Team model-------------
@@ -228,4 +229,28 @@ model SystemSettings {
 
   createdAt                  DateTime @default(now())
   updatedAt                  DateTime @updatedAt
+}
+
+//--------Overtime & Comp-Off Claim model-------------
+
+model OvertimeRecord {
+  id               Int      @id @default(autoincrement())
+  userId           Int
+  date             DateTime
+  hours            Float
+  type             String   // "WEEKDAY_OT" | "WEEKEND_OT" | "HOLIDAY_OT"
+  reason           String?
+  status           String   @default("PENDING") // "PENDING" | "APPROVED" | "REJECTED"
+  rejectionReason  String?
+  claimCompOff     Boolean  @default(false)
+  compOffDays      Float    @default(0) // 0.5 (4-7.9h) or 1.0 (8h+)
+  extraOtHours     Float    @default(0) // hours beyond 8.0 on holiday/weekend
+  compOffCredited  Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  user             User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([status])
 }
