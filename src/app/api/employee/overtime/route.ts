@@ -75,9 +75,6 @@ export async function GET(request: NextRequest) {
 
       const isWeekend = attDate.getDay() === 0 || attDate.getDay() === 6;
       const isHoliday = holidays.some((h) => {
-        if (h.date && new Date(h.date).toDateString() === attDate.toDateString()) {
-          return true;
-        }
         if (h.fromDate && h.toDate) {
           const s = new Date(h.fromDate);
           s.setHours(0, 0, 0, 0);

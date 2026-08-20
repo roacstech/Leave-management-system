@@ -11,6 +11,7 @@ import {
   User,
   CalendarCheck2,
   Settings,
+  PieChart,
 } from "lucide-react";
 import { useSettings } from "@/contexts/SettingsContext";
 

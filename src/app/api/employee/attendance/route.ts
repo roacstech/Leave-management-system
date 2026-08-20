@@ -93,11 +93,8 @@ export async function GET(request: NextRequest) {
         (a) => new Date(a.date).toDateString() === curDate.toDateString()
       );
 
-      // Find holiday for this day (supports date or fromDate/toDate with null safety)
+      // Find holiday for this day
       const holiday = holidays.find((h) => {
-        if (h.date && new Date(h.date).toDateString() === curDate.toDateString()) {
-          return true;
-        }
         if (h.fromDate && h.toDate) {
           const from = new Date(h.fromDate);
           from.setHours(0, 0, 0, 0);
