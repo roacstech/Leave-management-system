@@ -1,12 +1,14 @@
 "use client";
 
 import React, { useState } from "react";
+import { signOut } from "next-auth/react";
 import AdminSidebar from "@/components/admin/AdminSidebar";
 import {
   Menu,
   Bell,
   Calendar,
   RefreshCw,
+  LogOut,
 } from "lucide-react";
 
 export default function AdminLayout({
@@ -21,6 +23,12 @@ export default function AdminLayout({
     setIsRefreshing(true);
     window.dispatchEvent(new CustomEvent("refresh-dashboard"));
     setTimeout(() => setIsRefreshing(false), 700);
+  };
+
+  const handleLogout = async () => {
+    await signOut({
+      callbackUrl: "/login",
+    });
   };
 
   const currentDate = new Date().toLocaleDateString("en-US", {
@@ -65,7 +73,9 @@ export default function AdminLayout({
               onClick={handleRefresh}
               title="Refresh Dashboard"
               className={`p-1.5 rounded-md text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-all ${
-                isRefreshing ? "rotate-180 transition-transform duration-700 text-slate-900" : ""
+                isRefreshing
+                  ? "rotate-180 transition-transform duration-700 text-slate-900"
+                  : ""
               }`}
             >
               <RefreshCw className="w-4 h-4" />
@@ -87,14 +97,27 @@ export default function AdminLayout({
               <div className="w-7 h-7 rounded-md bg-slate-900 flex items-center justify-center text-white font-bold text-xs">
                 M
               </div>
+
               <div className="hidden sm:block text-left">
                 <div className="text-xs font-semibold text-slate-900 leading-tight">
                   Admin
                 </div>
+
                 <div className="text-[10px] text-slate-500 leading-none">
                   Manager
                 </div>
               </div>
+
+              {/* Logout */}
+              <button
+                type="button"
+                onClick={handleLogout}
+                title="Logout"
+                aria-label="Logout"
+                className="ml-2 p-1.5 rounded-md text-slate-500 hover:text-red-600 hover:bg-red-50 transition-colors"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
             </div>
           </div>
         </header>

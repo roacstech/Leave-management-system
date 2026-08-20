@@ -1,0 +1,11 @@
+-- AlterTable
+ALTER TABLE `leavetype` ADD COLUMN `annualAllocation` DOUBLE NOT NULL DEFAULT 0,
+    ADD COLUMN `carryForward` BOOLEAN NOT NULL DEFAULT false,
+    ADD COLUMN `category` VARCHAR(191) NOT NULL DEFAULT 'Annual',
+    ADD COLUMN `isActive` BOOLEAN NOT NULL DEFAULT true,
+    ADD COLUMN `isPaid` BOOLEAN NOT NULL DEFAULT true,
+    ADD COLUMN `maxCarryForwardDays` INTEGER NOT NULL DEFAULT 0,
+    ADD COLUMN `maxConsecutiveDays` INTEGER NOT NULL DEFAULT 14,
+    ADD COLUMN `minimumNoticeDays` INTEGER NOT NULL DEFAULT 0,
+    ADD COLUMN `requiresApproval` BOOLEAN NOT NULL DEFAULT true,
+    ADD COLUMN `requiresAttachment` BOOLEAN NOT NULL DEFAULT false;
