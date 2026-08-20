@@ -80,7 +80,8 @@ export default function EmployeesPage() {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    password: "password123",
+    password: "",
+    confirmPassword: "",
     role: "EMPLOYEE",
     teamId: "",
     reportingToId: "",
@@ -160,6 +161,16 @@ export default function EmployeesPage() {
       return;
     }
 
+    if (!formData.password) {
+      showToast("Password is required", "error");
+      return;
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      showToast("Passwords do not match", "error");
+      return;
+    }
+
     try {
       setSubmitting(true);
       const res = await fetch("/api/admin/employees", {
@@ -198,6 +209,11 @@ export default function EmployeesPage() {
 
     if (formData.role === "EMPLOYEE" && !formData.reportingToId) {
       showToast("Please select a Reporting Team Leader (TL) for this employee", "error");
+      return;
+    }
+
+    if (formData.password && formData.password !== formData.confirmPassword) {
+      showToast("Passwords do not match", "error");
       return;
     }
 
@@ -300,6 +316,7 @@ export default function EmployeesPage() {
       name: emp.name,
       email: emp.email,
       password: "",
+      confirmPassword: "",
       role: emp.role,
       teamId: emp.teamId ? String(emp.teamId) : "",
       reportingToId: emp.reportingToId
@@ -321,7 +338,8 @@ export default function EmployeesPage() {
     setFormData({
       name: "",
       email: "",
-      password: "password123",
+      password: "",
+      confirmPassword: "",
       role: "EMPLOYEE",
       teamId: "",
       reportingToId: "",
@@ -709,6 +727,35 @@ export default function EmployeesPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-medium text-slate-700 mb-1">
+                    Password <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    placeholder="Enter password"
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    className="w-full px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-slate-400"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 mb-1">
+                    Confirm Password <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    placeholder="Confirm password"
+                    value={formData.confirmPassword}
+                    onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                    className="w-full px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-slate-400"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 mb-1">
                     Role <span className="text-rose-500">*</span>
                   </label>
                   <select
@@ -848,6 +895,33 @@ export default function EmployeesPage() {
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   className="w-full px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-slate-400"
                 />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 mb-1">
+                    New Password
+                  </label>
+                  <input
+                    type="password"
+                    placeholder="Leave blank to keep current"
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    className="w-full px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-slate-400"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 mb-1">
+                    Confirm New Password
+                  </label>
+                  <input
+                    type="password"
+                    placeholder="Confirm new password"
+                    value={formData.confirmPassword}
+                    onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                    className="w-full px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-slate-400"
+                  />
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">

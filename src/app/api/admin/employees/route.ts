@@ -143,9 +143,9 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { name, email, password, role, teamId, reportingToId, isActive } = body;
 
-    if (!name || !email || !role) {
+    if (!name || !email || !role || !password) {
       return NextResponse.json(
-        { success: false, error: "Name, email, and role are required." },
+        { success: false, error: "Name, email, password, and role are required." },
         { status: 400 }
       );
     }
@@ -179,7 +179,7 @@ export async function POST(request: NextRequest) {
       data: {
         name: name.trim(),
         email: email.trim().toLowerCase(),
-        password: password ? password.trim() : "password123",
+        password: password.trim(),
         role: role as any,
         teamId: teamId ? Number(teamId) : null,
         reportingToId:
