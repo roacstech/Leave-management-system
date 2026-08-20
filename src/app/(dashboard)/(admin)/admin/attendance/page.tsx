@@ -377,17 +377,17 @@ export default function AttendanceAdminPage() {
 
   const fetchTeams = useCallback(async () => {
     try {
-      const res = await fetch("/api/admin/employees?meta=true");
+      const res = await fetch("/api/admin/departments?status=ACTIVE");
       const data = await res.json();
-      if (data.teams) setTeams(data.teams);
+      if (data.success && data.departments) {
+        setTeams(data.departments);
+      } else {
+        const empRes = await fetch("/api/admin/employees?meta=true");
+        const empData = await empRes.json();
+        if (empData.teams) setTeams(empData.teams);
+      }
     } catch {
-      setTeams([
-        { id: 1, name: "Development" },
-        { id: 2, name: "HR" },
-        { id: 3, name: "Sales" },
-        { id: 4, name: "Accounts" },
-        { id: 5, name: "Operations" },
-      ]);
+      // Keep existing teams
     }
   }, []);
 

@@ -14,6 +14,7 @@ import {
   ShieldCheck,
   Building2,
   ChevronRight,
+  Network,
 } from "lucide-react";
 import { useSettings } from "@/contexts/SettingsContext";
 
@@ -48,6 +49,12 @@ export default function AdminSidebar({
       name: "Roles",
       href: "/admin/roles",
       icon: ShieldCheck,
+      badge: null,
+    },
+    {
+      name: "Departments",
+      href: "/admin/departments",
+      icon: Network,
       badge: null,
     },
     {

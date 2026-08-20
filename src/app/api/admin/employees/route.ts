@@ -86,6 +86,9 @@ export async function GET(request: NextRequest) {
           take: limit,
         }),
         prisma.team.findMany({
+          where: {
+            isActive: true,
+          },
           select: {
             id: true,
             name: true,
