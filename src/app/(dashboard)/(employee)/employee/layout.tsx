@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { signOut } from "next-auth/react";
-import TLSidebar from "@/components/tl/TLSidebar";
+import EmployeeSidebar from "@/components/employee/EmployeeSidebar";
 import {
   Menu,
   Bell,
@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { SettingsProvider, useSettings } from "@/contexts/SettingsContext";
 
-function TLHeader({
+function EmployeeHeader({
   onOpenMobile,
   isRefreshing,
   onRefresh,
@@ -76,16 +76,16 @@ function TLHeader({
         <div className="h-4 w-px bg-slate-200 hidden sm:block mx-1" />
 
         <div className="flex items-center gap-2 pl-1">
-          <div className="w-7 h-7 rounded-md bg-indigo-600 flex items-center justify-center text-white font-bold text-xs shadow-2xs">
-            TL
+          <div className="w-7 h-7 rounded-md bg-emerald-600 flex items-center justify-center text-white font-bold text-xs shadow-2xs">
+            EMP
           </div>
 
           <div className="hidden sm:block text-left">
             <div className="text-xs font-semibold text-slate-900 leading-tight">
-              Team Leader
+              Employee
             </div>
             <div className="text-[10px] text-slate-500 leading-none">
-              Supervisor
+              Staff Member
             </div>
           </div>
         </div>
@@ -102,7 +102,7 @@ function TLHeader({
   );
 }
 
-export default function TLLayout({
+export default function EmployeeLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -112,22 +112,22 @@ export default function TLLayout({
 
   const handleRefresh = () => {
     setIsRefreshing(true);
-    window.dispatchEvent(new CustomEvent("refresh-tl-dashboard"));
+    window.dispatchEvent(new CustomEvent("refresh-emp-dashboard"));
     setTimeout(() => setIsRefreshing(false), 700);
   };
 
   return (
     <SettingsProvider>
       <div className="min-h-screen bg-slate-50 text-slate-900 flex font-sans">
-        {/* TL Sidebar */}
-        <TLSidebar
+        {/* Employee Sidebar */}
+        <EmployeeSidebar
           mobileOpen={mobileOpen}
           onCloseMobile={() => setMobileOpen(false)}
         />
 
         {/* Main Content Area */}
         <div className="flex-1 flex flex-col min-w-0">
-          <TLHeader
+          <EmployeeHeader
             onOpenMobile={() => setMobileOpen(true)}
             isRefreshing={isRefreshing}
             onRefresh={handleRefresh}
