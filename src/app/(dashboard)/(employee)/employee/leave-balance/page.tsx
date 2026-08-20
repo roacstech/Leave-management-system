@@ -258,6 +258,11 @@ export default function EmployeeLeaveBalancePage() {
             {data.balances.map((bal) => {
               const usedPercentage = bal.total > 0 ? Math.round((bal.used / bal.total) * 100) : 0;
               const remainingPercentage = Math.max(0, 100 - usedPercentage);
+              const typeName = bal.leaveType?.name || (bal as any).name || "Leave Quota";
+              const typeCode = bal.leaveType?.code || (bal as any).code || "LV";
+              const typeDesc = bal.leaveType?.description || (bal as any).description || (bal.leaveType?.isPaid ? "Standard Paid Leave Quota" : "Unpaid Leave");
+              const isPaid = bal.leaveType?.isPaid ?? (bal as any).isPaid ?? true;
+              const usageCount = bal.usageHistory?.length ?? (bal as any).recentUsage?.length ?? 0;
 
               return (
                 <div
@@ -270,25 +275,25 @@ export default function EmployeeLeaveBalancePage() {
                       <div>
                         <div className="flex items-center gap-2">
                           <h3 className="font-bold text-sm text-slate-900">
-                            {bal.leaveType.name}
+                            {typeName}
                           </h3>
                           <span className="font-mono text-[10px] font-bold px-1.5 py-0.2 rounded bg-slate-100 text-slate-700 border border-slate-200">
-                            {bal.leaveType.code}
+                            {typeCode}
                           </span>
                         </div>
                         <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-1">
-                          {bal.leaveType.description || (bal.leaveType.isPaid ? "Standard Paid Leave Quota" : "Unpaid Leave")}
+                          {typeDesc}
                         </p>
                       </div>
 
                       <span
                         className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
-                          bal.leaveType.isPaid
+                          isPaid
                             ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
                             : "bg-slate-100 text-slate-600 border border-slate-200"
                         }`}
                       >
-                        {bal.leaveType.isPaid ? "Paid" : "Unpaid"}
+                        {isPaid ? "Paid" : "Unpaid"}
                       </span>
                     </div>
 
@@ -340,14 +345,14 @@ export default function EmployeeLeaveBalancePage() {
                   {/* Card Footer */}
                   <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
                     <span className="text-[11px] text-slate-400">
-                      {bal.usageHistory.length} requests approved
+                      {usageCount} requests approved
                     </span>
 
                     <Link
                       href="/employee/apply-leave"
                       className="text-xs font-semibold text-emerald-700 hover:text-emerald-800 flex items-center gap-1"
                     >
-                      <span>Apply {bal.leaveType.code}</span>
+                      <span>Apply {typeCode}</span>
                       <ArrowRight className="w-3 h-3" />
                     </Link>
                   </div>

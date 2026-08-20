@@ -129,15 +129,30 @@ export async function GET(request: NextRequest) {
 
       return {
         id: b.id,
+        year: b.year,
         leaveTypeId: b.leaveTypeId,
-        name: b.leaveType.name,
-        code: b.leaveType.code,
-        description: b.leaveType.description,
-        isPaid: b.leaveType.isPaid,
+        name: b.leaveType?.name || "Leave",
+        code: b.leaveType?.code || "LV",
+        description: b.leaveType?.description || null,
+        isPaid: Boolean(b.leaveType?.isPaid),
+        leaveType: {
+          id: b.leaveType?.id || b.leaveTypeId,
+          name: b.leaveType?.name || "Leave",
+          code: b.leaveType?.code || "LV",
+          description: b.leaveType?.description || null,
+          isPaid: Boolean(b.leaveType?.isPaid),
+        },
         total: b.total,
         used: b.used,
         remaining: b.remaining,
         percentageUsed,
+        usageHistory: typeUsage.map((u) => ({
+          id: u.id,
+          startDate: u.startDate,
+          endDate: u.endDate,
+          reason: u.reason,
+          status: u.status,
+        })),
         recentUsage: typeUsage.slice(0, 3).map((u) => ({
           id: u.id,
           startDate: u.startDate,
@@ -155,19 +170,41 @@ export async function GET(request: NextRequest) {
         totalUsed,
         totalRemaining,
         categoriesCount: currentBalances.length,
+        utilizationRate:
+          totalAllocated > 0 ? Math.round((totalUsed / totalAllocated) * 100) : 0,
         overallPercentageUsed:
           totalAllocated > 0 ? Math.round((totalUsed / totalAllocated) * 100) : 0,
+        approvedApplicationsCount: approvedLeaves.length,
       },
       balances: detailedBalances,
+      recentApprovedUsage: approvedLeaves.slice(0, 10).map((u) => ({
+        id: u.id,
+        startDate: u.startDate,
+        endDate: u.endDate,
+        reason: u.reason,
+        status: u.status,
+        leaveType: {
+          name: u.leaveType?.name || "Leave",
+          code: u.leaveType?.code || "LV",
+        },
+      })),
       employee: employee
         ? {
             id: employee.id,
             name: employee.name,
             email: employee.email,
             teamName: employee.team?.name || "General Team",
+            team: employee.team ? { name: employee.team.name } : null,
           }
         : null,
       policies: {
+        allowHalfDayLeave: settings.allowHalfDayLeave,
+        allowBackdatedLeave: settings.allowBackdatedLeave,
+        carryForwardLeave: settings.carryForwardLeave,
+        allowNegativeLeaveBalance: settings.allowNegativeLeaveBalance,
+      },
+      policyRules: {
+        leaveYear: "January to December",
         allowHalfDayLeave: settings.allowHalfDayLeave,
         allowBackdatedLeave: settings.allowBackdatedLeave,
         carryForwardLeave: settings.carryForwardLeave,
