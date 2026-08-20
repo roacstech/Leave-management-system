@@ -158,14 +158,14 @@ export default function CEODashboardPage() {
       )}
 
       {/* 1. Header Banner */}
-      <div className="rounded-2xl bg-gradient-to-r from-slate-950 via-indigo-950 to-slate-900 p-6 text-white shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 border border-indigo-900/30">
+      <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 text-xs font-semibold border border-indigo-400/30 mb-2">
-            <Sparkles className="w-3 h-3 text-indigo-400" />
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200 text-[10px] font-semibold mb-1.5">
+            <Sparkles className="w-3 h-3 text-indigo-600" />
             <span>Executive Business Overview</span>
           </div>
-          <h1 className="text-2xl font-bold tracking-tight">CEO Executive Dashboard</h1>
-          <p className="text-xs text-slate-300 mt-1 max-w-xl leading-relaxed">
+          <h1 className="text-xl font-bold text-slate-900 tracking-tight">CEO Executive Dashboard</h1>
+          <p className="text-xs text-slate-500 mt-0.5 max-w-xl">
             Monitor real-time company workforce presence, departmental outage capacity, and review high-priority leave authorizations.
           </p>
         </div>
@@ -173,10 +173,10 @@ export default function CEODashboardPage() {
         <div className="flex items-center gap-3 self-start md:self-auto">
           <Link
             href="/ceo/leave-management"
-            className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-xs transition-all flex items-center gap-1.5 active:scale-95"
+            className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer"
           >
             <span>Review Pending Approvals</span>
-            <ChevronRight className="w-4 h-4" />
+            <ChevronRight className="w-3.5 h-3.5" />
           </Link>
         </div>
       </div>

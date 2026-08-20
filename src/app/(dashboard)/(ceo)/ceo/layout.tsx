@@ -35,14 +35,14 @@ export default function CEOLayout({
       {mobileMenuOpen && (
         <div className="fixed inset-0 z-50 lg:hidden flex">
           <div
-            className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs"
+            className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs"
             onClick={() => setMobileMenuOpen(false)}
           />
-          <div className="relative flex-1 flex flex-col max-w-xs w-full bg-slate-900 shadow-2xl z-10 animate-in slide-in-from-left">
+          <div className="relative flex-1 flex flex-col max-w-xs w-full bg-white shadow-2xl z-10 animate-in slide-in-from-left">
             <div className="absolute top-3.5 right-3.5 z-20">
               <button
                 onClick={() => setMobileMenuOpen(false)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-white bg-slate-800/80"
+                className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 bg-slate-100 cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -71,10 +71,10 @@ export default function CEOLayout({
                 <span>{todayFormatted}</span>
               </div>
 
-              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-50 border border-indigo-200 text-[11px] font-bold text-indigo-700">
+              {/* <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-50 border border-indigo-200 text-[11px] font-bold text-indigo-700">
                 <ShieldCheck className="w-3.5 h-3.5 text-indigo-600" />
                 <span>CEO Executive Suite</span>
-              </div>
+              </div> */}
             </div>
           </div>
 
