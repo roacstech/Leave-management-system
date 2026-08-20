@@ -1,18 +1,12 @@
 "use client";
 
-import React, { useState } from "react";
-import { Calendar, Plus, Edit2, Trash2, X, Search } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Calendar, Plus, Edit2, Trash2, X, Search, Loader2 } from "lucide-react";
 
 export default function HolidaysPage() {
-  const [holidays, setHolidays] = useState([
-    { id: "1", name: "New Year's Day", fromDate: "2026-01-01", toDate: "2026-01-01" },
-    { id: "2", name: "Republic Day", fromDate: "2026-01-26", toDate: "2026-01-26" },
-    { id: "3", name: "Holi Festival", fromDate: "2026-03-17", toDate: "2026-03-18" },
-    { id: "4", name: "Independence Day", fromDate: "2026-08-15", toDate: "2026-08-15" },
-    { id: "5", name: "Gandhi Jayanti", fromDate: "2026-10-02", toDate: "2026-10-02" },
-    { id: "6", name: "Diwali Festival", fromDate: "2026-11-08", toDate: "2026-11-10" },
-    { id: "7", name: "Christmas Day", fromDate: "2026-12-25", toDate: "2026-12-25" },
-  ]);
+  const [holidays, setHolidays] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingHoliday, setEditingHoliday] = useState<any>(null);
@@ -23,10 +17,36 @@ export default function HolidaysPage() {
   // Form state
   const [formData, setFormData] = useState({ name: "", fromDate: "", toDate: "" });
 
+  const fetchHolidays = async () => {
+    try {
+      setIsLoading(true);
+      const res = await fetch("/api/admin/holidays");
+      const data = await res.json();
+      if (data.success) {
+        setHolidays(data.holidays);
+      }
+    } catch (error) {
+      console.error("Failed to fetch holidays", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchHolidays();
+  }, []);
+
   const formatDateString = (dateStr: string) => {
     if (!dateStr) return "";
     const date = new Date(dateStr);
     return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  };
+
+  // Helper for input type="date" values
+  const formatInputDate = (dateStr: string) => {
+    if (!dateStr) return "";
+    const date = new Date(dateStr);
+    return date.toISOString().split("T")[0];
   };
 
   const getDaysCount = (from: string, to: string) => {
@@ -43,7 +63,11 @@ export default function HolidaysPage() {
   const handleOpenModal = (holiday?: any) => {
     if (holiday) {
       setEditingHoliday(holiday);
-      setFormData({ name: holiday.name, fromDate: holiday.fromDate, toDate: holiday.toDate });
+      setFormData({ 
+        name: holiday.name, 
+        fromDate: formatInputDate(holiday.fromDate), 
+        toDate: formatInputDate(holiday.toDate) 
+      });
     } else {
       setEditingHoliday(null);
       setFormData({ name: "", fromDate: "", toDate: "" });
@@ -57,7 +81,7 @@ export default function HolidaysPage() {
     setFormData({ name: "", fromDate: "", toDate: "" });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.fromDate || !formData.toDate) return;
     
@@ -66,32 +90,62 @@ export default function HolidaysPage() {
       return;
     }
 
-    if (editingHoliday) {
-      setHolidays(holidays.map(h => 
-        h.id === editingHoliday.id 
-          ? { ...h, name: formData.name, fromDate: formData.fromDate, toDate: formData.toDate }
-          : h
-      ));
-    } else {
-      const newId = Math.random().toString(36).substring(7);
-      setHolidays([...holidays, { 
-        id: newId, 
-        name: formData.name, 
-        fromDate: formData.fromDate, 
-        toDate: formData.toDate 
-      }]);
+    try {
+      setIsSaving(true);
+      const url = editingHoliday 
+        ? `/api/admin/holidays/${editingHoliday.id}` 
+        : "/api/admin/holidays";
+      
+      const method = editingHoliday ? "PATCH" : "POST";
+
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await res.json();
+      
+      if (data.success) {
+        if (editingHoliday) {
+          setHolidays(holidays.map(h => h.id === editingHoliday.id ? data.holiday : h));
+        } else {
+          setHolidays([...holidays, data.holiday]);
+        }
+        handleCloseModal();
+      } else {
+        alert(data.error || "Failed to save holiday");
+      }
+    } catch (error) {
+      console.error("Save error:", error);
+      alert("An error occurred while saving the holiday.");
+    } finally {
+      setIsSaving(false);
     }
-    handleCloseModal();
   };
 
   const confirmDelete = (id: string) => {
     setHolidayToDelete(id);
   };
 
-  const executeDelete = () => {
-    if (holidayToDelete) {
-      setHolidays(holidays.filter(h => h.id !== holidayToDelete));
-      setHolidayToDelete(null);
+  const executeDelete = async () => {
+    if (!holidayToDelete) return;
+    
+    try {
+      const res = await fetch(`/api/admin/holidays/${holidayToDelete}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        setHolidays(holidays.filter(h => h.id !== parseInt(holidayToDelete, 10)));
+        setHolidayToDelete(null);
+      } else {
+        alert(data.error || "Failed to delete holiday");
+      }
+    } catch (error) {
+      console.error("Delete error:", error);
+      alert("An error occurred while deleting the holiday.");
     }
   };
 
@@ -193,8 +247,13 @@ export default function HolidaysPage() {
       </div>
 
       {/* HOLIDAYS TABLE UI */}
-      <div className="rounded-xl bg-white border border-slate-200 overflow-hidden shadow-xs">
-        <div className="overflow-x-auto">
+      <div className="rounded-xl bg-white border border-slate-200 overflow-hidden shadow-xs relative">
+        <div className="overflow-x-auto min-h-[200px]">
+          {isLoading && (
+            <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/50 backdrop-blur-sm">
+              <Loader2 className="w-6 h-6 text-indigo-600 animate-spin" />
+            </div>
+          )}
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50/70 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
@@ -206,7 +265,7 @@ export default function HolidaysPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-xs">
-              {filteredAndSortedHolidays.length === 0 ? (
+              {!isLoading && filteredAndSortedHolidays.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="py-10 text-center text-slate-400">
                     No holidays found matching criteria.
@@ -255,7 +314,7 @@ export default function HolidaysPage() {
 
                           {/* Delete button */}
                           <button
-                            onClick={() => confirmDelete(h.id)}
+                            onClick={() => confirmDelete(h.id.toString())}
                             title="Delete Holiday"
                             className="p-1 rounded text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
                           >
@@ -277,8 +336,13 @@ export default function HolidaysPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/30 backdrop-blur-2xs animate-fadeIn">
           <form
             onSubmit={handleSubmit}
-            className="w-full max-w-md bg-white border border-slate-200 rounded-xl p-5 shadow-lg space-y-3.5"
+            className="w-full max-w-md bg-white border border-slate-200 rounded-xl p-5 shadow-lg space-y-3.5 relative"
           >
+            {isSaving && (
+               <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/50 backdrop-blur-sm rounded-xl">
+                 <Loader2 className="w-6 h-6 text-indigo-600 animate-spin" />
+               </div>
+            )}
             <div className="flex items-center justify-between pb-2.5 border-b border-slate-100">
               <h3 className="text-sm font-bold text-slate-900">
                 {editingHoliday ? "Edit Holiday" : "Create New Holiday"}
@@ -286,7 +350,8 @@ export default function HolidaysPage() {
               <button
                 type="button"
                 onClick={handleCloseModal}
-                className="text-slate-400 hover:text-slate-700"
+                className="text-slate-400 hover:text-slate-700 disabled:opacity-50"
+                disabled={isSaving}
               >
                 <X className="w-4 h-4" />
               </button>
@@ -304,6 +369,7 @@ export default function HolidaysPage() {
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   className="w-full px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-slate-400"
+                  disabled={isSaving}
                 />
               </div>
 
@@ -318,6 +384,7 @@ export default function HolidaysPage() {
                     value={formData.fromDate}
                     onChange={(e) => setFormData({ ...formData, fromDate: e.target.value })}
                     className="w-full px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-slate-400"
+                    disabled={isSaving}
                   />
                 </div>
 
@@ -331,6 +398,7 @@ export default function HolidaysPage() {
                     value={formData.toDate}
                     onChange={(e) => setFormData({ ...formData, toDate: e.target.value })}
                     className="w-full px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-slate-400"
+                    disabled={isSaving}
                   />
                 </div>
               </div>
@@ -341,12 +409,14 @@ export default function HolidaysPage() {
                 type="button"
                 onClick={handleCloseModal}
                 className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium"
+                disabled={isSaving}
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 className="px-3.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-medium disabled:opacity-50"
+                disabled={isSaving}
               >
                 {editingHoliday ? "Save Changes" : "Create Holiday"}
               </button>
