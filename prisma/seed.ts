@@ -81,6 +81,46 @@ async function main() {
   } else {
     console.log("Employee user already exists:", existingEmployee.email);
   }
+
+    // Check if team leader exists, create if not
+  const existingTeamLeader = await prisma.user.findUnique({
+    where: { email: "tl@lms.com" },
+  });
+
+  if (!existingTeamLeader) {
+    const teamLeader = await prisma.user.create({
+      data: {
+        name: "Test Team Leader",
+        email: "tl@lms.com",
+        password: "tl123",
+        role: "TL",
+      },
+    });
+
+    console.log("Team Leader user created:", teamLeader.email);
+  } else {
+    console.log("Team Leader user already exists:", existingTeamLeader.email);
+  }
+
+  // Check if CEO exists, create if not
+  const existingCeo = await prisma.user.findUnique({
+    where: { email: "ceo@lms.com" },
+  });
+
+  if (!existingCeo) {
+    const ceo = await prisma.user.create({
+      data: {
+        name: "Executive CEO",
+        email: "ceo@lms.com",
+        password: "ceo123",
+        role: "CEO",
+      },
+    });
+
+    console.log("CEO user created:", ceo.email);
+  } else {
+    console.log("CEO user already exists:", existingCeo.email);
+  }
 }
 
 main()
