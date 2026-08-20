@@ -125,10 +125,13 @@ export async function GET() {
 
       prisma.holiday.findMany({
         where: {
-          toDate: { gte: startOfToday },
+          OR: [
+            { date: { gte: startOfToday } },
+            { toDate: { gte: startOfToday } },
+          ],
         },
         orderBy: {
-          fromDate: "asc",
+          createdAt: "asc",
         },
         take: 3,
       }),
