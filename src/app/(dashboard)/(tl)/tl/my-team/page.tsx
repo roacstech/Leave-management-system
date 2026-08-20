@@ -319,9 +319,9 @@ export default function MyTeamPage() {
       ) : members.length === 0 ? (
         <div className="p-12 text-center bg-white border border-slate-200 rounded-xl">
           <Users className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-          <p className="font-semibold text-xs text-slate-700">No team members found</p>
+          <p className="font-semibold text-xs text-slate-700">No assigned team members found</p>
           <p className="text-[11px] text-slate-400 mt-0.5">
-            Try adjusting your search criteria.
+            Employees assigned to report to you by the Administrator will appear here.
           </p>
         </div>
       ) : viewMode === "cards" ? (

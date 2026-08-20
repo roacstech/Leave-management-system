@@ -39,13 +39,11 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // 2. Fetch team members
+    // 2. Fetch assigned team members
     const teamWhere: any = {
       role: "EMPLOYEE",
+      reportingToId: tlId,
     };
-    if (tlUser.teamId) {
-      teamWhere.teamId = tlUser.teamId;
-    }
 
     const teamEmployees = await prisma.user.findMany({
       where: teamWhere,

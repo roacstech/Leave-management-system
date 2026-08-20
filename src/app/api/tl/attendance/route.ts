@@ -62,14 +62,12 @@ export async function GET(request: NextRequest) {
       999
     );
 
-    // 3. Fetch team employees
+    // 3. Fetch assigned team employees
     const teamWhere: any = {
       role: "EMPLOYEE",
+      reportingToId: tlId,
       isActive: true,
     };
-    if (tlUser.teamId) {
-      teamWhere.teamId = tlUser.teamId;
-    }
     if (search) {
       teamWhere.OR = [
         { name: { contains: search } },

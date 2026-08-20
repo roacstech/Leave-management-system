@@ -38,14 +38,11 @@ export async function GET(request: NextRequest) {
     const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
     const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
 
-    // 2. Build where clause
+    // 2. Build where clause — show only employees explicitly assigned to this TL
     const whereClause: any = {
       role: "EMPLOYEE",
+      reportingToId: tlId,
     };
-
-    if (tlUser.teamId) {
-      whereClause.teamId = tlUser.teamId;
-    }
 
     if (statusFilter === "ACTIVE") {
       whereClause.isActive = true;

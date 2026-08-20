@@ -32,16 +32,12 @@ export async function GET() {
       );
     }
 
-    // 2. Identify Team Members
-    // If TL has an assigned teamId, fetch employees in that team; otherwise fallback to employees
+    // 2. Identify Assigned Team Members
     const teamWhereClause: any = {
       role: "EMPLOYEE",
+      reportingToId: tlId,
       isActive: true,
     };
-
-    if (tlUser.teamId) {
-      teamWhereClause.teamId = tlUser.teamId;
-    }
 
     const teamMembers = await prisma.user.findMany({
       where: teamWhereClause,
