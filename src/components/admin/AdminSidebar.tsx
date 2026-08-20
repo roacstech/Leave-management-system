@@ -15,6 +15,7 @@ import {
   Building2,
   ChevronRight,
 } from "lucide-react";
+import { useSettings } from "@/contexts/SettingsContext";
 
 interface AdminSidebarProps {
   pendingCount?: number;
@@ -28,6 +29,7 @@ export default function AdminSidebar({
   onCloseMobile,
 }: AdminSidebarProps) {
   const pathname = usePathname();
+  const { settings } = useSettings();
 
   const navItems = [
     {
@@ -110,8 +112,8 @@ export default function AdminSidebar({
                   Manager
                 </span>
               </div>
-              <p className="text-[11px] text-slate-400 font-normal">
-                Roacs Corporation
+              <p className="text-[11px] text-slate-400 font-normal truncate max-w-[130px]" title={settings.companyName}>
+                {settings.companyName || "Roacs Corporation"}
               </p>
             </div>
           </div>
