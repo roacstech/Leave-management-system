@@ -13,6 +13,7 @@ import {
   Building2,
   User,
   CalendarCheck2,
+  Settings,
 } from "lucide-react";
 import { useSettings } from "@/contexts/SettingsContext";
 
@@ -58,6 +59,11 @@ export default function EmployeeSidebar({
       name: "My Attendance",
       href: "/employee/attendance",
       icon: Clock3,
+    },
+    {
+      name: "Settings",
+      href: "/employee/settings",
+      icon: Settings,
     },
   ];
 
