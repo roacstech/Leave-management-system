@@ -13,6 +13,7 @@ import {
   Bell,
   Building2,
   Users2,
+  Settings,
 } from "lucide-react";
 import { useSettings } from "@/contexts/SettingsContext";
 
@@ -73,6 +74,12 @@ export default function TLSidebar({
       name: "Notifications",
       href: "/tl/notifications",
       icon: Bell,
+      badge: null,
+    },
+    {
+      name: "Settings",
+      href: "/tl/settings",
+      icon: Settings,
       badge: null,
     },
   ];
