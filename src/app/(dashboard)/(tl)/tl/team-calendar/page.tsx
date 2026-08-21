@@ -25,7 +25,7 @@ interface LeaveEvent {
   startDate: string;
   endDate: string;
   reason: string | null;
-  status: "APPROVED" | "PENDING";
+  status: "APPROVED" | "PENDING_TL" | "PENDING_ADMIN" | "REJECTED" | "CANCELLED";
   user: {
     id: number;
     name: string;

@@ -65,7 +65,7 @@ interface LeaveRequestItem {
   startDate: string;
   endDate: string;
   reason: string | null;
-  status: "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED" | "ESCALATED";
+  status: "PENDING_TL" | "PENDING_ADMIN" | "APPROVED" | "REJECTED" | "CANCELLED";
   rejectionReason: string | null;
   createdAt: string;
   user: {
@@ -92,7 +92,7 @@ export default function AdminDashboardPage() {
   const [toastMessage, setToastMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   // Filters & Tabs
-  const [leaveTab, setLeaveTab] = useState<"ALL" | "PENDING" | "APPROVED" | "REJECTED">("PENDING");
+  const [leaveTab, setLeaveTab] = useState<"ALL" | "PENDING_ADMIN" | "APPROVED" | "REJECTED">("PENDING_ADMIN");
   const [attendanceTab, setAttendanceTab] = useState<"ALL" | "PRESENT" | "LATE" | "ABSENT">("ALL");
 
   // Rejection modal state
@@ -412,17 +412,21 @@ export default function AdminDashboardPage() {
 
             {/* Filter Tabs */}
             <div className="flex items-center gap-1 p-0.5 bg-slate-100 rounded-lg text-xs">
-              {(["PENDING", "APPROVED", "REJECTED", "ALL"] as const).map((tab) => (
+              {(["PENDING_ADMIN", "APPROVED", "REJECTED", "ALL"] as const).map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setLeaveTab(tab)}
-                  className={`px-2.5 py-1 rounded-md text-xs transition-all ${
+                  className={`px-2.5 py-1 rounded-md text-xs transition-all cursor-pointer ${
                     leaveTab === tab
                       ? "bg-white text-slate-900 font-semibold shadow-2xs"
                       : "text-slate-500 hover:text-slate-800"
                   }`}
                 >
-                  {tab === "ALL" ? "All" : tab.charAt(0) + tab.slice(1).toLowerCase()}
+                  {tab === "ALL"
+                    ? "All"
+                    : tab === "PENDING_ADMIN"
+                    ? "Pending Admin"
+                    : tab.charAt(0) + tab.slice(1).toLowerCase()}
                 </button>
               ))}
             </div>
@@ -477,7 +481,7 @@ export default function AdminDashboardPage() {
 
                       {/* Status / Direct Action Buttons */}
                       <div className="flex items-center gap-1.5 self-end sm:self-center shrink-0">
-                        {req.status === "PENDING" ? (
+                        {req.status === "PENDING_ADMIN" ? (
                           <>
                             <button
                               onClick={() => handleUpdateLeaveStatus(req.id, "APPROVED")}

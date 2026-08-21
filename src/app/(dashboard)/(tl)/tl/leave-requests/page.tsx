@@ -40,7 +40,7 @@ interface LeaveRequestItem {
   startDate: string;
   endDate: string;
   reason: string | null;
-  status: "PENDING" | "APPROVED" | "REJECTED" | "ESCALATED" | "CANCELLED";
+  status: "PENDING_TL" | "PENDING_ADMIN" | "APPROVED" | "REJECTED" | "CANCELLED";
   rejectionReason: string | null;
   createdAt: string;
   user: {
@@ -359,14 +359,14 @@ export default function TLLeaveRequestsPage() {
           <div className="flex flex-wrap items-center gap-2">
             {/* Status Filter Tabs */}
             <div className="flex items-center gap-0.5 p-0.5 bg-slate-100 rounded-lg text-xs">
-              {(["ALL", "PENDING", "APPROVED", "REJECTED", "ESCALATED"] as const).map((st) => (
+              {(["ALL", "PENDING_TL", "APPROVED", "REJECTED", "PENDING_ADMIN"] as const).map((st) => (
                 <button
                   key={st}
                   onClick={() => {
                     setStatusFilter(st);
                     setPage(1);
                   }}
-                  className={`px-2.5 py-1 rounded-md transition-all ${
+                  className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
                     statusFilter === st
                       ? "bg-white text-slate-900 font-semibold shadow-2xs"
                       : "text-slate-500 hover:text-slate-800"
@@ -374,8 +374,8 @@ export default function TLLeaveRequestsPage() {
                 >
                   {st === "ALL"
                     ? `All (${summary.total})`
-                    : st === "PENDING"
-                    ? `Pending (${summary.pending})`
+                    : st === "PENDING_TL"
+                    ? `Pending TL (${summary.pending})`
                     : st === "APPROVED"
                     ? `Approved (${summary.approved})`
                     : st === "REJECTED"
@@ -435,7 +435,8 @@ export default function TLLeaveRequestsPage() {
               <tbody className="divide-y divide-slate-100 text-xs">
                 {requests.map((req) => {
                   const days = calculateDays(req.startDate, req.endDate);
-                  const isPending = req.status === "PENDING";
+                  const isPending = req.status === "PENDING_TL";
+                  const isEscalated = req.status === "PENDING_ADMIN";
 
                   return (
                     <tr key={req.id} className="hover:bg-slate-50/50 transition-colors">
@@ -488,19 +489,29 @@ export default function TLLeaveRequestsPage() {
                       {/* Status */}
                       <td className="py-3 px-3">
                         <span
-                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold ${
+                          className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
                             req.status === "APPROVED"
                               ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                              : req.status === "PENDING"
+                              : req.status === "PENDING_TL"
                               ? "bg-amber-50 text-amber-700 border border-amber-200"
                               : req.status === "REJECTED"
                               ? "bg-rose-50 text-rose-700 border border-rose-200"
-                              : req.status === "ESCALATED"
-                              ? "bg-indigo-50 text-indigo-700 border border-indigo-200"
+                              : req.status === "PENDING_ADMIN"
+                              ? "bg-purple-50 text-purple-700 border border-purple-200"
                               : "bg-slate-100 text-slate-600 border border-slate-200"
                           }`}
                         >
-                          <span>{req.status}</span>
+                          <span>
+                            {req.status === "PENDING_TL"
+                              ? "Pending TL Approval"
+                              : req.status === "PENDING_ADMIN"
+                              ? "Escalated to Admin"
+                              : req.status === "APPROVED"
+                              ? "Approved"
+                              : req.status === "REJECTED"
+                              ? "Rejected"
+                              : "Cancelled"}
+                          </span>
                         </span>
                       </td>
 
@@ -854,7 +865,7 @@ export default function TLLeaveRequestsPage() {
               {selectedRequest.rejectionReason && (
                 <div>
                   <span className="text-rose-600 font-semibold block mb-1">
-                    {selectedRequest.status === "ESCALATED" ? "Escalation Note:" : "Rejection Reason:"}
+                    {selectedRequest.status === "PENDING_ADMIN" ? "Escalation Note:" : "Rejection Reason:"}
                   </span>
                   <p className="p-3 bg-rose-50/60 rounded-xl border border-rose-200 text-rose-800">
                     {selectedRequest.rejectionReason}

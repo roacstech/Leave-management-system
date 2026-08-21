@@ -1,28 +1,42 @@
 "use client";
 
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
-  CalendarCheck2,
+  Calendar,
   Check,
   X,
-  Calendar,
+  Clock,
+  User,
+  Users,
+  Search,
+  Filter,
   AlertCircle,
+  TrendingUp,
+  FileCheck,
+  FileX,
+  ExternalLink,
+  ChevronRight,
+  ShieldCheck,
   CheckCircle2,
   XCircle,
-  Search,
   Loader2,
+  ArrowUpRight,
 } from "lucide-react";
 import { useSettings } from "@/contexts/SettingsContext";
 
 interface LeaveRequestItem {
   id: number;
-  userId: number;
-  leaveTypeId: number;
   startDate: string;
   endDate: string;
   reason: string | null;
-  status: "PENDING" | "APPROVED" | "REJECTED" | "ESCALATED" | "CANCELLED";
+  status: "PENDING_TL" | "PENDING_ADMIN" | "APPROVED" | "REJECTED" | "CANCELLED";
   rejectionReason: string | null;
+  escalatedById: number | null;
+  escalatedAt: string | null;
+  escalationReason: string | null;
+  escalatedBy?: { id: number; name: string; email: string } | null;
+  approver?: { id: number; name: string; email: string } | null;
+  approverRole?: string | null;
   createdAt: string;
   user: {
     id: number;
@@ -32,6 +46,7 @@ interface LeaveRequestItem {
     team?: {
       id: number;
       name: string;
+      tl?: { id: number; name: string; email: string } | null;
     } | null;
     reportingTo?: {
       id: number;
@@ -122,187 +137,197 @@ export default function LeavesAdminPage() {
     loadLeaves();
   }, [loadLeaves]);
 
-  const openActionModal = (type: "APPROVE" | "REJECT", req: LeaveRequestItem) => {
-    setModalState({ isOpen: true, type, request: req });
-    setActionReason("");
-  };
-
-  const closeModal = () => {
-    setModalState({ isOpen: false, type: null, request: null });
-    setActionReason("");
-  };
-
-  const confirmAction = async () => {
+  const handleAction = async () => {
     if (!modalState.request || !modalState.type) return;
 
-    const id = modalState.request.id;
-    const isApprove = modalState.type === "APPROVE";
-    const status = isApprove ? "APPROVED" : "REJECTED";
-
-    if (!isApprove && !actionReason.trim()) {
-      showToast("Please provide a reason for rejecting the leave request.", "error");
+    if (modalState.type === "REJECT" && !actionReason.trim()) {
+      showToast("Please provide a rejection reason", "error");
       return;
     }
 
     try {
       setSubmitting(true);
-      const body: any = { id, status };
-      if (!isApprove) {
-        body.rejectionReason = actionReason.trim();
-      }
-
       const res = await fetch("/api/admin/leaves", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
+        body: JSON.stringify({
+          id: modalState.request.id,
+          status: modalState.type === "APPROVE" ? "APPROVED" : "REJECTED",
+          rejectionReason: modalState.type === "REJECT" ? actionReason : undefined,
+        }),
       });
-      const data = await res.json();
 
+      const data = await res.json();
       if (data.success) {
-        showToast(data.message || `Leave request ${status.toLowerCase()} successfully.`);
+        showToast(
+          `Leave request #${modalState.request.id} ${
+            modalState.type === "APPROVE" ? "approved" : "rejected"
+          } successfully!`
+        );
+        closeActionModal();
         loadLeaves();
-        closeModal();
       } else {
-        showToast(data.error || "Failed to update leave request", "error");
+        showToast(data.error || "Failed to process leave request", "error");
       }
     } catch {
-      showToast("Network error executing action", "error");
+      showToast("Network error while submitting action", "error");
     } finally {
       setSubmitting(false);
     }
   };
 
-  const getDaysCount = (startStr: string, endStr: string) => {
-    const s = new Date(startStr);
-    const e = new Date(endStr);
-    const diff = Math.round((e.getTime() - s.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-    return Math.max(1, diff);
+  const openActionModal = (type: "APPROVE" | "REJECT", request: LeaveRequestItem) => {
+    setModalState({ isOpen: true, type, request });
+    setActionReason("");
   };
 
-  const displayedLeaves = search.trim()
-    ? leaves.filter(
-        (l) =>
-          l.user.name.toLowerCase().includes(search.toLowerCase()) ||
-          l.user.email.toLowerCase().includes(search.toLowerCase()) ||
-          l.leaveType.name.toLowerCase().includes(search.toLowerCase()) ||
-          (l.reason && l.reason.toLowerCase().includes(search.toLowerCase()))
-      )
-    : leaves;
+  const closeActionModal = () => {
+    setModalState({ isOpen: false, type: null, request: null });
+    setActionReason("");
+  };
 
-  const STATUS_TABS = [
-    { key: "ALL", label: "All Requests", count: summary.all },
-    { key: "PENDING", label: "Pending", count: summary.pending },
-    { key: "ESCALATED", label: "Escalated by TL", count: summary.escalated },
-    { key: "APPROVED", label: "Approved", count: summary.approved },
-    { key: "REJECTED", label: "Rejected", count: summary.rejected },
-  ];
+  const getDaysCount = (start: string, end: string) => {
+    const s = new Date(start);
+    const e = new Date(end);
+    const diff = e.getTime() - s.getTime();
+    return Math.max(1, Math.round(diff / (1000 * 60 * 60 * 24)) + 1);
+  };
+
+  const displayedLeaves = leaves.filter((req) => {
+    if (!search) return true;
+    const term = search.toLowerCase();
+    return (
+      req.user.name.toLowerCase().includes(term) ||
+      req.user.email.toLowerCase().includes(term) ||
+      req.leaveType.name.toLowerCase().includes(term) ||
+      (req.reason && req.reason.toLowerCase().includes(term)) ||
+      (req.escalationReason && req.escalationReason.toLowerCase().includes(term))
+    );
+  });
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-12">
-      {/* Toast Notification */}
+    <div className="space-y-6">
+      {/* Toast */}
       {toastMessage && (
         <div
-          className={`fixed bottom-5 right-5 z-50 flex items-center gap-2.5 px-4 py-2.5 rounded-xl shadow-lg border text-xs font-medium animate-in fade-in slide-in-from-bottom-5 ${
+          className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-xl border shadow-lg text-xs font-semibold flex items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-200 ${
             toastMessage.type === "success"
-              ? "bg-slate-900 text-white border-slate-800"
-              : "bg-rose-900 text-white border-rose-800"
+              ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+              : "bg-rose-50 text-rose-800 border-rose-200"
           }`}
         >
           {toastMessage.type === "success" ? (
-            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
           ) : (
-            <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+            <XCircle className="w-4 h-4 text-rose-600" />
           )}
           <span>{toastMessage.text}</span>
         </div>
       )}
 
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-slate-100 border border-slate-200 text-slate-700 flex items-center justify-center shrink-0">
-            <CalendarCheck2 className="w-5 h-5" />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-              Leave Requests Master
-            </h1>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Review, approve, or reject employee leave applications and TL-escalated requests.
-            </p>
-          </div>
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-bold text-slate-900 tracking-tight">Admin Leave Management</h1>
+          <p className="text-xs text-slate-500 mt-1">
+            Review and process escalated employee leave applications and direct Team Lead requests.
+          </p>
         </div>
-
-        {summary.escalated > 0 && (
-          <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 text-xs font-medium shrink-0">
-            <AlertCircle className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-            <span>
-              <strong className="text-slate-900">{summary.escalated}</strong> Escalated request{summary.escalated > 1 ? "s" : ""} waiting for review
-            </span>
-          </div>
-        )}
       </div>
 
-      {/* Main Table Card */}
-      <div className="rounded-2xl bg-white border border-slate-200/80 overflow-hidden shadow-xs">
-        {/* Toolbar with Tabs and Search */}
-        <div className="p-4 border-b border-slate-100 flex flex-col md:flex-row items-center justify-between gap-3 bg-slate-50/50">
-          {/* Search bar */}
-          <div className="relative w-full md:w-72">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              placeholder="Search by employee, leave type..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-4 py-1.5 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-slate-400"
-            />
+      {/* Metric Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-2xs">
+          <div className="flex items-center justify-between text-slate-500 text-xs font-medium">
+            <span>Pending Review</span>
+            <Clock className="w-4 h-4 text-amber-500" />
           </div>
-
-          {/* Status Tabs */}
-          <div className="flex items-center gap-1 p-1 bg-white border border-slate-200 rounded-xl w-full md:w-auto overflow-x-auto">
-            {STATUS_TABS.map((tab) => {
-              const isSelected = filter === tab.key;
-              return (
-                <button
-                  key={tab.key}
-                  type="button"
-                  onClick={() => {
-                    setFilter(tab.key);
-                    setPage(1);
-                  }}
-                  className={`flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-lg transition-all whitespace-nowrap cursor-pointer ${
-                    isSelected
-                      ? "bg-slate-900 text-white shadow-2xs font-semibold"
-                      : "text-slate-500 hover:text-slate-900"
-                  }`}
-                >
-                  <span>{tab.label}</span>
-                  <span
-                    className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
-                      isSelected
-                        ? "bg-white/20 text-white"
-                        : "bg-slate-100 text-slate-600"
-                    }`}
-                  >
-                    {tab.count}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+          <div className="mt-2 text-2xl font-bold text-slate-900">{summary.pending}</div>
+          <div className="text-[11px] text-slate-400 mt-0.5">Awaiting Admin action</div>
         </div>
 
-        {/* Leave Requests Table */}
+        <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-2xs">
+          <div className="flex items-center justify-between text-slate-500 text-xs font-medium">
+            <span>Escalated by TL</span>
+            <ArrowUpRight className="w-4 h-4 text-purple-500" />
+          </div>
+          <div className="mt-2 text-2xl font-bold text-purple-700">{summary.escalated}</div>
+          <div className="text-[11px] text-slate-400 mt-0.5">Forwarded by Team Leads</div>
+        </div>
+
+        <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-2xs">
+          <div className="flex items-center justify-between text-slate-500 text-xs font-medium">
+            <span>Approved</span>
+            <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+          </div>
+          <div className="mt-2 text-2xl font-bold text-emerald-700">{summary.approved}</div>
+          <div className="text-[11px] text-slate-400 mt-0.5">Total approved requests</div>
+        </div>
+
+        <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-2xs">
+          <div className="flex items-center justify-between text-slate-500 text-xs font-medium">
+            <span>Rejected</span>
+            <XCircle className="w-4 h-4 text-rose-500" />
+          </div>
+          <div className="mt-2 text-2xl font-bold text-rose-700">{summary.rejected}</div>
+          <div className="text-[11px] text-slate-400 mt-0.5">Declined requests</div>
+        </div>
+      </div>
+
+      {/* Filter and Search Bar */}
+      <div className="p-4 rounded-2xl bg-white border border-slate-200/80 shadow-xs space-y-3">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+          {/* Status Tabs */}
+          <div className="flex items-center p-0.5 bg-slate-100/80 rounded-xl gap-1 w-full sm:w-auto overflow-x-auto">
+            {[
+              { id: "ALL", label: `All (${summary.all})` },
+              { id: "PENDING_ADMIN", label: `Pending Review (${summary.pending})` },
+              { id: "ESCALATED", label: `Escalated (${summary.escalated})` },
+              { id: "APPROVED", label: `Approved (${summary.approved})` },
+              { id: "REJECTED", label: `Rejected (${summary.rejected})` },
+            ].map((t) => (
+              <button
+                key={t.id}
+                onClick={() => {
+                  setFilter(t.id);
+                  setPage(1);
+                }}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all cursor-pointer ${
+                  filter === t.id
+                    ? "bg-white text-slate-900 shadow-2xs font-bold"
+                    : "text-slate-500 hover:text-slate-900"
+                }`}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Search Box */}
+          <div className="relative w-full sm:w-64">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search employee, reason..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-slate-800 placeholder-slate-400"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Table Card */}
+      <div className="rounded-2xl bg-white border border-slate-200/80 shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200 text-[11px] uppercase tracking-wider text-slate-500 font-semibold">
-                <th className="px-5 py-3.5">Employee & Hierarchy</th>
+                <th className="px-5 py-3.5">Requester & Team</th>
                 <th className="px-5 py-3.5">Role</th>
                 <th className="px-5 py-3.5">Leave Type</th>
                 <th className="px-5 py-3.5">Duration</th>
-                <th className="px-5 py-3.5">Reason / TL Notes</th>
+                <th className="px-5 py-3.5">Reason & Escalation</th>
                 <th className="px-5 py-3.5 text-center">Status / Actions</th>
               </tr>
             </thead>
@@ -318,12 +343,10 @@ export default function LeavesAdminPage() {
                 <tr>
                   <td colSpan={6} className="p-12 text-center text-slate-400">
                     <Calendar className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                    <p className="font-medium text-slate-700 text-xs">
-                      No {filter !== "ALL" ? filter.toLowerCase() : ""} leave requests found
-                    </p>
+                    <p className="font-semibold text-slate-700 text-xs">No leave requests found</p>
                     <p className="text-[11px] text-slate-400 mt-0.5">
                       {filter === "ESCALATED"
-                        ? "No leave applications have been escalated by Team Leaders."
+                        ? "No leave applications are currently escalated to Administration."
                         : "No records matching current filter."}
                     </p>
                   </td>
@@ -331,15 +354,13 @@ export default function LeavesAdminPage() {
               ) : (
                 displayedLeaves.map((req) => {
                   const days = getDaysCount(req.startDate, req.endDate);
-                  const isEscalated = req.status === "ESCALATED";
-                  const isPending = req.status === "PENDING";
+                  const isEscalated = Boolean(req.escalatedById);
+                  const isPendingAdmin = req.status === "PENDING_ADMIN";
+                  const assignedTL = req.user.team?.tl?.name || req.user.reportingTo?.name;
 
                   return (
-                    <tr
-                      key={req.id}
-                      className="hover:bg-slate-50/70 transition-colors"
-                    >
-                      {/* Employee Column */}
+                    <tr key={req.id} className="hover:bg-slate-50/70 transition-colors">
+                      {/* Requester & Team */}
                       <td className="px-5 py-3.5">
                         <div className="flex items-center gap-2.5">
                           <div className="w-8 h-8 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700 font-bold text-xs shrink-0">
@@ -348,19 +369,26 @@ export default function LeavesAdminPage() {
                           <div>
                             <div className="font-semibold text-slate-900">{req.user.name}</div>
                             <div className="text-[11px] text-slate-400">{req.user.email}</div>
-                            {req.user.reportingTo && (
-                              <div className="text-[10px] text-slate-500 font-normal mt-0.5">
-                                TL: {req.user.reportingTo.name}
+                            {req.user.team && (
+                              <div className="text-[10px] text-slate-500 font-medium mt-0.5">
+                                Team: {req.user.team.name}
+                                {assignedTL && ` (TL: ${assignedTL})`}
                               </div>
                             )}
                           </div>
                         </div>
                       </td>
 
-                      {/* Role Column */}
+                      {/* Role */}
                       <td className="px-5 py-3.5">
-                        <span className="text-[11px] px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200 font-medium whitespace-nowrap">
-                          {req.user.role}
+                        <span
+                          className={`text-[11px] px-2 py-0.5 rounded-md font-semibold whitespace-nowrap ${
+                            req.user.role === "TL"
+                              ? "bg-purple-50 text-purple-700 border border-purple-200"
+                              : "bg-slate-100 text-slate-700 border border-slate-200"
+                          }`}
+                        >
+                          {req.user.role === "TL" ? "Team Lead" : "Employee"}
                         </span>
                       </td>
 
@@ -376,31 +404,38 @@ export default function LeavesAdminPage() {
                         <div className="text-slate-800 font-medium whitespace-nowrap">
                           {formatDate(new Date(req.startDate))} - {formatDate(new Date(req.endDate))}
                         </div>
-                        <div className="text-[11px] text-slate-400 mt-0.5">
+                        <div className="text-[11px] text-slate-400 mt-0.5 font-medium">
                           {days} day{days > 1 ? "s" : ""}
                         </div>
                       </td>
 
-                      {/* Reason / Notes */}
-                      <td className="px-5 py-3.5 max-w-[240px]">
+                      {/* Reason & Escalation Details */}
+                      <td className="px-5 py-3.5 max-w-[280px]">
                         {req.reason && (
-                          <p className="text-slate-600 text-xs truncate" title={req.reason}>
-                            &quot;{req.reason}&quot;
+                          <p className="text-slate-600 text-xs leading-relaxed" title={req.reason}>
+                            <span className="font-semibold text-slate-700">Reason:</span> &quot;{req.reason}&quot;
                           </p>
                         )}
-                        {/* If Escalated, show TL Escalation Note */}
-                        {isEscalated && req.rejectionReason && (
-                          <div className="mt-1 flex items-start gap-1.5 p-1.5 rounded-lg bg-slate-50 border border-slate-200 text-[11px] text-slate-700">
-                            <AlertCircle className="w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5" />
-                            <span className="leading-tight">
-                              <strong className="text-slate-900">TL Note:</strong> {req.rejectionReason}
-                            </span>
+
+                        {/* If Escalated, show Escalation Note & Escalator */}
+                        {isEscalated && (
+                          <div className="mt-1.5 p-2 rounded-xl bg-purple-50/70 border border-purple-200 text-[11px] text-purple-950 space-y-0.5">
+                            <div className="flex items-center gap-1 font-bold text-purple-800">
+                              <ArrowUpRight className="w-3.5 h-3.5 text-purple-600" />
+                              <span>Escalated by: {req.escalatedBy?.name || "Team Lead"}</span>
+                            </div>
+                            {req.escalationReason && (
+                              <p className="text-purple-900 text-xs">
+                                <span className="font-semibold">Note:</span> {req.escalationReason}
+                              </p>
+                            )}
                           </div>
                         )}
+
                         {/* If Rejected, show rejection reason */}
                         {req.status === "REJECTED" && req.rejectionReason && (
-                          <p className="text-[11px] text-rose-600 mt-0.5 truncate" title={req.rejectionReason}>
-                            Reason: {req.rejectionReason}
+                          <p className="text-[11px] text-rose-600 font-medium mt-1 truncate" title={req.rejectionReason}>
+                            Rejection Note: {req.rejectionReason}
                           </p>
                         )}
                       </td>
@@ -408,55 +443,36 @@ export default function LeavesAdminPage() {
                       {/* Actions Column */}
                       <td className="px-5 py-3.5 text-center">
                         <div className="flex flex-col items-center justify-center gap-1.5">
-                          {isEscalated ? (
-                            /* ESCALATED: Light subtle badge + soft Approve/Reject buttons */
+                          {isPendingAdmin ? (
                             <div className="flex flex-col items-center gap-1.5">
-                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-amber-50 text-amber-700 border border-amber-200">
-                                <AlertCircle className="w-3 h-3 text-amber-500" />
-                                <span>Escalated by TL</span>
-                              </span>
-
+                              {isEscalated && (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200">
+                                  <AlertCircle className="w-3 h-3 text-purple-500" />
+                                  <span>Escalated</span>
+                                </span>
+                              )}
                               <div className="flex items-center gap-1.5">
                                 <button
                                   type="button"
                                   onClick={() => openActionModal("APPROVE", req)}
-                                  className="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 text-[11px] font-semibold flex items-center gap-1 transition-colors cursor-pointer"
-                                  title="Approve Escalated Leave"
+                                  className="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                                  title="Approve Leave"
                                 >
-                                  <Check className="w-3 h-3" /> Approve
+                                  <Check className="w-3.5 h-3.5" /> Approve
                                 </button>
                                 <button
                                   type="button"
                                   onClick={() => openActionModal("REJECT", req)}
-                                  className="px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-[11px] font-semibold flex items-center gap-1 transition-colors cursor-pointer"
-                                  title="Reject Escalated Leave"
+                                  className="px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                                  title="Reject Leave"
                                 >
-                                  <X className="w-3 h-3" /> Reject
+                                  <X className="w-3.5 h-3.5" /> Reject
                                 </button>
                               </div>
                             </div>
-                          ) : isPending ? (
-                            /* PENDING: Soft Approve/Reject Buttons */
-                            <div className="flex items-center justify-center gap-1.5">
-                              <button
-                                type="button"
-                                onClick={() => openActionModal("APPROVE", req)}
-                                className="px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer"
-                              >
-                                <Check className="w-3.5 h-3.5" /> Approve
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => openActionModal("REJECT", req)}
-                                className="px-3 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer"
-                              >
-                                <X className="w-3.5 h-3.5" /> Reject
-                              </button>
-                            </div>
                           ) : (
-                            /* FINAL STATUS: Soft Approved / Rejected Badge */
                             <span
-                              className={`px-2.5 py-0.5 text-[11px] font-medium rounded-full whitespace-nowrap ${
+                              className={`px-2.5 py-0.5 text-[11px] font-bold rounded-full whitespace-nowrap ${
                                 req.status === "APPROVED"
                                   ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
                                   : req.status === "REJECTED"
@@ -488,7 +504,7 @@ export default function LeavesAdminPage() {
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="px-3 py-1.5 text-xs font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="px-3 py-1.5 text-xs font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
             >
               Previous
             </button>
@@ -497,9 +513,9 @@ export default function LeavesAdminPage() {
                 <button
                   key={p}
                   onClick={() => setPage(p)}
-                  className={`w-7 h-7 flex items-center justify-center rounded-lg text-xs font-medium transition-colors ${
+                  className={`w-7 h-7 flex items-center justify-center rounded-lg text-xs font-medium transition-colors cursor-pointer ${
                     page === p
-                      ? "bg-slate-900 text-white font-semibold"
+                      ? "bg-blue-600 text-white font-bold"
                       : "text-slate-600 hover:bg-slate-100"
                   }`}
                 >
@@ -510,7 +526,7 @@ export default function LeavesAdminPage() {
             <button
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page === totalPages || totalPages === 0}
-              className="px-3 py-1.5 text-xs font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="px-3 py-1.5 text-xs font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
             >
               Next
             </button>
@@ -518,128 +534,95 @@ export default function LeavesAdminPage() {
         </div>
       </div>
 
-      {/* Review & Decision Modal */}
+      {/* Action Modal (Approve / Reject) */}
       {modalState.isOpen && modalState.request && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-2xs animate-in fade-in">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl space-y-4 border border-slate-200">
-            {/* Modal Header */}
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                {modalState.type === "APPROVE" ? (
-                  <>
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                    <span>
-                      {modalState.request.status === "ESCALATED"
-                        ? "Approve Escalated Leave Request"
-                        : "Approve Leave Request"}
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <XCircle className="w-4 h-4 text-rose-600" />
-                    <span>
-                      {modalState.request.status === "ESCALATED"
-                        ? "Reject Escalated Leave Request"
-                        : "Reject Leave Request"}
-                    </span>
-                  </>
-                )}
-              </h2>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4 animate-in fade-in duration-150">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-md w-full p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-bold text-slate-900">
+                {modalState.type === "APPROVE" ? "Approve Leave Request" : "Reject Leave Request"}
+              </h3>
               <button
-                onClick={closeModal}
-                className="text-slate-400 hover:text-slate-700 p-1"
+                onClick={closeActionModal}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
               >
-                <X className="w-4 h-4" />
+                <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Request Summary Card */}
-            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 text-xs space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-slate-500">Employee:</span>
+            <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200/80 space-y-2 text-xs">
+              <div className="flex justify-between">
+                <span className="text-slate-500 font-medium">Employee:</span>
                 <span className="font-semibold text-slate-900">{modalState.request.user.name}</span>
               </div>
-              {modalState.request.user.reportingTo && (
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-500">Reporting TL:</span>
-                  <span className="font-medium text-slate-700">
-                    {modalState.request.user.reportingTo.name}
-                  </span>
-                </div>
-              )}
-              <div className="flex items-center justify-between">
-                <span className="text-slate-500">Leave Type:</span>
-                <span className="font-medium text-slate-900">
-                  {modalState.request.leaveType.name}
-                </span>
+              <div className="flex justify-between">
+                <span className="text-slate-500 font-medium">Role:</span>
+                <span className="font-semibold text-slate-900">{modalState.request.user.role}</span>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-slate-500">Duration:</span>
-                <span className="font-medium text-slate-900">
+              <div className="flex justify-between">
+                <span className="text-slate-500 font-medium">Leave Type:</span>
+                <span className="font-semibold text-slate-900">{modalState.request.leaveType.name}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500 font-medium">Duration:</span>
+                <span className="font-semibold text-slate-900">
                   {formatDate(new Date(modalState.request.startDate))} -{" "}
                   {formatDate(new Date(modalState.request.endDate))} (
                   {getDaysCount(modalState.request.startDate, modalState.request.endDate)} days)
                 </span>
               </div>
-              {modalState.request.reason && (
-                <div className="pt-1.5 border-t border-slate-200">
-                  <span className="text-slate-500 block mb-0.5">Employee Reason:</span>
-                  <span className="text-slate-700 italic">&quot;{modalState.request.reason}&quot;</span>
-                </div>
-              )}
-
-              {/* If Escalated, show TL note */}
-              {modalState.request.status === "ESCALATED" && modalState.request.rejectionReason && (
-                <div className="pt-1.5 border-t border-slate-200 bg-white p-2 rounded-lg text-slate-700 border">
-                  <span className="font-semibold text-slate-900 block mb-0.5 flex items-center gap-1">
-                    <AlertCircle className="w-3.5 h-3.5 text-amber-500" /> TL Escalation Note:
+              {modalState.request.escalatedById && (
+                <div className="flex justify-between">
+                  <span className="text-purple-700 font-bold">Escalated By:</span>
+                  <span className="font-bold text-purple-900">
+                    {modalState.request.escalatedBy?.name || "Team Lead"}
                   </span>
-                  <span>{modalState.request.rejectionReason}</span>
                 </div>
               )}
             </div>
 
-            {/* Input for Rejection Reason */}
             {modalState.type === "REJECT" && (
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Rejection Reason / Admin Note <span className="text-rose-500">*</span>
+              <div className="space-y-1.5">
+                <label className="block text-xs font-semibold text-slate-700">
+                  Rejection Reason <span className="text-rose-500">*</span>
                 </label>
                 <textarea
-                  className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs focus:border-slate-400 focus:outline-none transition-all"
-                  rows={2.5}
                   value={actionReason}
                   onChange={(e) => setActionReason(e.target.value)}
-                  placeholder="State the reason for rejecting this leave request..."
+                  placeholder="Explain why this request is being rejected..."
+                  rows={3}
+                  className="w-full p-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500/20 text-slate-900 placeholder-slate-400"
                 />
               </div>
             )}
 
-            {/* Action Buttons */}
-            <div className="flex justify-end gap-2.5 pt-2 border-t border-slate-100">
+            <div className="flex items-center justify-end gap-2 pt-2">
               <button
                 type="button"
-                onClick={closeModal}
-                className="px-4 py-2 text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors cursor-pointer"
+                onClick={closeActionModal}
+                disabled={submitting}
+                className="px-4 py-2 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="button"
-                onClick={confirmAction}
-                disabled={submitting || (modalState.type === "REJECT" && !actionReason.trim())}
-                className={`flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer ${
+                onClick={handleAction}
+                disabled={submitting}
+                className={`px-4 py-2 text-xs font-bold text-white rounded-xl shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer ${
                   modalState.type === "APPROVE"
-                    ? "bg-slate-900 hover:bg-slate-800 text-white"
-                    : "bg-rose-600 hover:bg-rose-700 text-white"
+                    ? "bg-emerald-600 hover:bg-emerald-700"
+                    : "bg-rose-600 hover:bg-rose-700"
                 }`}
               >
-                {submitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                <span>
-                  {modalState.type === "APPROVE"
-                    ? "Confirm & Approve Leave"
-                    : "Confirm Rejection"}
-                </span>
+                {submitting ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : modalState.type === "APPROVE" ? (
+                  <Check className="w-3.5 h-3.5" />
+                ) : (
+                  <X className="w-3.5 h-3.5" />
+                )}
+                <span>{modalState.type === "APPROVE" ? "Confirm Approval" : "Confirm Rejection"}</span>
               </button>
             </div>
           </div>

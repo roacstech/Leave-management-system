@@ -97,7 +97,7 @@ export async function GET(request: NextRequest) {
     });
 
     const pendingExecutiveCount = formattedLeaves.filter(
-      (l) => l.isExecutiveScope && l.status === "PENDING"
+      (l) => l.isExecutiveScope && (l.status === "PENDING_ADMIN" || l.status === "PENDING_TL")
     ).length;
 
     return NextResponse.json({

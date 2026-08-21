@@ -109,7 +109,7 @@ export async function POST() {
         {
           user: employees[0],
           type: leaveTypes["AL"],
-          status: "PENDING" as const,
+          status: "PENDING_TL" as const,
           daysAhead: 3,
           duration: 2,
           reason: "Family gathering and cousin's wedding ceremony.",
@@ -117,7 +117,7 @@ export async function POST() {
         {
           user: employees[1],
           type: leaveTypes["SL"],
-          status: "PENDING" as const,
+          status: "PENDING_TL" as const,
           daysAhead: 1,
           duration: 1,
           reason: "Medical checkup and consultation with dentist.",
@@ -125,7 +125,7 @@ export async function POST() {
         {
           user: employees[2],
           type: leaveTypes["CL"],
-          status: "PENDING" as const,
+          status: "PENDING_TL" as const,
           daysAhead: 5,
           duration: 3,
           reason: "Personal home maintenance and relocation assistance.",

@@ -156,7 +156,7 @@ export default function CEOLeaveManagementPage() {
 
   const displayedLeaves = leaves.filter((l) => {
     if (activeTab === "QUEUE") {
-      return l.isExecutiveScope && (l.status === "PENDING" || l.status === "ESCALATED");
+      return l.isExecutiveScope && (l.status === "PENDING_ADMIN" || l.status === "PENDING_TL");
     }
     return true;
   });
@@ -268,7 +268,8 @@ export default function CEOLeaveManagementPage() {
             className="w-full py-2 px-3 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-indigo-500"
           >
             <option value="ALL">All Leave Statuses</option>
-            <option value="PENDING">Pending</option>
+            <option value="PENDING_ADMIN">Pending Admin / Executive</option>
+            <option value="PENDING_TL">Pending TL</option>
             <option value="APPROVED">Approved</option>
             <option value="REJECTED">Rejected</option>
             <option value="CANCELLED">Cancelled</option>
@@ -308,7 +309,7 @@ export default function CEOLeaveManagementPage() {
               </thead>
               <tbody className="divide-y divide-slate-100 text-xs">
                 {displayedLeaves.map((l) => {
-                  const isPending = l.status === "PENDING" || l.status === "ESCALATED";
+                  const isPending = l.status === "PENDING_ADMIN" || l.status === "PENDING_TL";
 
                   return (
                     <tr key={l.id} className="hover:bg-slate-50/60 transition-colors">
@@ -352,17 +353,23 @@ export default function CEOLeaveManagementPage() {
 
                       <td className="py-3 px-4">
                         <span
-                          className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold ${
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
                             l.status === "APPROVED"
                               ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                              : l.status === "PENDING" || l.status === "ESCALATED"
+                              : l.status === "PENDING_TL"
                               ? "bg-amber-50 text-amber-700 border border-amber-200"
+                              : l.status === "PENDING_ADMIN"
+                              ? "bg-purple-50 text-purple-700 border border-purple-200"
                               : l.status === "REJECTED"
                               ? "bg-rose-50 text-rose-700 border border-rose-200"
                               : "bg-slate-100 text-slate-500 border border-slate-200"
                           }`}
                         >
-                          {l.status}
+                          {l.status === "PENDING_TL"
+                            ? "Pending TL"
+                            : l.status === "PENDING_ADMIN"
+                            ? "Pending Admin"
+                            : l.status}
                         </span>
                       </td>
 

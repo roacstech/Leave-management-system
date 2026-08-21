@@ -10,7 +10,8 @@ import { createNotification, resolveEmployeeTeamLead } from "@/lib/notifications
 
 export const dynamic = "force-dynamic";
 
-// GET all leave requests or filter by status
+// GET all leave requests or filter by status for Admin
+// Admin sees ONLY: 1. Escalated Employee requests (PENDING_ADMIN), 2. TL Leave requests (PENDING_ADMIN), 3. Historical decisions
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -20,22 +21,35 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit;
 
     const whereClause: any = {};
+
     if (status && status !== "ALL") {
-      whereClause.status = status;
+      if (status === "PENDING" || status === "PENDING_ADMIN") {
+        whereClause.status = "PENDING_ADMIN";
+      } else if (status === "ESCALATED") {
+        whereClause.status = "PENDING_ADMIN";
+        whereClause.escalatedById = { not: null };
+      } else {
+        whereClause.status = status;
+      }
+    } else {
+      // By default when viewing ALL, exclude normal Employee PENDING_TL requests so Admin only sees Admin-scoped leaves
+      whereClause.OR = [
+        { status: "PENDING_ADMIN" },
+        { status: { in: ["APPROVED", "REJECTED", "CANCELLED"] } },
+      ];
     }
 
     const [
-      totalAll,
-      pendingCount,
+      pendingAdminCount,
       escalatedCount,
       approvedCount,
       rejectedCount,
       filteredTotal,
       leaveRequests,
     ] = await Promise.all([
-      prisma.leaveRequest.count(),
-      prisma.leaveRequest.count({ where: { status: "PENDING" } }),
-      prisma.leaveRequest.count({ where: { status: "ESCALATED" } }),
+      // Only count PENDING_ADMIN for Admin pending metric
+      prisma.leaveRequest.count({ where: { status: "PENDING_ADMIN" } }),
+      prisma.leaveRequest.count({ where: { status: "PENDING_ADMIN", escalatedById: { not: null } } }),
       prisma.leaveRequest.count({ where: { status: "APPROVED" } }),
       prisma.leaveRequest.count({ where: { status: "REJECTED" } }),
       prisma.leaveRequest.count({ where: whereClause }),
@@ -54,6 +68,13 @@ export async function GET(request: NextRequest) {
                 select: {
                   id: true,
                   name: true,
+                  tl: {
+                    select: {
+                      id: true,
+                      name: true,
+                      email: true,
+                    },
+                  },
                 },
               },
               reportingTo: {
@@ -65,6 +86,20 @@ export async function GET(request: NextRequest) {
               },
             },
           },
+          escalatedBy: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+          approver: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
           leaveType: true,
         },
         orderBy: {
@@ -73,6 +108,7 @@ export async function GET(request: NextRequest) {
       }),
     ]);
 
+    const totalAll = pendingAdminCount + approvedCount + rejectedCount;
     const totalPages = Math.ceil(filteredTotal / limit) || 1;
 
     return NextResponse.json({
@@ -80,11 +116,11 @@ export async function GET(request: NextRequest) {
       leaveRequests,
       summary: {
         all: totalAll,
-        pending: pendingCount,
+        pending: pendingAdminCount,
         escalated: escalatedCount,
         approved: approvedCount,
         rejected: rejectedCount,
-        actionable: pendingCount + escalatedCount,
+        actionable: pendingAdminCount,
       },
       pagination: {
         totalItems: filteredTotal,
@@ -102,7 +138,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST create a leave request on behalf of an employee (Admin)
+// POST create a leave request on behalf of a user (Admin)
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -113,6 +149,14 @@ export async function POST(request: NextRequest) {
         { success: false, error: "User, leave type, start date, and end date are required." },
         { status: 400 }
       );
+    }
+
+    const targetUser = await prisma.user.findUnique({
+      where: { id: Number(userId) },
+    });
+
+    if (!targetUser) {
+      return NextResponse.json({ success: false, error: "Target user not found." }, { status: 404 });
     }
 
     const start = new Date(startDate);
@@ -187,6 +231,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const initialStatus = targetUser.role === "EMPLOYEE" ? "PENDING_TL" : "PENDING_ADMIN";
+
     const newRequest = await prisma.leaveRequest.create({
       data: {
         userId: Number(userId),
@@ -194,10 +240,10 @@ export async function POST(request: NextRequest) {
         startDate: start,
         endDate: end,
         reason: reason || null,
-        status: "PENDING",
+        status: initialStatus,
       },
       include: {
-        user: { select: { id: true, name: true, email: true } },
+        user: { select: { id: true, name: true, email: true, role: true } },
         leaveType: true,
       },
     });
@@ -205,17 +251,19 @@ export async function POST(request: NextRequest) {
     const formattedStart = formatDateWithPattern(start, settings.dateFormat, settings.timezone);
     const formattedEnd = formatDateWithPattern(end, settings.dateFormat, settings.timezone);
 
-    // Notify assigned TL if employee has one
-    const tlResolution = await resolveEmployeeTeamLead(Number(userId));
-    if (tlResolution.success && tlResolution.tl) {
-      await createNotification({
-        userId: tlResolution.tl.id,
-        type: "LEAVE_REQUEST",
-        title: "New Leave Request",
-        message: `${newRequest.user.name} requested ${newRequest.leaveType.name} from ${formattedStart} to ${formattedEnd}.`,
-        entityType: "LEAVE_REQUEST",
-        entityId: newRequest.id,
-      });
+    // Notify assigned TL if employee
+    if (targetUser.role === "EMPLOYEE") {
+      const tlResolution = await resolveEmployeeTeamLead(Number(userId));
+      if (tlResolution.success && tlResolution.tl) {
+        await createNotification({
+          userId: tlResolution.tl.id,
+          type: "LEAVE_REQUEST",
+          title: "New Leave Request",
+          message: `${newRequest.user.name} requested ${newRequest.leaveType.name} from ${formattedStart} to ${formattedEnd}.`,
+          entityType: "LEAVE_REQUEST",
+          entityId: newRequest.id,
+        });
+      }
     }
 
     return NextResponse.json({
@@ -236,6 +284,10 @@ export async function POST(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   try {
     const session = await auth();
+    if (!session?.user || (session.user.role !== "ADMIN" && session.user.role !== "CEO")) {
+      return NextResponse.json({ success: false, error: "Unauthorized access" }, { status: 401 });
+    }
+
     const body = await request.json();
     const { id, status, rejectionReason } = body;
 
@@ -246,7 +298,7 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    const adminId = session?.user?.id ? Number(session.user.id) : null;
+    const adminId = Number(session.user.id);
     const leaveRequestId = Number(id);
 
     const existing = await prisma.leaveRequest.findUnique({
@@ -268,14 +320,22 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    if (existing.status === "APPROVED" || existing.status === "REJECTED" || existing.status === "CANCELLED") {
+    // Admin can ONLY process requests that are PENDING_ADMIN
+    if (existing.status === "PENDING_TL") {
+      return NextResponse.json(
+        { success: false, error: "This request is pending Team Lead review and cannot be processed by Admin." },
+        { status: 400 }
+      );
+    }
+
+    if (existing.status !== "PENDING_ADMIN") {
       return NextResponse.json(
         { success: false, error: `This leave request has already been ${existing.status.toLowerCase()}.` },
         { status: 400 }
       );
     }
 
-    const wasEscalated = existing.status === "ESCALATED";
+    const wasEscalated = Boolean(existing.escalatedById);
     const settings = await getSystemSettings();
     const formattedStart = formatDateWithPattern(existing.startDate, settings.dateFormat, settings.timezone);
     const formattedEnd = formatDateWithPattern(existing.endDate, settings.dateFormat, settings.timezone);
@@ -336,7 +396,7 @@ export async function PATCH(request: NextRequest) {
               actionBy: adminId,
               actionByRole: "ADMIN",
               wasEscalated,
-              oldStatus: existing.status,
+              oldStatus: "PENDING_ADMIN",
               newStatus: "APPROVED",
               days: daysDiff,
             }),
@@ -346,7 +406,7 @@ export async function PATCH(request: NextRequest) {
         return req;
       });
 
-      // Notify Employee ONLY
+      // Notify Requester (Employee or TL)
       await createNotification({
         userId: existing.userId,
         type: "LEAVE_APPROVED",
@@ -398,7 +458,7 @@ export async function PATCH(request: NextRequest) {
               actionBy: adminId,
               actionByRole: "ADMIN",
               wasEscalated,
-              oldStatus: existing.status,
+              oldStatus: "PENDING_ADMIN",
               newStatus: "REJECTED",
               rejectionReason: reason,
             }),
@@ -408,7 +468,7 @@ export async function PATCH(request: NextRequest) {
         return req;
       });
 
-      // Notify Employee ONLY
+      // Notify Requester (Employee or TL)
       await createNotification({
         userId: existing.userId,
         type: "LEAVE_REJECTED",

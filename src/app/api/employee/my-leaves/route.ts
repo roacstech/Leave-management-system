@@ -4,11 +4,10 @@ import { prisma } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
-// GET personal leave applications history with filtering, search, and pagination
 export async function GET(request: NextRequest) {
   try {
     const session = await auth();
-    if (!session?.user || session.user.role !== "EMPLOYEE") {
+    if (!session?.user?.id) {
       return NextResponse.json(
         { success: false, error: "Unauthorized access" },
         { status: 401 }
@@ -17,21 +16,26 @@ export async function GET(request: NextRequest) {
 
     const userId = Number(session.user.id);
     const { searchParams } = new URL(request.url);
+
     const search = searchParams.get("search")?.trim().toLowerCase() || "";
-    const status = searchParams.get("status") || "ALL";
-    const yearParam = searchParams.get("year") || "ALL";
+    const statusParam = searchParams.get("status") || "ALL";
     const leaveTypeId = searchParams.get("leaveTypeId") || "ALL";
+    const yearParam = searchParams.get("year") || "ALL";
     const page = parseInt(searchParams.get("page") || "1", 10);
     const limit = parseInt(searchParams.get("limit") || "10", 10);
     const skip = (page - 1) * limit;
 
-    // 1. Build where clause
-    const whereClause: any = {
-      userId,
-    };
+    // 1. Build dynamic where clause
+    const whereClause: any = { userId };
 
-    if (status !== "ALL") {
-      whereClause.status = status;
+    if (statusParam !== "ALL") {
+      if (statusParam === "PENDING") {
+        whereClause.status = { in: ["PENDING_TL", "PENDING_ADMIN"] };
+      } else if (statusParam === "ESCALATED" || statusParam === "PENDING_ADMIN") {
+        whereClause.status = "PENDING_ADMIN";
+      } else {
+        whereClause.status = statusParam;
+      }
     }
 
     if (leaveTypeId !== "ALL") {
@@ -50,6 +54,7 @@ export async function GET(request: NextRequest) {
       whereClause.OR = [
         { reason: { contains: search } },
         { rejectionReason: { contains: search } },
+        { escalationReason: { contains: search } },
         { leaveType: { name: { contains: search } } },
       ];
     }
@@ -57,10 +62,10 @@ export async function GET(request: NextRequest) {
     // 2. Query summary metrics and paginated records
     const [
       totalCount,
-      pendingCount,
+      pendingTLCount,
+      pendingAdminCount,
       approvedCount,
       rejectedCount,
-      escalatedCount,
       cancelledCount,
       filteredTotal,
       requests,
@@ -68,10 +73,10 @@ export async function GET(request: NextRequest) {
       leaveTypes,
     ] = await Promise.all([
       prisma.leaveRequest.count({ where: { userId } }),
-      prisma.leaveRequest.count({ where: { userId, status: "PENDING" } }),
+      prisma.leaveRequest.count({ where: { userId, status: "PENDING_TL" } }),
+      prisma.leaveRequest.count({ where: { userId, status: "PENDING_ADMIN" } }),
       prisma.leaveRequest.count({ where: { userId, status: "APPROVED" } }),
       prisma.leaveRequest.count({ where: { userId, status: "REJECTED" } }),
-      prisma.leaveRequest.count({ where: { userId, status: "ESCALATED" } }),
       prisma.leaveRequest.count({ where: { userId, status: "CANCELLED" } }),
       prisma.leaveRequest.count({ where: whereClause }),
       prisma.leaveRequest.findMany({
@@ -84,6 +89,12 @@ export async function GET(request: NextRequest) {
               code: true,
               isPaid: true,
             },
+          },
+          escalatedBy: {
+            select: { id: true, name: true },
+          },
+          approver: {
+            select: { id: true, name: true },
           },
         },
         orderBy: {
@@ -99,18 +110,21 @@ export async function GET(request: NextRequest) {
       prisma.leaveType.findMany({
         where: { isActive: true },
         select: { id: true, name: true, code: true },
-        orderBy: { name: "asc" },
       }),
     ]);
 
-    // Calculate total approved days
+    // Calculate total approved leave days taken this year
+    const currentYear = new Date().getFullYear();
     let totalApprovedDays = 0;
-    approvedLeavesList.forEach((l) => {
-      const s = new Date(l.startDate);
-      const e = new Date(l.endDate);
-      const diff = Math.max(1, Math.round((e.getTime() - s.getTime()) / (1000 * 60 * 60 * 24)) + 1);
-      totalApprovedDays += diff;
-    });
+    for (const req of approvedLeavesList) {
+      const start = new Date(req.startDate);
+      const end = new Date(req.endDate);
+      if (start.getFullYear() === currentYear || end.getFullYear() === currentYear) {
+        const diffTime = Math.abs(end.getTime() - start.getTime());
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+        totalApprovedDays += diffDays;
+      }
+    }
 
     const totalPages = Math.ceil(filteredTotal / limit) || 1;
 
@@ -120,12 +134,14 @@ export async function GET(request: NextRequest) {
       leaveTypes,
       summary: {
         total: totalCount,
-        pending: pendingCount,
+        pending: pendingTLCount + pendingAdminCount,
+        pendingTL: pendingTLCount,
+        pendingAdmin: pendingAdminCount,
         approved: approvedCount,
         rejected: rejectedCount,
-        escalated: escalatedCount,
+        escalated: pendingAdminCount,
         cancelled: cancelledCount,
-        totalApprovedDays,
+        approvedDays: totalApprovedDays,
       },
       pagination: {
         totalItems: filteredTotal,
@@ -135,9 +151,9 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error: any) {
-    console.error("Fetch personal leave history error:", error);
+    console.error("Fetch employee leaves error:", error);
     return NextResponse.json(
-      { success: false, error: error.message || "Failed to load leave history" },
+      { success: false, error: error.message || "Failed to fetch leaves" },
       { status: 500 }
     );
   }

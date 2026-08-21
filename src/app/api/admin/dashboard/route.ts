@@ -33,7 +33,7 @@ export async function GET() {
       cancelledLeaves,
       totalLeaves,
     ] = await Promise.all([
-      prisma.leaveRequest.count({ where: { status: "PENDING" } }),
+      prisma.leaveRequest.count({ where: { status: "PENDING_ADMIN" } }),
       prisma.leaveRequest.count({ where: { status: "APPROVED" } }),
       prisma.leaveRequest.count({ where: { status: "REJECTED" } }),
       prisma.leaveRequest.count({ where: { status: "CANCELLED" } }),
@@ -95,8 +95,14 @@ export async function GET() {
     const checkedInCount = presentCount + lateCount + halfDayCount;
     const attendanceRate = totalExpected > 0 ? Math.round((checkedInCount / totalExpected) * 100) : 0;
 
-    // 5. Fetch Recent Leave Requests with relations
+    // 5. Fetch Recent Leave Requests with relations (Admin-scoped)
     const recentLeaveRequests = await prisma.leaveRequest.findMany({
+      where: {
+        OR: [
+          { status: "PENDING_ADMIN" },
+          { status: { in: ["APPROVED", "REJECTED", "CANCELLED"] } },
+        ],
+      },
       take: 10,
       orderBy: {
         createdAt: "desc",

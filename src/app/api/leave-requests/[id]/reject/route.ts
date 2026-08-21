@@ -71,21 +71,28 @@ export async function PATCH(
         );
       }
 
-      if (existing.status === "ESCALATED") {
+      if (existing.status === "PENDING_ADMIN") {
         return NextResponse.json(
           { success: false, error: "This request has been escalated to Admin and can no longer be processed by the Team Lead." },
           { status: 400 }
         );
       }
 
-      if (existing.status !== "PENDING") {
+      if (existing.status !== "PENDING_TL") {
         return NextResponse.json(
           { success: false, error: `This leave request has already been ${existing.status.toLowerCase()}.` },
           { status: 400 }
         );
       }
     } else if (userRole === "ADMIN" || userRole === "CEO") {
-      if (existing.status === "APPROVED" || existing.status === "REJECTED" || existing.status === "CANCELLED") {
+      if (existing.status === "PENDING_TL") {
+        return NextResponse.json(
+          { success: false, error: "This request is pending Team Lead review and cannot be rejected by Admin." },
+          { status: 400 }
+        );
+      }
+
+      if (existing.status !== "PENDING_ADMIN") {
         return NextResponse.json(
           { success: false, error: `This leave request has already been ${existing.status.toLowerCase()}.` },
           { status: 400 }
@@ -93,6 +100,7 @@ export async function PATCH(
       }
     }
 
+    const wasEscalated = Boolean(existing.escalatedById);
     const settings = await getSystemSettings();
     const formattedStart = formatDateWithPattern(existing.startDate, settings.dateFormat, settings.timezone);
     const formattedEnd = formatDateWithPattern(existing.endDate, settings.dateFormat, settings.timezone);
@@ -131,13 +139,15 @@ export async function PATCH(
       return req;
     });
 
-    // Create & dispatch notification strictly to the Employee
+    // Create & dispatch notification strictly to the Requester
     const rejecterTitle = userRole === "TL" ? userName : "Admin";
     await createNotification({
       userId: existing.userId,
       type: "LEAVE_REJECTED",
       title: "Leave Request Rejected",
-      message: `Your ${existing.leaveType.name} request from ${formattedStart} to ${formattedEnd} was rejected by ${rejecterTitle}. Reason: ${reason}`,
+      message: wasEscalated
+        ? `Your escalated ${existing.leaveType.name} request from ${formattedStart} to ${formattedEnd} was rejected by Administration. Reason: ${reason}`
+        : `Your ${existing.leaveType.name} request from ${formattedStart} to ${formattedEnd} was rejected by ${rejecterTitle}. Reason: ${reason}`,
       entityType: "LEAVE_REQUEST",
       entityId: leaveRequestId,
     });

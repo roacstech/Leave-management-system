@@ -10,11 +10,11 @@ import { createNotification, resolveEmployeeTeamLead } from "@/lib/notifications
 
 export const dynamic = "force-dynamic";
 
-// POST submit a new leave application
+// POST submit a new leave application (Employee -> PENDING_TL, TL -> PENDING_ADMIN)
 export async function POST(request: NextRequest) {
   try {
     const session = await auth();
-    if (!session?.user || session.user.role !== "EMPLOYEE") {
+    if (!session?.user || (session.user.role !== "EMPLOYEE" && session.user.role !== "TL")) {
       return NextResponse.json(
         { success: false, error: "Unauthorized access" },
         { status: 401 }
@@ -22,6 +22,7 @@ export async function POST(request: NextRequest) {
     }
 
     const userId = Number(session.user.id);
+    const userRole = session.user.role;
     const body = await request.json();
     const { leaveTypeId, startDate, endDate, reason, isHalfDay } = body;
 
@@ -32,13 +33,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 1. Resolve Assigned Team Lead
-    const tlResolution = await resolveEmployeeTeamLead(userId);
-    if (!tlResolution.success || !tlResolution.tl) {
-      return NextResponse.json(
-        { success: false, error: tlResolution.error || "No assigned Team Lead found for your team. Please contact Admin." },
-        { status: 400 }
-      );
+    // 1. Role-specific routing validation
+    let assignedTL: { id: number; name: string; email: string } | null = null;
+    let initialStatus: "PENDING_TL" | "PENDING_ADMIN" = "PENDING_TL";
+
+    if (userRole === "EMPLOYEE") {
+      const tlResolution = await resolveEmployeeTeamLead(userId);
+      if (!tlResolution.success || !tlResolution.tl) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: tlResolution.error || "No Team Lead is assigned to your team. Please contact Admin.",
+          },
+          { status: 400 }
+        );
+      }
+      assignedTL = tlResolution.tl;
+      initialStatus = "PENDING_TL";
+    } else if (userRole === "TL") {
+      // TL leave routes directly to Admin
+      initialStatus = "PENDING_ADMIN";
     }
 
     const start = new Date(startDate);
@@ -125,7 +139,7 @@ export async function POST(request: NextRequest) {
         startDate: start,
         endDate: end,
         reason: reason?.trim() || null,
-        status: "PENDING",
+        status: initialStatus,
       },
       include: {
         user: {
@@ -134,6 +148,7 @@ export async function POST(request: NextRequest) {
             name: true,
             email: true,
             teamId: true,
+            role: true,
           },
         },
         leaveType: true,
@@ -143,15 +158,34 @@ export async function POST(request: NextRequest) {
     const formattedStart = formatDateWithPattern(start, settings.dateFormat, settings.timezone);
     const formattedEnd = formatDateWithPattern(end, settings.dateFormat, settings.timezone);
 
-    // 2. Notify ONLY the assigned Team Lead
-    await createNotification({
-      userId: tlResolution.tl.id,
-      type: "LEAVE_REQUEST",
-      title: "New Leave Request",
-      message: `${newRequest.user.name} requested ${newRequest.leaveType.name} from ${formattedStart} to ${formattedEnd}.`,
-      entityType: "LEAVE_REQUEST",
-      entityId: newRequest.id,
-    });
+    // 2. Strict Recipient-Specific Notifications
+    if (userRole === "EMPLOYEE" && assignedTL) {
+      // Notify ONLY the assigned Team Lead
+      await createNotification({
+        userId: assignedTL.id,
+        type: "LEAVE_REQUEST",
+        title: "New Leave Request",
+        message: `${newRequest.user.name} requested ${newRequest.leaveType.name} from ${formattedStart} to ${formattedEnd}.`,
+        entityType: "LEAVE_REQUEST",
+        entityId: newRequest.id,
+      });
+    } else if (userRole === "TL") {
+      // TL leave -> Notify Admins directly
+      const admins = await prisma.user.findMany({
+        where: { role: { in: ["ADMIN", "CEO"] }, isActive: true },
+        select: { id: true },
+      });
+      for (const admin of admins) {
+        await createNotification({
+          userId: admin.id,
+          type: "LEAVE_REQUEST",
+          title: "New TL Leave Request",
+          message: `Team Lead ${newRequest.user.name} submitted a ${newRequest.leaveType.name} request (${formattedStart} - ${formattedEnd}).`,
+          entityType: "LEAVE_REQUEST",
+          entityId: newRequest.id,
+        });
+      }
+    }
 
     // 3. Create Audit Log
     try {
@@ -163,8 +197,10 @@ export async function POST(request: NextRequest) {
           entityId: newRequest.id,
           details: JSON.stringify({
             leaveRequestId: newRequest.id,
-            employeeId: userId,
-            assignedTLId: tlResolution.tl.id,
+            requesterId: userId,
+            requesterRole: userRole,
+            assignedTLId: assignedTL?.id || null,
+            initialStatus,
             leaveType: newRequest.leaveType.name,
             requestedDays,
             startDate: formattedStart,
@@ -190,11 +226,11 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// PATCH cancel own pending or escalated leave request
+// PATCH cancel own pending leave request
 export async function PATCH(request: NextRequest) {
   try {
     const session = await auth();
-    if (!session?.user || session.user.role !== "EMPLOYEE") {
+    if (!session?.user) {
       return NextResponse.json(
         { success: false, error: "Unauthorized access" },
         { status: 401 }
@@ -230,12 +266,17 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    if (existing.status !== "PENDING" && existing.status !== "ESCALATED") {
+    if (existing.status !== "PENDING_TL" && existing.status !== "PENDING_ADMIN") {
       return NextResponse.json(
-        { success: false, error: `Only PENDING or ESCALATED leave requests can be cancelled. Current status: ${existing.status}` },
+        {
+          success: false,
+          error: `Only pending leave requests can be cancelled. Current status: ${existing.status}`,
+        },
         { status: 400 }
       );
     }
+
+    const previousStatus = existing.status;
 
     const updated = await prisma.leaveRequest.update({
       where: { id: existing.id },
@@ -248,18 +289,20 @@ export async function PATCH(request: NextRequest) {
     const formattedStart = formatDateWithPattern(existing.startDate, settings.dateFormat, settings.timezone);
     const formattedEnd = formatDateWithPattern(existing.endDate, settings.dateFormat, settings.timezone);
 
-    // Notify the assigned TL if pending, or Admin if escalated
-    const tlResolution = await resolveEmployeeTeamLead(userId);
-    if (existing.status === "PENDING" && tlResolution.success && tlResolution.tl) {
-      await createNotification({
-        userId: tlResolution.tl.id,
-        type: "LEAVE_CANCELLED",
-        title: "Leave Request Cancelled",
-        message: `${existing.user.name} cancelled their ${existing.leaveType.name} request (${formattedStart} - ${formattedEnd}).`,
-        entityType: "LEAVE_REQUEST",
-        entityId: existing.id,
-      });
-    } else if (existing.status === "ESCALATED") {
+    // Notify appropriate reviewer
+    if (previousStatus === "PENDING_TL") {
+      const tlResolution = await resolveEmployeeTeamLead(userId);
+      if (tlResolution.success && tlResolution.tl) {
+        await createNotification({
+          userId: tlResolution.tl.id,
+          type: "LEAVE_CANCELLED",
+          title: "Leave Request Cancelled",
+          message: `${existing.user.name} cancelled their ${existing.leaveType.name} request (${formattedStart} - ${formattedEnd}).`,
+          entityType: "LEAVE_REQUEST",
+          entityId: existing.id,
+        });
+      }
+    } else if (previousStatus === "PENDING_ADMIN") {
       const admins = await prisma.user.findMany({
         where: { role: { in: ["ADMIN", "CEO"] }, isActive: true },
         select: { id: true },
@@ -268,8 +311,8 @@ export async function PATCH(request: NextRequest) {
         await createNotification({
           userId: admin.id,
           type: "LEAVE_CANCELLED",
-          title: "Escalated Leave Cancelled",
-          message: `${existing.user.name} cancelled their escalated ${existing.leaveType.name} request (${formattedStart} - ${formattedEnd}).`,
+          title: "Leave Request Cancelled",
+          message: `${existing.user.name} cancelled their ${existing.leaveType.name} request (${formattedStart} - ${formattedEnd}).`,
           entityType: "LEAVE_REQUEST",
           entityId: existing.id,
         });
@@ -287,7 +330,7 @@ export async function PATCH(request: NextRequest) {
           details: JSON.stringify({
             leaveRequestId: existing.id,
             employeeId: userId,
-            oldStatus: existing.status,
+            oldStatus: previousStatus,
             newStatus: "CANCELLED",
           }),
         },

@@ -123,11 +123,11 @@ model LeaveBalance {
 //-----Leave status and request
 
 enum LeaveStatus {
-  PENDING
+  PENDING_TL
+  PENDING_ADMIN
   APPROVED
   REJECTED
   CANCELLED
-  ESCALATED
 }
 
 model LeaveRequest {
@@ -137,7 +137,7 @@ model LeaveRequest {
   startDate        DateTime
   endDate          DateTime
   reason           String?
-  status           LeaveStatus @default(PENDING)
+  status           LeaveStatus @default(PENDING_TL)
   rejectionReason  String?
   escalatedById    Int?
   escalatedAt      DateTime?

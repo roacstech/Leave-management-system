@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
         ? prisma.leaveRequest.findMany({
             where: {
               userId: { in: memberIds },
-              status: { in: ["APPROVED", "PENDING"] },
+              status: { in: ["APPROVED", "PENDING_TL", "PENDING_ADMIN"] },
               startDate: { lte: endOfMonth },
               endDate: { gte: startOfMonth },
             },

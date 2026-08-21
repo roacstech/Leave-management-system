@@ -99,7 +99,7 @@ export async function GET() {
         ? prisma.leaveRequest.count({
             where: {
               userId: { in: teamMemberIds },
-              status: "PENDING",
+              status: "PENDING_TL",
             },
           })
         : 0,
@@ -144,7 +144,7 @@ export async function GET() {
         ? prisma.leaveRequest.findMany({
             where: {
               userId: { in: teamMemberIds },
-              status: "PENDING",
+              status: "PENDING_TL",
             },
             include: {
               user: {

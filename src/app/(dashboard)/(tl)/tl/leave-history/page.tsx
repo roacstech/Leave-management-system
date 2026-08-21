@@ -27,7 +27,7 @@ interface LeaveHistoryItem {
   startDate: string;
   endDate: string;
   reason: string | null;
-  status: "APPROVED" | "REJECTED" | "ESCALATED" | "CANCELLED" | "PENDING";
+  status: "PENDING_TL" | "PENDING_ADMIN" | "APPROVED" | "REJECTED" | "CANCELLED";
   rejectionReason: string | null;
   createdAt: string;
   user: {
@@ -463,19 +463,29 @@ export default function TLLeaveHistoryPage() {
                       {/* Status */}
                       <td className="py-3 px-3">
                         <span
-                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold ${
+                          className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
                             req.status === "APPROVED"
                               ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                              : req.status === "PENDING"
+                              : req.status === "PENDING_TL"
                               ? "bg-amber-50 text-amber-700 border border-amber-200"
+                              : req.status === "PENDING_ADMIN"
+                              ? "bg-purple-50 text-purple-700 border border-purple-200"
                               : req.status === "REJECTED"
                               ? "bg-rose-50 text-rose-700 border border-rose-200"
-                              : req.status === "ESCALATED"
-                              ? "bg-indigo-50 text-indigo-700 border border-indigo-200"
                               : "bg-slate-100 text-slate-600 border border-slate-200"
                           }`}
                         >
-                          <span>{req.status}</span>
+                          <span>
+                            {req.status === "PENDING_TL"
+                              ? "Pending TL"
+                              : req.status === "PENDING_ADMIN"
+                              ? "Escalated to Admin"
+                              : req.status === "APPROVED"
+                              ? "Approved"
+                              : req.status === "REJECTED"
+                              ? "Rejected"
+                              : "Cancelled"}
+                          </span>
                         </span>
                       </td>
 

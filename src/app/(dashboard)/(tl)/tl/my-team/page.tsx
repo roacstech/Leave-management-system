@@ -44,7 +44,7 @@ interface RecentRequestItem {
   startDate: string;
   endDate: string;
   reason: string | null;
-  status: "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED";
+  status: "PENDING_TL" | "PENDING_ADMIN" | "APPROVED" | "REJECTED" | "CANCELLED";
   createdAt: string;
   leaveType: {
     id: number;
@@ -647,14 +647,20 @@ export default function MyTeamPage() {
                           className={`px-2 py-0.5 rounded text-[10px] font-bold ${
                             req.status === "APPROVED"
                               ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                              : req.status === "PENDING"
+                              : req.status === "PENDING_TL"
                               ? "bg-amber-50 text-amber-700 border border-amber-200"
+                              : req.status === "PENDING_ADMIN"
+                              ? "bg-purple-50 text-purple-700 border border-purple-200"
                               : req.status === "REJECTED"
                               ? "bg-rose-50 text-rose-700 border border-rose-200"
                               : "bg-slate-100 text-slate-600 border border-slate-200"
                           }`}
                         >
-                          {req.status}
+                          {req.status === "PENDING_TL"
+                            ? "Pending TL"
+                            : req.status === "PENDING_ADMIN"
+                            ? "Pending Admin"
+                            : req.status}
                         </span>
                       </div>
                     ))}

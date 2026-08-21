@@ -71,7 +71,7 @@ export async function GET() {
           ? await prisma.leaveRequest.count({
               where: {
                 userId: { in: memberIds },
-                status: "PENDING",
+                status: "PENDING_TL",
               },
             })
           : 0;

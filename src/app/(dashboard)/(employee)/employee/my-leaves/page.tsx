@@ -28,8 +28,9 @@ interface LeaveRequestItem {
   startDate: string;
   endDate: string;
   reason: string | null;
-  status: "PENDING" | "APPROVED" | "REJECTED" | "ESCALATED" | "CANCELLED";
+  status: "PENDING_TL" | "PENDING_ADMIN" | "APPROVED" | "REJECTED" | "CANCELLED";
   rejectionReason: string | null;
+  escalationReason?: string | null;
   createdAt: string;
   leaveType: {
     id: number;
@@ -48,6 +49,8 @@ interface LeaveTypeOption {
 interface SummaryData {
   total: number;
   pending: number;
+  pendingTL?: number;
+  pendingAdmin?: number;
   approved: number;
   rejected: number;
   escalated: number;
@@ -62,6 +65,8 @@ export default function EmployeeMyLeavesPage() {
   const [summary, setSummary] = useState<SummaryData>({
     total: 0,
     pending: 0,
+    pendingTL: 0,
+    pendingAdmin: 0,
     approved: 0,
     rejected: 0,
     escalated: 0,
@@ -338,7 +343,7 @@ export default function EmployeeMyLeavesPage() {
 
         {/* Status Filter Tabs */}
         <div className="pt-2 border-t border-slate-100 flex flex-wrap items-center gap-1">
-          {(["ALL", "PENDING", "APPROVED", "REJECTED", "ESCALATED", "CANCELLED"] as const).map(
+          {(["ALL", "PENDING_TL", "PENDING_ADMIN", "APPROVED", "REJECTED", "CANCELLED"] as const).map(
             (st) => (
               <button
                 key={st}
@@ -346,7 +351,7 @@ export default function EmployeeMyLeavesPage() {
                   setStatusFilter(st);
                   setPage(1);
                 }}
-                className={`px-3 py-1 rounded-md text-xs transition-all ${
+                className={`px-3 py-1 rounded-md text-xs transition-all cursor-pointer ${
                   statusFilter === st
                     ? "bg-slate-900 text-white font-semibold shadow-2xs"
                     : "text-slate-500 hover:text-slate-900 bg-slate-100/70 hover:bg-slate-100"
@@ -354,14 +359,14 @@ export default function EmployeeMyLeavesPage() {
               >
                 {st === "ALL"
                   ? `All (${summary.total})`
-                  : st === "PENDING"
-                  ? `Pending (${summary.pending})`
+                  : st === "PENDING_TL"
+                  ? `Pending TL (${summary.pendingTL || 0})`
+                  : st === "PENDING_ADMIN"
+                  ? `Pending Admin (${summary.pendingAdmin || 0})`
                   : st === "APPROVED"
                   ? `Approved (${summary.approved})`
                   : st === "REJECTED"
                   ? `Rejected (${summary.rejected})`
-                  : st === "ESCALATED"
-                  ? `Escalated (${summary.escalated})`
                   : `Cancelled (${summary.cancelled})`}
               </button>
             )
@@ -399,7 +404,7 @@ export default function EmployeeMyLeavesPage() {
               <tbody className="divide-y divide-slate-100 text-xs">
                 {requests.map((req) => {
                   const days = calculateDays(req.startDate, req.endDate);
-                  const isPending = req.status === "PENDING";
+                  const isCancelable = req.status === "PENDING_TL" || req.status === "PENDING_ADMIN";
 
                   return (
                     <tr key={req.id} className="hover:bg-slate-50/50 transition-colors">
@@ -447,6 +452,11 @@ export default function EmployeeMyLeavesPage() {
                         ) : (
                           <span className="text-slate-400 italic">None provided</span>
                         )}
+                        {req.escalationReason && (
+                          <div className="text-[10px] text-purple-700 font-semibold mt-0.5 truncate">
+                            Escalation: {req.escalationReason}
+                          </div>
+                        )}
                         {req.rejectionReason && (
                           <div className="text-[10px] text-rose-600 font-medium mt-0.5 truncate">
                             Remarks: {req.rejectionReason}
@@ -457,26 +467,36 @@ export default function EmployeeMyLeavesPage() {
                       {/* Status */}
                       <td className="py-3 px-3">
                         <span
-                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold ${
+                          className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
                             req.status === "APPROVED"
                               ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                              : req.status === "PENDING"
+                              : req.status === "PENDING_TL"
                               ? "bg-amber-50 text-amber-700 border border-amber-200"
+                              : req.status === "PENDING_ADMIN"
+                              ? "bg-purple-50 text-purple-700 border border-purple-200"
                               : req.status === "REJECTED"
                               ? "bg-rose-50 text-rose-700 border border-rose-200"
-                              : req.status === "ESCALATED"
-                              ? "bg-indigo-50 text-indigo-700 border border-indigo-200"
                               : "bg-slate-100 text-slate-600 border border-slate-200"
                           }`}
                         >
-                          <span>{req.status}</span>
+                          <span>
+                            {req.status === "PENDING_TL"
+                              ? "Pending TL Approval"
+                              : req.status === "PENDING_ADMIN"
+                              ? "Pending Admin Approval"
+                              : req.status === "APPROVED"
+                              ? "Approved"
+                              : req.status === "REJECTED"
+                              ? "Rejected"
+                              : "Cancelled"}
+                          </span>
                         </span>
                       </td>
 
                       {/* Actions */}
                       <td className="py-3 px-4 text-right">
                         <div className="flex items-center justify-end gap-1.5">
-                          {isPending && (
+                          {isCancelable && (
                             <button
                               onClick={() => handleCancelRequest(req.id)}
                               disabled={cancellingId === req.id}
@@ -569,14 +589,24 @@ export default function EmployeeMyLeavesPage() {
                     className={`font-bold text-xs ${
                       selectedRecord.status === "APPROVED"
                         ? "text-emerald-700"
-                        : selectedRecord.status === "PENDING"
+                        : selectedRecord.status === "PENDING_TL"
                         ? "text-amber-600"
+                        : selectedRecord.status === "PENDING_ADMIN"
+                        ? "text-purple-600"
                         : selectedRecord.status === "REJECTED"
                         ? "text-rose-600"
                         : "text-slate-700"
                     }`}
                   >
-                    {selectedRecord.status}
+                    {selectedRecord.status === "PENDING_TL"
+                      ? "Pending TL Approval"
+                      : selectedRecord.status === "PENDING_ADMIN"
+                      ? "Pending Admin Approval"
+                      : selectedRecord.status === "APPROVED"
+                      ? "Approved"
+                      : selectedRecord.status === "REJECTED"
+                      ? "Rejected"
+                      : "Cancelled"}
                   </span>
                 </div>
 
@@ -609,6 +639,18 @@ export default function EmployeeMyLeavesPage() {
                 </p>
               </div>
 
+              {/* Escalation Note */}
+              {selectedRecord.escalationReason && (
+                <div>
+                  <span className="text-purple-700 font-semibold block mb-1">
+                    Escalation Details:
+                  </span>
+                  <p className="p-3 bg-purple-50/60 rounded-xl border border-purple-200 text-purple-900 font-medium">
+                    {selectedRecord.escalationReason}
+                  </p>
+                </div>
+              )}
+
               {/* Remarks / Rejection Notes */}
               {selectedRecord.rejectionReason && (
                 <div>
@@ -624,7 +666,7 @@ export default function EmployeeMyLeavesPage() {
 
             {/* Footer */}
             <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
-              {selectedRecord.status === "PENDING" ? (
+              {(selectedRecord.status === "PENDING_TL" || selectedRecord.status === "PENDING_ADMIN") ? (
                 <button
                   type="button"
                   onClick={() => handleCancelRequest(selectedRecord.id)}

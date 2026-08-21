@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { getSystemSettings, formatDateWithPattern } from "@/lib/settings";
 import { createNotification } from "@/lib/notifications";
 
 export const dynamic = "force-dynamic";
@@ -37,7 +36,13 @@ export async function PATCH(
     const userId = Number(session.user.id);
     const userName = session.user.name || "Team Leader";
 
-    // Fetch existing leave request
+    if (userRole !== "TL" && userRole !== "ADMIN" && userRole !== "CEO") {
+      return NextResponse.json(
+        { success: false, error: "Only Team Leads or Administrators can escalate leave requests." },
+        { status: 403 }
+      );
+    }
+
     const existing = await prisma.leaveRequest.findUnique({
       where: { id: leaveRequestId },
       include: {
@@ -54,10 +59,6 @@ export async function PATCH(
       return NextResponse.json({ success: false, error: "Leave request not found." }, { status: 404 });
     }
 
-    if (userRole === "EMPLOYEE") {
-      return NextResponse.json({ success: false, error: "Employees cannot escalate leave requests." }, { status: 403 });
-    }
-
     if (userRole === "TL") {
       const isAssignedTL =
         (existing.user.team && existing.user.team.tlId === userId) ||
@@ -69,32 +70,28 @@ export async function PATCH(
           { status: 403 }
         );
       }
-
-      if (existing.status !== "PENDING") {
-        return NextResponse.json(
-          { success: false, error: `Cannot escalate: Request is currently in ${existing.status} status.` },
-          { status: 400 }
-        );
-      }
     }
 
-    const settings = await getSystemSettings();
-    const formattedStart = formatDateWithPattern(existing.startDate, settings.dateFormat, settings.timezone);
-    const formattedEnd = formatDateWithPattern(existing.endDate, settings.dateFormat, settings.timezone);
-    const daysDiff = Math.max(
-      1,
-      Math.round(
-        (new Date(existing.endDate).getTime() - new Date(existing.startDate).getTime()) /
-          (1000 * 60 * 60 * 24)
-      ) + 1
-    );
+    if (existing.status === "PENDING_ADMIN") {
+      return NextResponse.json(
+        { success: false, error: "This request has already been escalated to Administration." },
+        { status: 400 }
+      );
+    }
 
-    // Update in transaction
+    if (existing.status !== "PENDING_TL") {
+      return NextResponse.json(
+        { success: false, error: `Only requests pending Team Lead review can be escalated. Current status: ${existing.status}` },
+        { status: 400 }
+      );
+    }
+
+    // Update LeaveRequest to PENDING_ADMIN in transaction with AuditLog
     const updated = await prisma.$transaction(async (tx) => {
       const req = await tx.leaveRequest.update({
         where: { id: leaveRequestId },
         data: {
-          status: "ESCALATED",
+          status: "PENDING_ADMIN",
           escalatedById: userId,
           escalatedAt: new Date(),
           escalationReason: reason,
@@ -110,12 +107,11 @@ export async function PATCH(
           details: JSON.stringify({
             leaveRequestId,
             employeeId: existing.userId,
-            employeeName: existing.user.name,
             escalatedBy: userId,
             escalatedByName: userName,
             escalationReason: reason,
-            oldStatus: existing.status,
-            newStatus: "ESCALATED",
+            oldStatus: "PENDING_TL",
+            newStatus: "PENDING_ADMIN",
           }),
         },
       });
@@ -123,32 +119,29 @@ export async function PATCH(
       return req;
     });
 
-    // 1. Notify all active Admins
-    const activeAdmins = await prisma.user.findMany({
-      where: {
-        role: { in: ["ADMIN", "CEO"] },
-        isActive: true,
-      },
+    // 1. Notify all active Administrators
+    const admins = await prisma.user.findMany({
+      where: { role: { in: ["ADMIN", "CEO"] }, isActive: true },
       select: { id: true },
     });
 
-    for (const admin of activeAdmins) {
+    for (const adm of admins) {
       await createNotification({
-        userId: admin.id,
+        userId: adm.id,
         type: "LEAVE_ESCALATED",
         title: "Leave Request Escalated",
-        message: `${userName} escalated ${existing.user.name}'s ${existing.leaveType.name} request for ${formattedStart} - ${formattedEnd} (${daysDiff} day${daysDiff > 1 ? "s" : ""}). Reason: ${reason}`,
+        message: `${userName} escalated ${existing.user.name}'s leave request for Admin review. Reason: ${reason}`,
         entityType: "LEAVE_REQUEST",
         entityId: leaveRequestId,
       });
     }
 
-    // 2. Notify Employee that request was forwarded to Admin
+    // 2. Notify Employee
     await createNotification({
       userId: existing.userId,
       type: "LEAVE_ESCALATED",
       title: "Leave Request Escalated",
-      message: `Your ${existing.leaveType.name} request (${formattedStart} - ${formattedEnd}) has been forwarded to Admin for further approval.`,
+      message: `Your leave request has been forwarded to Admin for further review.`,
       entityType: "LEAVE_REQUEST",
       entityId: leaveRequestId,
     });

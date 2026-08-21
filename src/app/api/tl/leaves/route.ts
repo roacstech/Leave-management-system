@@ -76,7 +76,13 @@ export async function GET(request: NextRequest) {
     };
 
     if (status && status !== "ALL") {
-      whereClause.status = status;
+      if (status === "PENDING" || status === "PENDING_TL") {
+        whereClause.status = "PENDING_TL";
+      } else if (status === "ESCALATED" || status === "PENDING_ADMIN") {
+        whereClause.status = "PENDING_ADMIN";
+      } else {
+        whereClause.status = status;
+      }
     }
 
     if (leaveTypeId && leaveTypeId !== "ALL") {
@@ -103,10 +109,10 @@ export async function GET(request: NextRequest) {
       leaveTypes,
     ] = await Promise.all([
       prisma.leaveRequest.count({ where: { userId: { in: memberIds } } }),
-      prisma.leaveRequest.count({ where: { userId: { in: memberIds }, status: "PENDING" } }),
+      prisma.leaveRequest.count({ where: { userId: { in: memberIds }, status: "PENDING_TL" } }),
       prisma.leaveRequest.count({ where: { userId: { in: memberIds }, status: "APPROVED" } }),
       prisma.leaveRequest.count({ where: { userId: { in: memberIds }, status: "REJECTED" } }),
-      prisma.leaveRequest.count({ where: { userId: { in: memberIds }, status: "ESCALATED" } }),
+      prisma.leaveRequest.count({ where: { userId: { in: memberIds }, status: "PENDING_ADMIN" } }),
       prisma.leaveRequest.count({ where: whereClause }),
       prisma.leaveRequest.findMany({
         where: whereClause,
@@ -220,15 +226,15 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    // 2. State & Idempotency check
-    if (existing.status === "ESCALATED") {
+    // 2. State & Idempotency check: TL can only process requests in PENDING_TL status
+    if (existing.status === "PENDING_ADMIN") {
       return NextResponse.json(
         { success: false, error: "This request has been escalated to Admin and can no longer be processed by the Team Lead." },
         { status: 400 }
       );
     }
 
-    if (existing.status !== "PENDING") {
+    if (existing.status !== "PENDING_TL") {
       return NextResponse.json(
         { success: false, error: `This leave request has already been ${existing.status.toLowerCase()}.` },
         { status: 400 }
@@ -294,7 +300,7 @@ export async function PATCH(request: NextRequest) {
               employeeId: existing.userId,
               actionBy: tlId,
               actionByRole: "TL",
-              oldStatus: "PENDING",
+              oldStatus: "PENDING_TL",
               newStatus: "APPROVED",
               days: daysDiff,
             }),
@@ -351,7 +357,7 @@ export async function PATCH(request: NextRequest) {
               employeeId: existing.userId,
               actionBy: tlId,
               actionByRole: "TL",
-              oldStatus: "PENDING",
+              oldStatus: "PENDING_TL",
               newStatus: "REJECTED",
               rejectionReason: reason,
             }),
@@ -376,7 +382,7 @@ export async function PATCH(request: NextRequest) {
         message: `Leave request #${leaveRequestId} has been rejected.`,
         leaveRequest: updated,
       });
-    } else if (status === "ESCALATED") {
+    } else if (status === "ESCALATED" || status === "PENDING_ADMIN") {
       const note = (escalationReason || escalationNote)?.trim();
       if (!note) {
         return NextResponse.json(
@@ -389,7 +395,7 @@ export async function PATCH(request: NextRequest) {
         const req = await tx.leaveRequest.update({
           where: { id: leaveRequestId },
           data: {
-            status: "ESCALATED",
+            status: "PENDING_ADMIN",
             escalatedById: tlId,
             escalatedAt: new Date(),
             escalationReason: note,
@@ -408,8 +414,8 @@ export async function PATCH(request: NextRequest) {
               escalatedBy: tlId,
               escalatedByName: tlName,
               escalationReason: note,
-              oldStatus: "PENDING",
-              newStatus: "ESCALATED",
+              oldStatus: "PENDING_TL",
+              newStatus: "PENDING_ADMIN",
             }),
           },
         });
@@ -428,7 +434,7 @@ export async function PATCH(request: NextRequest) {
           userId: adm.id,
           type: "LEAVE_ESCALATED",
           title: "Leave Request Escalated",
-          message: `${tlName} escalated ${existing.user.name}'s ${existing.leaveType.name} request for ${formattedStart} - ${formattedEnd} (${daysDiff} days). Reason: ${note}`,
+          message: `${tlName} escalated ${existing.user.name}'s leave request for Admin review. Reason: ${note}`,
           entityType: "LEAVE_REQUEST",
           entityId: leaveRequestId,
         });
@@ -439,7 +445,7 @@ export async function PATCH(request: NextRequest) {
         userId: existing.userId,
         type: "LEAVE_ESCALATED",
         title: "Leave Request Escalated",
-        message: `Your ${existing.leaveType.name} request (${formattedStart} - ${formattedEnd}) has been forwarded to Admin for further approval.`,
+        message: `Your leave request has been forwarded to Admin for further review.`,
         entityType: "LEAVE_REQUEST",
         entityId: leaveRequestId,
       });

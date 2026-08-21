@@ -43,7 +43,7 @@ interface LeaveRequestItem {
   startDate: string;
   endDate: string;
   reason: string | null;
-  status: "PENDING" | "APPROVED" | "REJECTED" | "ESCALATED" | "CANCELLED";
+  status: "PENDING_TL" | "PENDING_ADMIN" | "APPROVED" | "REJECTED" | "CANCELLED";
   rejectionReason: string | null;
   createdAt: string;
   leaveType: {
@@ -686,20 +686,30 @@ export default function EmployeeDashboardPage() {
 
                       <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
                         <span
-                          className={`px-2.5 py-0.5 rounded-lg text-[10px] font-bold border ${
+                          className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
                             req.status === "APPROVED"
                               ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                              : req.status === "PENDING"
+                              : req.status === "PENDING_TL"
                               ? "bg-amber-50 text-amber-700 border-amber-200"
+                              : req.status === "PENDING_ADMIN"
+                              ? "bg-purple-50 text-purple-700 border-purple-200"
                               : req.status === "REJECTED"
                               ? "bg-rose-50 text-rose-700 border-rose-200"
                               : "bg-slate-100 text-slate-600 border border-slate-200"
                           }`}
                         >
-                          {req.status}
+                          {req.status === "PENDING_TL"
+                            ? "Pending TL"
+                            : req.status === "PENDING_ADMIN"
+                            ? "Pending Admin"
+                            : req.status === "APPROVED"
+                            ? "Approved"
+                            : req.status === "REJECTED"
+                            ? "Rejected"
+                            : "Cancelled"}
                         </span>
 
-                        {req.status === "PENDING" && (
+                        {(req.status === "PENDING_TL" || req.status === "PENDING_ADMIN") && (
                           <button
                             onClick={() => handleCancelRequest(req.id)}
                             className="text-[11px] text-rose-600 hover:text-rose-700 font-semibold px-2 py-0.5 rounded border border-rose-200 hover:bg-rose-50 transition-colors cursor-pointer"

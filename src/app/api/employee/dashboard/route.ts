@@ -190,7 +190,7 @@ export async function GET() {
       remainingDays += bal.remaining;
     });
 
-    const pendingCount = recentRequests.filter((r) => r.status === "PENDING").length;
+    const pendingCount = recentRequests.filter((r) => r.status === "PENDING_TL" || r.status === "PENDING_ADMIN").length;
     const approvedCount = recentRequests.filter((r) => r.status === "APPROVED").length;
 
     return NextResponse.json({

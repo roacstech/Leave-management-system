@@ -62,21 +62,28 @@ export async function PATCH(
         );
       }
 
-      if (existing.status === "ESCALATED") {
+      if (existing.status === "PENDING_ADMIN") {
         return NextResponse.json(
           { success: false, error: "This request has been escalated to Admin and can no longer be processed by the Team Lead." },
           { status: 400 }
         );
       }
 
-      if (existing.status !== "PENDING") {
+      if (existing.status !== "PENDING_TL") {
         return NextResponse.json(
           { success: false, error: `This leave request has already been ${existing.status.toLowerCase()}.` },
           { status: 400 }
         );
       }
     } else if (userRole === "ADMIN" || userRole === "CEO") {
-      if (existing.status === "APPROVED" || existing.status === "REJECTED" || existing.status === "CANCELLED") {
+      if (existing.status === "PENDING_TL") {
+        return NextResponse.json(
+          { success: false, error: "This request is currently pending Team Lead review and cannot be approved by Admin." },
+          { status: 400 }
+        );
+      }
+
+      if (existing.status !== "PENDING_ADMIN") {
         return NextResponse.json(
           { success: false, error: `This leave request has already been ${existing.status.toLowerCase()}.` },
           { status: 400 }
@@ -84,6 +91,7 @@ export async function PATCH(
       }
     }
 
+    const wasEscalated = Boolean(existing.escalatedById);
     const settings = await getSystemSettings();
     const formattedStart = formatDateWithPattern(existing.startDate, settings.dateFormat, settings.timezone);
     const formattedEnd = formatDateWithPattern(existing.endDate, settings.dateFormat, settings.timezone);
@@ -154,13 +162,15 @@ export async function PATCH(
       return req;
     });
 
-    // 4. Create & dispatch notification strictly to the Employee
-    const approverTitle = userRole === "TL" ? userName : "Admin";
+    // 4. Create & dispatch notification strictly to the Requester
+    const approverTitle = userRole === "TL" ? userName : "Administration";
     await createNotification({
       userId: existing.userId,
       type: "LEAVE_APPROVED",
       title: "Leave Request Approved",
-      message: `Your ${existing.leaveType.name} request from ${formattedStart} to ${formattedEnd} has been approved by ${approverTitle}.`,
+      message: wasEscalated
+        ? `Your escalated ${existing.leaveType.name} request (${formattedStart} - ${formattedEnd}) has been approved by Administration.`
+        : `Your ${existing.leaveType.name} request from ${formattedStart} to ${formattedEnd} has been approved by ${approverTitle}.`,
       entityType: "LEAVE_REQUEST",
       entityId: leaveRequestId,
     });

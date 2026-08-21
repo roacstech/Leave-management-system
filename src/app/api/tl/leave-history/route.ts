@@ -91,7 +91,13 @@ export async function GET(request: NextRequest) {
     }
 
     if (status !== "ALL") {
-      whereClause.status = status;
+      if (status === "PENDING" || status === "PENDING_TL") {
+        whereClause.status = "PENDING_TL";
+      } else if (status === "ESCALATED" || status === "PENDING_ADMIN") {
+        whereClause.status = "PENDING_ADMIN";
+      } else {
+        whereClause.status = status;
+      }
     }
 
     if (leaveTypeId !== "ALL") {
