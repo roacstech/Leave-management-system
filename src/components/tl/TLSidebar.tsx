@@ -100,25 +100,8 @@ export default function TLSidebar({
         }`}
       >
         {/* Brand Header */}
-        <div className="px-5 py-5 border-b border-slate-100 bg-white">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-indigo-600 text-white shadow-xs">
-              <Users2 className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="flex items-center gap-1.5">
-                <span className="font-bold text-sm tracking-tight text-slate-900">
-                  LMS Portal
-                </span>
-                <span className="text-[10px] font-semibold px-1.5 py-0.2 rounded bg-indigo-50 text-indigo-700 border border-indigo-200">
-                  TL
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-400 font-normal truncate max-w-[130px]" title={teamName}>
-                {teamName || settings.companyName || "Team Leader"}
-              </p>
-            </div>
-          </div>
+        <div className="px-5 py-5 border-b border-slate-100 bg-white flex flex-col items-center justify-center gap-2">
+          <img src="/logo.png" alt="Embassy of India" className="h-10 w-auto object-contain" />
         </div>
 
         {/* Menu Navigation */}
@@ -177,7 +160,7 @@ export default function TLSidebar({
                 TL
               </div>
               <div className="overflow-hidden">
-                <div className="text-xs font-semibold text-slate-900 truncate">
+                <div className="text-xs font-semibold text-slate-900 truncate uppercase">
                   Team Leader
                 </div>
                 <div className="flex items-center gap-1 text-[11px] text-slate-500">

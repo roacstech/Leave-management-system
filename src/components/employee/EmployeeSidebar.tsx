@@ -15,6 +15,7 @@ import {
   Bell,
 } from "lucide-react";
 import { useSettings } from "@/contexts/SettingsContext";
+import { getSession } from "next-auth/react";
 
 interface EmployeeSidebarProps {
   mobileOpen?: boolean;
@@ -27,6 +28,22 @@ export default function EmployeeSidebar({
 }: EmployeeSidebarProps) {
   const pathname = usePathname();
   const { settings } = useSettings();
+
+  const [userName, setUserName] = React.useState("Employee");
+  const [userInitials, setUserInitials] = React.useState("EMP");
+  const [empId, setEmpId] = React.useState("EMP-0000");
+
+  React.useEffect(() => {
+    getSession().then((session) => {
+      if (session?.user?.name) {
+        setUserName(session.user.name);
+        setUserInitials(session.user.name.substring(0, 2).toUpperCase());
+      }
+      if (session?.user?.id) {
+        setEmpId(`EMP-${String(session.user.id).padStart(4, '0')}`);
+      }
+    });
+  }, []);
 
   const navItems = [
     {
@@ -87,25 +104,8 @@ export default function EmployeeSidebar({
         }`}
       >
         {/* Brand Header */}
-        <div className="px-5 py-5 border-b border-slate-100 bg-white">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-[#1e293b] text-white shadow-xs">
-              <User className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="flex items-center gap-1.5">
-                <span className="font-bold text-sm tracking-tight text-slate-900">
-                  LMS Portal
-                </span>
-                <span className="text-[10px] font-semibold px-1.5 py-0.2 rounded bg-slate-100 text-slate-700 border border-slate-200">
-                  Staff
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-400 font-normal truncate max-w-[130px]" title={settings.companyName}>
-                {settings.companyName || "Employee Workspace"}
-              </p>
-            </div>
-          </div>
+        <div className="px-5 py-5 border-b border-slate-100 bg-white flex flex-col items-center justify-center gap-2">
+          <img src="/logo.png" alt="Embassy of India" className="h-10 w-auto object-contain" />
         </div>
 
         {/* Menu Navigation */}
@@ -148,16 +148,16 @@ export default function EmployeeSidebar({
         <div className="p-3.5 border-t border-slate-100 bg-white">
           <div className="flex items-center justify-between p-2 rounded-xl bg-slate-50 border border-slate-200/60">
             <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-7 h-7 rounded-lg bg-[#1e293b] flex items-center justify-center font-bold text-white text-xs shrink-0">
-                EMP
+              <div className="w-7 h-7 rounded-lg bg-[#1e293b] flex items-center justify-center font-bold text-white text-xs shrink-0 uppercase">
+                {userInitials}
               </div>
               <div className="min-w-0">
-                <div className="text-xs font-semibold text-slate-900 truncate">
-                  Employee
+                <div className="text-xs font-semibold text-slate-900 truncate uppercase">
+                  {userName}
                 </div>
-                <div className="flex items-center gap-1.5 text-[10px] text-slate-500">
+                <div className="flex items-center gap-1.5 text-[10px] text-slate-500 font-medium">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
-                  <span>Active Member</span>
+                  <span>{empId}</span>
                 </div>
               </div>
             </div>
