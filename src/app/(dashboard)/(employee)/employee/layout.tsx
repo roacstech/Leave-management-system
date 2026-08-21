@@ -84,7 +84,7 @@ function EmployeeHeader({
           <RefreshCw className="w-4 h-4" />
         </button>
 
-        <NotificationBell />
+        <NotificationDropdown />
 
         <div className="h-4 w-px bg-slate-200 hidden sm:block mx-1" />
 
