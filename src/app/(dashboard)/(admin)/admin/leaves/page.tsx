@@ -210,18 +210,24 @@ export default function LeavesAdminPage() {
       {/* Toast */}
       {toastMessage && (
         <div
-          className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-xl border shadow-lg text-xs font-semibold flex items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-200 ${
+          className={`fixed bottom-5 right-5 z-50 px-4 py-2.5 rounded-xl border shadow-xl text-xs font-medium flex items-center gap-2.5 animate-in fade-in slide-in-from-bottom-3 duration-200 ${
             toastMessage.type === "success"
-              ? "bg-emerald-50 text-emerald-800 border-emerald-200"
-              : "bg-rose-50 text-rose-800 border-rose-200"
+              ? "bg-emerald-600 text-white border-emerald-500"
+              : "bg-rose-600 text-white border-rose-500"
           }`}
         >
           {toastMessage.type === "success" ? (
-            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+            <CheckCircle2 className="w-4 h-4 text-white shrink-0" />
           ) : (
-            <XCircle className="w-4 h-4 text-rose-600" />
+            <XCircle className="w-4 h-4 text-white shrink-0" />
           )}
-          <span>{toastMessage.text}</span>
+          <span className="text-white font-medium">{toastMessage.text}</span>
+          <button
+            onClick={() => setToastMessage(null)}
+            className="ml-1 text-white/80 hover:text-white cursor-pointer"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
         </div>
       )}
 

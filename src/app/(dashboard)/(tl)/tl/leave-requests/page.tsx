@@ -218,21 +218,21 @@ export default function TLLeaveRequestsPage() {
       {/* Toast Alert */}
       {toast && (
         <div
-          className={`fixed bottom-5 right-5 z-50 flex items-center gap-2.5 px-4 py-2.5 rounded-lg shadow-sm border text-xs font-medium ${
+          className={`fixed bottom-5 right-5 z-50 flex items-center gap-2.5 px-4 py-2.5 rounded-xl shadow-xl border text-xs font-medium animate-in fade-in slide-in-from-bottom-3 ${
             toast.type === "success"
-              ? "bg-white text-slate-800 border-slate-200"
-              : "bg-white text-rose-700 border-rose-200"
+              ? "bg-emerald-600 text-white border-emerald-500"
+              : "bg-rose-600 text-white border-rose-500"
           }`}
         >
           {toast.type === "success" ? (
-            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            <CheckCircle2 className="w-4 h-4 text-white shrink-0" />
           ) : (
-            <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+            <AlertCircle className="w-4 h-4 text-white shrink-0" />
           )}
-          <span>{toast.text}</span>
+          <span className="text-white font-medium">{toast.text}</span>
           <button
             onClick={() => setToast(null)}
-            className="ml-1 text-slate-400 hover:text-slate-700"
+            className="ml-1 text-white/80 hover:text-white cursor-pointer"
           >
             <X className="w-3.5 h-3.5" />
           </button>

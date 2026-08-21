@@ -392,18 +392,24 @@ export default function AdminSettingsPage() {
       {/* Toast Alert */}
       {toast && (
         <div
-          className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg border transition-all animate-in fade-in slide-in-from-bottom-5 ${
+          className={`fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-2.5 rounded-xl shadow-xl border transition-all animate-in fade-in slide-in-from-bottom-5 text-xs font-medium ${
             toast.type === "success"
-              ? "bg-emerald-900 text-white border-emerald-700"
-              : "bg-rose-900 text-white border-rose-700"
+              ? "bg-emerald-600 text-white border-emerald-500"
+              : "bg-rose-600 text-white border-rose-500"
           }`}
         >
           {toast.type === "success" ? (
-            <Check className="w-4 h-4 text-emerald-300 shrink-0" />
+            <Check className="w-4 h-4 text-white shrink-0" />
           ) : (
-            <AlertCircle className="w-4 h-4 text-rose-300 shrink-0" />
+            <AlertCircle className="w-4 h-4 text-white shrink-0" />
           )}
-          <span className="text-sm font-medium">{toast.message}</span>
+          <span className="text-white font-medium">{toast.message}</span>
+          <button
+            onClick={() => setToast(null)}
+            className="ml-1 text-white/80 hover:text-white cursor-pointer"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
         </div>
       )}
 
