@@ -57,13 +57,19 @@ export async function loginWithCredentials(formData: {
       };
     }
 
-    // 4. Authenticate via NextAuth to create session cookie
+    // 4. Authenticate via NextAuth to create session cookie.
+    // NOTE: Do NOT pass redirect: false in Auth.js v5 Server Actions.
+    // redirect: false triggers an internal HTTP fetch that can receive HTML
+    // instead of JSON (ClientFetchError). Let signIn throw NEXT_REDIRECT
+    // instead — it is caught and re-thrown below, triggering the server-side
+    // redirect to "/". Validation is already done above so this will succeed.
     await signIn("credentials", {
       email,
       password,
-      redirect: false,
+      redirectTo: "/",
     });
-
+    // Unreachable: signIn always throws NEXT_REDIRECT on success.
+    // Required so TypeScript sees a complete return path.
     return { success: true };
   } catch (error: any) {
     if (error instanceof AuthError) {

@@ -1279,6 +1279,7 @@ export const TeamScalarFieldEnum = {
   id: 'id',
   name: 'name',
   description: 'description',
+  tlId: 'tlId',
   isActive: 'isActive',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -1349,6 +1350,13 @@ export const LeaveRequestScalarFieldEnum = {
   reason: 'reason',
   status: 'status',
   rejectionReason: 'rejectionReason',
+  escalatedById: 'escalatedById',
+  escalatedAt: 'escalatedAt',
+  escalationReason: 'escalationReason',
+  approverId: 'approverId',
+  approverRole: 'approverRole',
+  approvedAt: 'approvedAt',
+  rejectedAt: 'rejectedAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -1389,8 +1397,12 @@ export const NotificationScalarFieldEnum = {
   userId: 'userId',
   title: 'title',
   message: 'message',
+  type: 'type',
+  entityType: 'entityType',
+  entityId: 'entityId',
   isRead: 'isRead',
-  createdAt: 'createdAt'
+  createdAt: 'createdAt',
+  readAt: 'readAt'
 } as const
 
 export type NotificationScalarFieldEnum = (typeof NotificationScalarFieldEnum)[keyof typeof NotificationScalarFieldEnum]
@@ -1514,7 +1526,9 @@ export type RoleDefinitionOrderByRelevanceFieldEnum = (typeof RoleDefinitionOrde
 
 export const LeaveRequestOrderByRelevanceFieldEnum = {
   reason: 'reason',
-  rejectionReason: 'rejectionReason'
+  rejectionReason: 'rejectionReason',
+  escalationReason: 'escalationReason',
+  approverRole: 'approverRole'
 } as const
 
 export type LeaveRequestOrderByRelevanceFieldEnum = (typeof LeaveRequestOrderByRelevanceFieldEnum)[keyof typeof LeaveRequestOrderByRelevanceFieldEnum]
@@ -1537,7 +1551,8 @@ export type HolidayOrderByRelevanceFieldEnum = (typeof HolidayOrderByRelevanceFi
 
 export const NotificationOrderByRelevanceFieldEnum = {
   title: 'title',
-  message: 'message'
+  message: 'message',
+  entityType: 'entityType'
 } as const
 
 export type NotificationOrderByRelevanceFieldEnum = (typeof NotificationOrderByRelevanceFieldEnum)[keyof typeof NotificationOrderByRelevanceFieldEnum]
@@ -1628,6 +1643,13 @@ export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, '
  * Reference to a field of type 'LeaveStatus'
  */
 export type EnumLeaveStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'LeaveStatus'>
+    
+
+
+/**
+ * Reference to a field of type 'NotificationType'
+ */
+export type EnumNotificationTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'NotificationType'>
     
 
 /**

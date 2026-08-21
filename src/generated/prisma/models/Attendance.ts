@@ -485,10 +485,6 @@ export type AttendanceUncheckedUpdateManyWithoutUserNestedInput = {
   deleteMany?: Prisma.AttendanceScalarWhereInput | Prisma.AttendanceScalarWhereInput[]
 }
 
-export type NullableDateTimeFieldUpdateOperationsInput = {
-  set?: Date | string | null
-}
-
 export type AttendanceCreateWithoutUserInput = {
   date: Date | string
   checkIn?: Date | string | null

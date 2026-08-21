@@ -20,11 +20,23 @@ export type Role = (typeof Role)[keyof typeof Role]
 
 
 export const LeaveStatus = {
-  PENDING: 'PENDING',
+  PENDING_TL: 'PENDING_TL',
+  PENDING_ADMIN: 'PENDING_ADMIN',
   APPROVED: 'APPROVED',
   REJECTED: 'REJECTED',
-  CANCELLED: 'CANCELLED',
-  ESCALATED: 'ESCALATED'
+  CANCELLED: 'CANCELLED'
 } as const
 
 export type LeaveStatus = (typeof LeaveStatus)[keyof typeof LeaveStatus]
+
+
+export const NotificationType = {
+  LEAVE_REQUEST: 'LEAVE_REQUEST',
+  LEAVE_APPROVED: 'LEAVE_APPROVED',
+  LEAVE_REJECTED: 'LEAVE_REJECTED',
+  LEAVE_ESCALATED: 'LEAVE_ESCALATED',
+  LEAVE_CANCELLED: 'LEAVE_CANCELLED',
+  SYSTEM: 'SYSTEM'
+} as const
+
+export type NotificationType = (typeof NotificationType)[keyof typeof NotificationType]

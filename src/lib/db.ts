@@ -16,7 +16,6 @@ function getDatabaseConfig() {
     user: decodeURIComponent(url.username),
     password: decodeURIComponent(url.password),
     database: url.pathname.replace(/^\//, ""),
-
     connectionLimit: 10,
 
     // Required for MySQL caching_sha2_password authentication
