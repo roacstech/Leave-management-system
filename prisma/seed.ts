@@ -5,30 +5,35 @@ import { PrismaClient } from "../src/generated/prisma/client";
 const dbUrl = process.env.DATABASE_URL || "";
 
 // Parse database URL: mysql://user:pass@host:port/dbname
-function parseDbUrl(url: string) {
-  try {
-    const match = url.match(
-      /mysql:\/\/([^:]+):([^@]*)@([^:]+):(\d+)\/(.+)/
-    );
-    if (!match) return null;
-    return {
-      user: match[1],
-      password: decodeURIComponent(match[2]),
-      host: match[3],
-      port: Number(match[4]),
-      database: match[5].split("?")[0],
-    };
-  } catch {
-    return null;
+function parseDbUrl(rawUrl: string) {
+  const urlStr = rawUrl.replace(/^["']|["']$/g, "").trim();
+  let host = (process.env.DB_HOST || "bec-api_leave_management_system").replace(/^["']|["']$/g, "").trim();
+  let port = Number((process.env.DB_PORT || "3306").replace(/^["']|["']$/g, "").trim()) || 3306;
+  let user = (process.env.DB_USER || "mysql_lms").replace(/^["']|["']$/g, "").trim();
+  let password = (process.env.DB_PASSWORD || "vpu06ce5lny4pmdlhm3f").replace(/^["']|["']$/g, "").trim();
+  let database = (process.env.DB_NAME || "leave_management").replace(/^["']|["']$/g, "").trim();
+
+  if (urlStr) {
+    try {
+      const sanitizedUrl = urlStr.replace(/^mysql:\/\//i, "mariadb://");
+      const url = new URL(sanitizedUrl);
+      if (url.hostname) host = url.hostname;
+      if (url.port) port = parseInt(url.port, 10);
+      if (url.username) user = decodeURIComponent(url.username);
+      if (url.password) password = decodeURIComponent(url.password);
+      if (url.pathname) {
+        const cleanPath = url.pathname.replace(/^\//, "").split("?")[0];
+        if (cleanPath) database = cleanPath;
+      }
+    } catch (err) {
+      console.error("[Seed] Error parsing DATABASE_URL:", err);
+    }
   }
+
+  return { host, port, user, password, database };
 }
 
 const parsed = parseDbUrl(dbUrl);
-
-if (!parsed) {
-  console.error("Could not parse DATABASE_URL:", dbUrl);
-  process.exit(1);
-}
 
 const adapter = new PrismaMariaDb({
   host: parsed.host,
