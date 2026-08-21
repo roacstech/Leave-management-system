@@ -86,12 +86,22 @@ function AdminHeader({
         </div>
 
         <button
-          onClick={() => signOut({ callbackUrl: "/login" })}
+          onClick={async () => {
+            try {
+              await signOut({
+                redirectTo: "/login",
+                callbackUrl: "/login",
+              });
+            } catch {
+              window.location.href = "/login";
+            }
+          }}
           title="Sign Out"
           className="p-1.5 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-50 transition-colors ml-1"
         >
           <LogOut className="w-4 h-4" />
         </button>
+
       </div>
     </header>
   );

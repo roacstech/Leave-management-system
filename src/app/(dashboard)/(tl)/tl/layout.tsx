@@ -25,9 +25,14 @@ function TLHeader({
   const currentDate = formatDate(new Date());
 
   const handleLogout = async () => {
-    await signOut({
-      callbackUrl: "/login",
-    });
+    try {
+      await signOut({
+        redirectTo: "/login",
+        callbackUrl: "/login",
+      });
+    } catch {
+      window.location.href = "/login";
+    }
   };
 
   return (

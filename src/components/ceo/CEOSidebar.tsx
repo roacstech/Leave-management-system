@@ -79,8 +79,16 @@ export default function CEOSidebar({
   const { settings } = useSettings();
 
   const handleLogout = async () => {
-    await signOut({ callbackUrl: "/login" });
+    try {
+      await signOut({
+        redirectTo: "/login",
+        callbackUrl: "/login",
+      });
+    } catch {
+      window.location.href = "/login";
+    }
   };
+
 
   return (
     <aside className="w-60 bg-white text-slate-800 flex flex-col h-full border-r border-slate-200 select-none">
