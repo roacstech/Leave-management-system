@@ -12,10 +12,13 @@ export class InvalidCredentialsError extends CredentialsSignin {
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   trustHost: true,
-  secret:
+  secret: (
     process.env.AUTH_SECRET ||
     process.env.NEXTAUTH_SECRET ||
-    "cf8cb7e8f776a5848ba2dbb26c027fa578082107e4cbb7c5cb1d4f94a44e20ca",
+    "cf8cb7e8f776a5848ba2dbb26c027fa578082107e4cbb7c5cb1d4f94a44e20ca"
+  )
+    .replace(/^["']|["']$/g, "")
+    .trim(),
   pages: {
     signIn: "/login",
   },
