@@ -2,32 +2,29 @@ import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 import { PrismaClient } from "@/generated/prisma/client";
 
 function getDatabaseConfig() {
-  const dbUrl = process.env.DATABASE_URL || "";
-  let host = "leave_management_system";
-  let port = 3306;
-  let user = "mysql_lms";
-  let password = process.env.DB_PASSWORD || "vpu06ce5lny4pmdlhm3f";
-  let database = "leave_management";
+  const rawDbUrl = process.env.DATABASE_URL || "";
+  const dbUrl = rawDbUrl.replace(/^["']|["']$/g, "").trim();
+
+  let host = (process.env.DB_HOST || "bec-api_leave_management_system").replace(/^["']|["']$/g, "").trim();
+  let port = Number((process.env.DB_PORT || "3306").replace(/^["']|["']$/g, "").trim()) || 3306;
+  let user = (process.env.DB_USER || "mysql_lms").replace(/^["']|["']$/g, "").trim();
+  let password = (process.env.DB_PASSWORD || "vpu06ce5lny4pmdlhm3f").replace(/^["']|["']$/g, "").trim();
+  let database = (process.env.DB_NAME || "leave_management").replace(/^["']|["']$/g, "").trim();
 
   if (dbUrl) {
-    const match = dbUrl.match(/mysql:\/\/([^:]+):([^@]*)@([^:]+):(\d+)\/(.+)/);
-    if (match) {
-      user = match[1];
-      password = decodeURIComponent(match[2]);
-      host = match[3];
-      port = Number(match[4]);
-      database = match[5].split("?")[0];
-    } else {
-      try {
-        const url = new URL(dbUrl.replace(/^mysql:\/\//, "http://"));
-        if (url.hostname) host = url.hostname;
-        if (url.port) port = parseInt(url.port, 10);
-        if (url.username) user = url.username;
-        if (url.password) password = decodeURIComponent(url.password);
-        if (url.pathname) database = url.pathname.replace(/^\//, "").split("?")[0];
-      } catch (err) {
-        console.error("DB URL parse error:", err);
+    try {
+      const sanitizedUrl = dbUrl.replace(/^mysql:\/\//i, "mariadb://");
+      const url = new URL(sanitizedUrl);
+      if (url.hostname) host = url.hostname;
+      if (url.port) port = parseInt(url.port, 10);
+      if (url.username) user = decodeURIComponent(url.username);
+      if (url.password) password = decodeURIComponent(url.password);
+      if (url.pathname) {
+        const cleanPath = url.pathname.replace(/^\//, "").split("?")[0];
+        if (cleanPath) database = cleanPath;
       }
+    } catch (err) {
+      console.error("[DB Config] Error parsing DATABASE_URL, using fallback config:", err);
     }
   }
 
@@ -38,10 +35,10 @@ function getDatabaseConfig() {
     port,
     user,
     password,
-    database: database || "leave_management",
-    connectionLimit: 5,
-    connectTimeout: 5000,
-    acquireTimeout: 5000,
+    database,
+    connectionLimit: 10,
+    connectTimeout: 10000,
+    acquireTimeout: 10000,
   };
 }
 
@@ -55,6 +52,4 @@ export const prisma =
     adapter: new PrismaMariaDb(getDatabaseConfig()),
   });
 
-if (process.env.NODE_ENV !== "production") {
-  globalForPrisma.prisma = prisma;
-}
+globalForPrisma.prisma = prisma;
