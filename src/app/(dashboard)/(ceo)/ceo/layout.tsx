@@ -9,6 +9,7 @@ import {
   Calendar,
   ShieldCheck,
 } from "lucide-react";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 
 export default function CEOLayout({
   children,
@@ -86,6 +87,8 @@ export default function CEOLayout({
             >
               <RotateCw className="w-4 h-4" />
             </button>
+
+            <NotificationBell />
 
             <div className="h-6 w-px bg-slate-200 mx-1 hidden sm:block" />
 

@@ -16,6 +16,7 @@ import {
   LogOut,
   ChevronRight,
   Sparkles,
+  Bell,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { useSettings } from "@/contexts/SettingsContext";
@@ -67,6 +68,11 @@ const navItems: NavItem[] = [
     name: "Company Holidays",
     href: "/ceo/holidays",
     icon: CalendarDays,
+  },
+  {
+    name: "Notifications",
+    href: "/ceo/notifications",
+    icon: Bell,
   },
 ];
 

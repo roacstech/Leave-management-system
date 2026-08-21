@@ -149,13 +149,18 @@ export default function TLLeaveRequestsPage() {
   const handleProcessAction = async () => {
     if (!actionModal.request) return;
 
-    if (actionModal.type === "REJECT" && !actionNote.trim()) {
-      showToast("Please provide a reason for rejecting the request.", "error");
-      return;
-    }
-
     try {
+      if (actionModal.type === "REJECT" && !actionNote.trim()) {
+        showToast("Please provide a reason for rejecting the leave request.", "error");
+        return;
+      }
+      if (actionModal.type === "ESCALATE" && !actionNote.trim()) {
+        showToast("Please provide a reason for escalating this request to Administrator.", "error");
+        return;
+      }
+
       setProcessing(true);
+
       const bodyPayload: any = {
         id: actionModal.request.id,
         status:
@@ -169,7 +174,8 @@ export default function TLLeaveRequestsPage() {
       if (actionModal.type === "REJECT") {
         bodyPayload.rejectionReason = actionNote.trim();
       } else if (actionModal.type === "ESCALATE") {
-        bodyPayload.escalationNote = actionNote.trim() || "Escalated to Administrator for review";
+        bodyPayload.escalationNote = actionNote.trim();
+        bodyPayload.escalationReason = actionNote.trim();
       }
 
       const res = await fetch("/api/tl/leaves", {

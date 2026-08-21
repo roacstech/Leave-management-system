@@ -3,10 +3,10 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import {
   getSystemSettings,
-  canSendNotification,
   formatDateWithPattern,
   validateLeaveApplication,
 } from "@/lib/settings";
+import { createNotification, resolveEmployeeTeamLead } from "@/lib/notifications";
 
 export const dynamic = "force-dynamic";
 
@@ -28,6 +28,15 @@ export async function POST(request: NextRequest) {
     if (!leaveTypeId || !startDate || !endDate) {
       return NextResponse.json(
         { success: false, error: "Leave type, start date, and end date are required." },
+        { status: 400 }
+      );
+    }
+
+    // 1. Resolve Assigned Team Lead
+    const tlResolution = await resolveEmployeeTeamLead(userId);
+    if (!tlResolution.success || !tlResolution.tl) {
+      return NextResponse.json(
+        { success: false, error: tlResolution.error || "No assigned Team Lead found for your team. Please contact Admin." },
         { status: 400 }
       );
     }
@@ -73,11 +82,10 @@ export async function POST(request: NextRequest) {
     }
 
     const requestedDays = isHalfDay ? 0.5 : workingDaysCount;
-
     const settings = await getSystemSettings();
     const currentYear = new Date().getFullYear();
 
-    // Check balance
+    // Check leave balance
     const balance = await prisma.leaveBalance.findUnique({
       where: {
         userId_leaveTypeId_year: {
@@ -132,48 +140,36 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Notify Team Leader & Admins
-    if (canSendNotification("NEW_LEAVE_REQUEST", "IN_APP", settings)) {
-      try {
-        const recipients = await prisma.user.findMany({
-          where: {
-            OR: [
-              { role: "ADMIN", isActive: true },
-              { role: "CEO", isActive: true },
-              ...(newRequest.user.teamId
-                ? [{ teamId: newRequest.user.teamId, role: "TL" as const, isActive: true }]
-                : []),
-            ],
-          },
-          select: { id: true },
-        });
+    const formattedStart = formatDateWithPattern(start, settings.dateFormat, settings.timezone);
+    const formattedEnd = formatDateWithPattern(end, settings.dateFormat, settings.timezone);
 
-        const formattedStart = formatDateWithPattern(start, settings.dateFormat, settings.timezone);
-        const formattedEnd = formatDateWithPattern(end, settings.dateFormat, settings.timezone);
+    // 2. Notify ONLY the assigned Team Lead
+    await createNotification({
+      userId: tlResolution.tl.id,
+      type: "LEAVE_REQUEST",
+      title: "New Leave Request",
+      message: `${newRequest.user.name} requested ${newRequest.leaveType.name} from ${formattedStart} to ${formattedEnd}.`,
+      entityType: "LEAVE_REQUEST",
+      entityId: newRequest.id,
+    });
 
-        for (const recipient of recipients) {
-          await prisma.notification.create({
-            data: {
-              userId: recipient.id,
-              title: "New Leave Application",
-              message: `${newRequest.user.name} applied for ${requestedDays} day(s) of ${newRequest.leaveType.name} (${formattedStart} - ${formattedEnd}).`,
-            },
-          });
-        }
-      } catch (notifErr) {
-        console.warn("Could not send leave notification:", notifErr);
-      }
-    }
-
-    // Audit Log
+    // 3. Create Audit Log
     try {
       await prisma.auditLog.create({
         data: {
           userId,
-          action: "EMPLOYEE_APPLY_LEAVE",
+          action: "LEAVE_REQUEST_CREATED",
           entity: "LeaveRequest",
           entityId: newRequest.id,
-          details: `Employee submitted a ${newRequest.leaveType.name} application for ${requestedDays} day(s)`.substring(0, 191),
+          details: JSON.stringify({
+            leaveRequestId: newRequest.id,
+            employeeId: userId,
+            assignedTLId: tlResolution.tl.id,
+            leaveType: newRequest.leaveType.name,
+            requestedDays,
+            startDate: formattedStart,
+            endDate: formattedEnd,
+          }),
         },
       });
     } catch (auditErr) {
@@ -194,7 +190,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// PATCH cancel own pending leave request
+// PATCH cancel own pending or escalated leave request
 export async function PATCH(request: NextRequest) {
   try {
     const session = await auth();
@@ -221,6 +217,10 @@ export async function PATCH(request: NextRequest) {
         id: Number(id),
         userId,
       },
+      include: {
+        user: true,
+        leaveType: true,
+      },
     });
 
     if (!existing) {
@@ -230,9 +230,9 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    if (existing.status !== "PENDING") {
+    if (existing.status !== "PENDING" && existing.status !== "ESCALATED") {
       return NextResponse.json(
-        { success: false, error: "Only PENDING leave requests can be cancelled." },
+        { success: false, error: `Only PENDING or ESCALATED leave requests can be cancelled. Current status: ${existing.status}` },
         { status: 400 }
       );
     }
@@ -243,6 +243,58 @@ export async function PATCH(request: NextRequest) {
         status: "CANCELLED",
       },
     });
+
+    const settings = await getSystemSettings();
+    const formattedStart = formatDateWithPattern(existing.startDate, settings.dateFormat, settings.timezone);
+    const formattedEnd = formatDateWithPattern(existing.endDate, settings.dateFormat, settings.timezone);
+
+    // Notify the assigned TL if pending, or Admin if escalated
+    const tlResolution = await resolveEmployeeTeamLead(userId);
+    if (existing.status === "PENDING" && tlResolution.success && tlResolution.tl) {
+      await createNotification({
+        userId: tlResolution.tl.id,
+        type: "LEAVE_CANCELLED",
+        title: "Leave Request Cancelled",
+        message: `${existing.user.name} cancelled their ${existing.leaveType.name} request (${formattedStart} - ${formattedEnd}).`,
+        entityType: "LEAVE_REQUEST",
+        entityId: existing.id,
+      });
+    } else if (existing.status === "ESCALATED") {
+      const admins = await prisma.user.findMany({
+        where: { role: { in: ["ADMIN", "CEO"] }, isActive: true },
+        select: { id: true },
+      });
+      for (const admin of admins) {
+        await createNotification({
+          userId: admin.id,
+          type: "LEAVE_CANCELLED",
+          title: "Escalated Leave Cancelled",
+          message: `${existing.user.name} cancelled their escalated ${existing.leaveType.name} request (${formattedStart} - ${formattedEnd}).`,
+          entityType: "LEAVE_REQUEST",
+          entityId: existing.id,
+        });
+      }
+    }
+
+    // Audit Log
+    try {
+      await prisma.auditLog.create({
+        data: {
+          userId,
+          action: "LEAVE_REQUEST_CANCELLED",
+          entity: "LeaveRequest",
+          entityId: existing.id,
+          details: JSON.stringify({
+            leaveRequestId: existing.id,
+            employeeId: userId,
+            oldStatus: existing.status,
+            newStatus: "CANCELLED",
+          }),
+        },
+      });
+    } catch (auditErr) {
+      console.warn("Could not create audit log:", auditErr);
+    }
 
     return NextResponse.json({
       success: true,

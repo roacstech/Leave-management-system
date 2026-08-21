@@ -70,12 +70,12 @@ export default function TLSidebar({
       icon: FileSpreadsheet,
       badge: null,
     },
-    // {
-    //   name: "Notifications",
-    //   href: "/tl/notifications",
-    //   icon: Bell,
-    //   badge: null,
-    // },
+    {
+      name: "Notifications",
+      href: "/tl/notifications",
+      icon: Bell,
+      badge: null,
+    },
     {
       name: "Settings",
       href: "/tl/settings",

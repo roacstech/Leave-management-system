@@ -5,11 +5,11 @@ import { signOut } from "next-auth/react";
 import EmployeeSidebar from "@/components/employee/EmployeeSidebar";
 import {
   Menu,
-  Bell,
   Calendar,
   RefreshCw,
   LogOut,
 } from "lucide-react";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { SettingsProvider, useSettings } from "@/contexts/SettingsContext";
 
 function EmployeeHeader({
@@ -68,15 +68,7 @@ function EmployeeHeader({
           <RefreshCw className="w-4 h-4" />
         </button>
 
-        <div className="relative">
-          <button
-            type="button"
-            className="p-1.5 rounded-md text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-all"
-            aria-label="Notifications"
-          >
-            <Bell className="w-4 h-4" />
-          </button>
-        </div>
+        <NotificationBell />
 
         <div className="h-4 w-px bg-slate-200 hidden sm:block mx-1" />
 

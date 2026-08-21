@@ -15,6 +15,7 @@ import {
   Building2,
   ChevronRight,
   Network,
+  Bell,
 } from "lucide-react";
 import { useSettings } from "@/contexts/SettingsContext";
 
@@ -93,6 +94,12 @@ export default function AdminSidebar({
       name: "Attendance",
       href: "/admin/attendance",
       icon: Clock3,
+      badge: null,
+    },
+    {
+      name: "Notifications",
+      href: "/admin/notifications",
+      icon: Bell,
       badge: null,
     },
     {

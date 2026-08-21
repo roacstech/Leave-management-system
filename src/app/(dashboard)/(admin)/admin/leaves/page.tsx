@@ -139,10 +139,15 @@ export default function LeavesAdminPage() {
     const isApprove = modalState.type === "APPROVE";
     const status = isApprove ? "APPROVED" : "REJECTED";
 
+    if (!isApprove && !actionReason.trim()) {
+      showToast("Please provide a reason for rejecting the leave request.", "error");
+      return;
+    }
+
     try {
       setSubmitting(true);
       const body: any = { id, status };
-      if (!isApprove && actionReason.trim()) {
+      if (!isApprove) {
         body.rejectionReason = actionReason.trim();
       }
 

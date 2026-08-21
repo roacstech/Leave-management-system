@@ -12,6 +12,7 @@ import {
   CalendarCheck2,
   Settings,
   PieChart,
+  Bell,
 } from "lucide-react";
 import { useSettings } from "@/contexts/SettingsContext";
 
@@ -57,6 +58,11 @@ export default function EmployeeSidebar({
       name: "My Attendance",
       href: "/employee/attendance",
       icon: Clock3,
+    },
+    {
+      name: "Notifications",
+      href: "/employee/notifications",
+      icon: Bell,
     },
     {
       name: "Settings",

@@ -1,0 +1,157 @@
+import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/db";
+import { getSystemSettings, formatDateWithPattern } from "@/lib/settings";
+import { createNotification } from "@/lib/notifications";
+
+export const dynamic = "force-dynamic";
+
+// PATCH /api/leave-requests/[id]/reject
+export async function PATCH(
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { id } = await context.params;
+    const leaveRequestId = Number(id);
+    if (isNaN(leaveRequestId)) {
+      return NextResponse.json({ success: false, error: "Invalid leave request ID" }, { status: 400 });
+    }
+
+    const body = await request.json().catch(() => ({}));
+    const reason = body?.reason?.trim() || body?.rejectionReason?.trim();
+
+    if (!reason) {
+      return NextResponse.json(
+        { success: false, error: "A rejection reason is required." },
+        { status: 400 }
+      );
+    }
+
+    const userRole = session.user.role;
+    const userId = Number(session.user.id);
+    const userName = session.user.name || (userRole === "TL" ? "Team Leader" : "Administrator");
+
+    // Fetch existing leave request
+    const existing = await prisma.leaveRequest.findUnique({
+      where: { id: leaveRequestId },
+      include: {
+        user: {
+          include: {
+            team: true,
+          },
+        },
+        leaveType: true,
+      },
+    });
+
+    if (!existing) {
+      return NextResponse.json({ success: false, error: "Leave request not found." }, { status: 404 });
+    }
+
+    // Role-based authorization & workflow verification
+    if (userRole === "EMPLOYEE") {
+      return NextResponse.json({ success: false, error: "Employees cannot reject leave requests." }, { status: 403 });
+    }
+
+    if (userRole === "TL") {
+      const isAssignedTL =
+        (existing.user.team && existing.user.team.tlId === userId) ||
+        existing.user.reportingToId === userId;
+
+      if (!isAssignedTL) {
+        return NextResponse.json(
+          { success: false, error: "Forbidden: You are not the assigned Team Lead for this employee." },
+          { status: 403 }
+        );
+      }
+
+      if (existing.status === "ESCALATED") {
+        return NextResponse.json(
+          { success: false, error: "This request has been escalated to Admin and can no longer be processed by the Team Lead." },
+          { status: 400 }
+        );
+      }
+
+      if (existing.status !== "PENDING") {
+        return NextResponse.json(
+          { success: false, error: `This leave request has already been ${existing.status.toLowerCase()}.` },
+          { status: 400 }
+        );
+      }
+    } else if (userRole === "ADMIN" || userRole === "CEO") {
+      if (existing.status === "APPROVED" || existing.status === "REJECTED" || existing.status === "CANCELLED") {
+        return NextResponse.json(
+          { success: false, error: `This leave request has already been ${existing.status.toLowerCase()}.` },
+          { status: 400 }
+        );
+      }
+    }
+
+    const settings = await getSystemSettings();
+    const formattedStart = formatDateWithPattern(existing.startDate, settings.dateFormat, settings.timezone);
+    const formattedEnd = formatDateWithPattern(existing.endDate, settings.dateFormat, settings.timezone);
+
+    // Update LeaveRequest in transaction with AuditLog
+    const updated = await prisma.$transaction(async (tx) => {
+      const req = await tx.leaveRequest.update({
+        where: { id: leaveRequestId },
+        data: {
+          status: "REJECTED",
+          approverId: userId,
+          approverRole: userRole,
+          rejectedAt: new Date(),
+          rejectionReason: reason,
+        },
+      });
+
+      await tx.auditLog.create({
+        data: {
+          userId: userId,
+          action: "LEAVE_REQUEST_REJECTED",
+          entity: "LeaveRequest",
+          entityId: leaveRequestId,
+          details: JSON.stringify({
+            leaveRequestId,
+            employeeId: existing.userId,
+            actionBy: userId,
+            actionByRole: userRole,
+            oldStatus: existing.status,
+            newStatus: "REJECTED",
+            rejectionReason: reason,
+          }),
+        },
+      });
+
+      return req;
+    });
+
+    // Create & dispatch notification strictly to the Employee
+    const rejecterTitle = userRole === "TL" ? userName : "Admin";
+    await createNotification({
+      userId: existing.userId,
+      type: "LEAVE_REJECTED",
+      title: "Leave Request Rejected",
+      message: `Your ${existing.leaveType.name} request from ${formattedStart} to ${formattedEnd} was rejected by ${rejecterTitle}. Reason: ${reason}`,
+      entityType: "LEAVE_REQUEST",
+      entityId: leaveRequestId,
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: `Leave request #${leaveRequestId} has been rejected.`,
+      leaveRequest: updated,
+    });
+  } catch (error: any) {
+    console.error("Reject leave request error:", error);
+    return NextResponse.json(
+      { success: false, error: error.message || "Failed to reject leave request" },
+      { status: 500 }
+    );
+  }
+}

@@ -3,9 +3,9 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import {
   getSystemSettings,
-  canSendNotification,
   formatDateWithPattern,
 } from "@/lib/settings";
+import { createNotification } from "@/lib/notifications";
 
 export const dynamic = "force-dynamic";
 
@@ -29,27 +29,21 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get("limit") || "10", 10);
     const skip = (page - 1) * limit;
 
-    // 1. Fetch TL profile to find team assignment
-    const tlUser = await prisma.user.findUnique({
-      where: { id: tlId },
-      include: { team: true },
+    // 1. Fetch assigned team members (either by direct reportingToId or by Team tlId)
+    const tlTeams = await prisma.team.findMany({
+      where: { tlId },
+      select: { id: true },
     });
-
-    if (!tlUser) {
-      return NextResponse.json(
-        { success: false, error: "Team Leader record not found" },
-        { status: 404 }
-      );
-    }
-
-    // 2. Fetch assigned team members
-    const teamWhere: any = {
-      role: "EMPLOYEE",
-      reportingToId: tlId,
-    };
+    const tlTeamIds = tlTeams.map((t) => t.id);
 
     const teamEmployees = await prisma.user.findMany({
-      where: teamWhere,
+      where: {
+        role: "EMPLOYEE",
+        OR: [
+          { reportingToId: tlId },
+          ...(tlTeamIds.length > 0 ? [{ teamId: { in: tlTeamIds } }] : []),
+        ],
+      },
       select: { id: true },
     });
 
@@ -76,7 +70,7 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // 3. Build where clause for leave requests
+    // 2. Build where clause for leave requests
     const whereClause: any = {
       userId: { in: memberIds },
     };
@@ -97,8 +91,7 @@ export async function GET(request: NextRequest) {
       ];
     }
 
-    // 4. Fetch metrics & paginated requests
-    const currentYear = new Date().getFullYear();
+    // 3. Fetch metrics & paginated requests
     const [
       totalCount,
       pendingCount,
@@ -117,31 +110,29 @@ export async function GET(request: NextRequest) {
       prisma.leaveRequest.count({ where: whereClause }),
       prisma.leaveRequest.findMany({
         where: whereClause,
+        skip,
+        take: limit,
         include: {
           user: {
             select: {
               id: true,
               name: true,
               email: true,
-              team: { select: { id: true, name: true } },
+              team: {
+                select: { id: true, name: true },
+              },
               leaveBalances: {
-                where: { year: currentYear },
                 include: { leaveType: true },
               },
             },
           },
           leaveType: true,
         },
-        orderBy: {
-          createdAt: "desc",
-        },
-        skip,
-        take: limit,
+        orderBy: { createdAt: "desc" },
       }),
       prisma.leaveType.findMany({
         where: { isActive: true },
         select: { id: true, name: true, code: true },
-        orderBy: { name: "asc" },
       }),
     ]);
 
@@ -166,7 +157,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error: any) {
-    console.error("Fetch TL leave requests error:", error);
+    console.error("TL Leaves fetch error:", error);
     return NextResponse.json(
       { success: false, error: error.message || "Failed to fetch leave requests" },
       { status: 500 }
@@ -174,7 +165,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// PATCH update a leave request status (Approve / Reject / Escalate to Admin)
+// PATCH update leave request status by Team Lead (APPROVE, REJECT, ESCALATE)
 export async function PATCH(request: NextRequest) {
   try {
     const session = await auth();
@@ -186,8 +177,9 @@ export async function PATCH(request: NextRequest) {
     }
 
     const tlId = Number(session.user.id);
+    const tlName = session.user.name || "Team Leader";
     const body = await request.json();
-    const { id, status, rejectionReason, escalationNote } = body;
+    const { id, status, rejectionReason, escalationNote, escalationReason } = body;
 
     if (!id || !status) {
       return NextResponse.json(
@@ -196,12 +188,17 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    const settings = await getSystemSettings();
-
-    // Check if leave request exists
+    const leaveRequestId = Number(id);
     const existing = await prisma.leaveRequest.findUnique({
-      where: { id: Number(id) },
-      include: { user: true, leaveType: true },
+      where: { id: leaveRequestId },
+      include: {
+        user: {
+          include: {
+            team: true,
+          },
+        },
+        leaveType: true,
+      },
     });
 
     if (!existing) {
@@ -211,48 +208,61 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    let noteText: string | null = null;
-    if (status === "REJECTED") {
-      noteText = rejectionReason ? String(rejectionReason).trim() : "Rejected by Team Leader";
-    } else if (status === "ESCALATED") {
-      noteText = escalationNote ? String(escalationNote).trim() : "Escalated to Administrator for special approval";
+    // 1. Ownership & Authorization check: verify TL is assigned to this employee
+    const isAssignedTL =
+      (existing.user.team && existing.user.team.tlId === tlId) ||
+      existing.user.reportingToId === tlId;
+
+    if (!isAssignedTL) {
+      return NextResponse.json(
+        { success: false, error: "Forbidden: You are not the assigned Team Lead for this employee." },
+        { status: 403 }
+      );
     }
 
-    // Update leave request status in Prisma
-    const updated = await prisma.leaveRequest.update({
-      where: { id: Number(id) },
-      data: {
-        status: status,
-        rejectionReason: noteText,
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
-        leaveType: true,
-      },
-    });
+    // 2. State & Idempotency check
+    if (existing.status === "ESCALATED") {
+      return NextResponse.json(
+        { success: false, error: "This request has been escalated to Admin and can no longer be processed by the Team Lead." },
+        { status: 400 }
+      );
+    }
 
+    if (existing.status !== "PENDING") {
+      return NextResponse.json(
+        { success: false, error: `This leave request has already been ${existing.status.toLowerCase()}.` },
+        { status: 400 }
+      );
+    }
+
+    const settings = await getSystemSettings();
     const formattedStart = formatDateWithPattern(existing.startDate, settings.dateFormat, settings.timezone);
     const formattedEnd = formatDateWithPattern(existing.endDate, settings.dateFormat, settings.timezone);
+    const daysDiff = Math.max(
+      1,
+      Math.round(
+        (new Date(existing.endDate).getTime() - new Date(existing.startDate).getTime()) /
+          (1000 * 60 * 60 * 24)
+      ) + 1
+    );
+    const leaveYear = new Date(existing.startDate).getFullYear();
 
-    // If approved, update leave balance
-    if (status === "APPROVED" && existing.status !== "APPROVED") {
-      const daysDiff = Math.max(
-        1,
-        Math.round(
-          (new Date(existing.endDate).getTime() - new Date(existing.startDate).getTime()) /
-            (1000 * 60 * 60 * 24)
-        ) + 1
-      );
-      const leaveYear = new Date(existing.startDate).getFullYear();
+    if (status === "APPROVED") {
+      // Approve Leave Request
+      const updated = await prisma.$transaction(async (tx) => {
+        const req = await tx.leaveRequest.update({
+          where: { id: leaveRequestId },
+          data: {
+            status: "APPROVED",
+            approverId: tlId,
+            approverRole: "TL",
+            approvedAt: new Date(),
+            rejectionReason: null,
+          },
+        });
 
-      try {
-        const bal = await prisma.leaveBalance.findUnique({
+        // Deduct balance
+        const balance = await tx.leaveBalance.findUnique({
           where: {
             userId_leaveTypeId_year: {
               userId: existing.userId,
@@ -262,89 +272,186 @@ export async function PATCH(request: NextRequest) {
           },
         });
 
-        if (bal) {
-          await prisma.leaveBalance.update({
-            where: { id: bal.id },
+        if (balance) {
+          await tx.leaveBalance.update({
+            where: { id: balance.id },
             data: {
-              used: bal.used + daysDiff,
-              remaining: Math.max(0, bal.total - (bal.used + daysDiff)),
+              used: balance.used + daysDiff,
+              remaining: Math.max(0, balance.total - (balance.used + daysDiff)),
             },
           });
         }
-      } catch (balErr) {
-        console.warn("Could not update leave balance:", balErr);
-      }
-    }
 
-    // Notifications
-    try {
-      if (status === "APPROVED" || status === "REJECTED") {
-        await prisma.notification.create({
+        // Audit Log
+        await tx.auditLog.create({
           data: {
-            userId: existing.userId,
-            title: `Leave Request ${status === "APPROVED" ? "Approved" : "Rejected"}`,
-            message: `Your Team Leader ${status.toLowerCase()} your ${existing.leaveType.name} request (${formattedStart} - ${formattedEnd}).${
-              status === "REJECTED" && noteText ? ` Reason: ${noteText}` : ""
-            }`,
-          },
-        });
-      } else if (status === "ESCALATED") {
-        // Notify employee of escalation
-        await prisma.notification.create({
-          data: {
-            userId: existing.userId,
-            title: "Leave Request Escalated",
-            message: `Your ${existing.leaveType.name} request (${formattedStart} - ${formattedEnd}) has been escalated to Administration for review.`,
+            userId: tlId,
+            action: "LEAVE_REQUEST_APPROVED",
+            entity: "LeaveRequest",
+            entityId: leaveRequestId,
+            details: JSON.stringify({
+              leaveRequestId,
+              employeeId: existing.userId,
+              actionBy: tlId,
+              actionByRole: "TL",
+              oldStatus: "PENDING",
+              newStatus: "APPROVED",
+              days: daysDiff,
+            }),
           },
         });
 
-        // Notify admins that a request was escalated
-        const admins = await prisma.user.findMany({
-          where: { role: { in: ["ADMIN", "CEO"] }, isActive: true },
-          select: { id: true },
-        });
-
-        for (const adm of admins) {
-          await prisma.notification.create({
-            data: {
-              userId: adm.id,
-              title: "Leave Request Escalated by TL",
-              message: `TL escalated leave request #${existing.id} for ${existing.user.name} (${existing.leaveType.name}: ${formattedStart} - ${formattedEnd}). Reason: ${noteText}`,
-            },
-          });
-        }
-      }
-    } catch (notifErr) {
-      console.warn("Could not create notification:", notifErr);
-    }
-
-    // Audit Log
-    try {
-      await prisma.auditLog.create({
-        data: {
-          userId: tlId,
-          action: `TL_${status}_LEAVE`,
-          entity: "LeaveRequest",
-          entityId: Number(id),
-          details: `Team Leader marked leave request #${id} as ${status} for ${existing.user.name}.${noteText ? ` Note: ${noteText}` : ""}`.substring(0, 191),
-        },
+        return req;
       });
-    } catch (auditErr) {
-      console.warn("Could not create audit log:", auditErr);
+
+      // Notify Employee ONLY
+      await createNotification({
+        userId: existing.userId,
+        type: "LEAVE_APPROVED",
+        title: "Leave Request Approved",
+        message: `Your ${existing.leaveType.name} request from ${formattedStart} to ${formattedEnd} has been approved by ${tlName}.`,
+        entityType: "LEAVE_REQUEST",
+        entityId: leaveRequestId,
+      });
+
+      return NextResponse.json({
+        success: true,
+        message: `Leave request #${leaveRequestId} has been approved successfully!`,
+        leaveRequest: updated,
+      });
+    } else if (status === "REJECTED") {
+      const reason = rejectionReason?.trim();
+      if (!reason) {
+        return NextResponse.json(
+          { success: false, error: "A rejection reason is required." },
+          { status: 400 }
+        );
+      }
+
+      const updated = await prisma.$transaction(async (tx) => {
+        const req = await tx.leaveRequest.update({
+          where: { id: leaveRequestId },
+          data: {
+            status: "REJECTED",
+            approverId: tlId,
+            approverRole: "TL",
+            rejectedAt: new Date(),
+            rejectionReason: reason,
+          },
+        });
+
+        await tx.auditLog.create({
+          data: {
+            userId: tlId,
+            action: "LEAVE_REQUEST_REJECTED",
+            entity: "LeaveRequest",
+            entityId: leaveRequestId,
+            details: JSON.stringify({
+              leaveRequestId,
+              employeeId: existing.userId,
+              actionBy: tlId,
+              actionByRole: "TL",
+              oldStatus: "PENDING",
+              newStatus: "REJECTED",
+              rejectionReason: reason,
+            }),
+          },
+        });
+
+        return req;
+      });
+
+      // Notify Employee ONLY
+      await createNotification({
+        userId: existing.userId,
+        type: "LEAVE_REJECTED",
+        title: "Leave Request Rejected",
+        message: `Your ${existing.leaveType.name} request from ${formattedStart} to ${formattedEnd} was rejected by ${tlName}. Reason: ${reason}`,
+        entityType: "LEAVE_REQUEST",
+        entityId: leaveRequestId,
+      });
+
+      return NextResponse.json({
+        success: true,
+        message: `Leave request #${leaveRequestId} has been rejected.`,
+        leaveRequest: updated,
+      });
+    } else if (status === "ESCALATED") {
+      const note = (escalationReason || escalationNote)?.trim();
+      if (!note) {
+        return NextResponse.json(
+          { success: false, error: "An escalation reason is required." },
+          { status: 400 }
+        );
+      }
+
+      const updated = await prisma.$transaction(async (tx) => {
+        const req = await tx.leaveRequest.update({
+          where: { id: leaveRequestId },
+          data: {
+            status: "ESCALATED",
+            escalatedById: tlId,
+            escalatedAt: new Date(),
+            escalationReason: note,
+          },
+        });
+
+        await tx.auditLog.create({
+          data: {
+            userId: tlId,
+            action: "LEAVE_REQUEST_ESCALATED",
+            entity: "LeaveRequest",
+            entityId: leaveRequestId,
+            details: JSON.stringify({
+              leaveRequestId,
+              employeeId: existing.userId,
+              escalatedBy: tlId,
+              escalatedByName: tlName,
+              escalationReason: note,
+              oldStatus: "PENDING",
+              newStatus: "ESCALATED",
+            }),
+          },
+        });
+
+        return req;
+      });
+
+      // 1. Notify all active Admin users
+      const admins = await prisma.user.findMany({
+        where: { role: { in: ["ADMIN", "CEO"] }, isActive: true },
+        select: { id: true },
+      });
+
+      for (const adm of admins) {
+        await createNotification({
+          userId: adm.id,
+          type: "LEAVE_ESCALATED",
+          title: "Leave Request Escalated",
+          message: `${tlName} escalated ${existing.user.name}'s ${existing.leaveType.name} request for ${formattedStart} - ${formattedEnd} (${daysDiff} days). Reason: ${note}`,
+          entityType: "LEAVE_REQUEST",
+          entityId: leaveRequestId,
+        });
+      }
+
+      // 2. Notify Employee
+      await createNotification({
+        userId: existing.userId,
+        type: "LEAVE_ESCALATED",
+        title: "Leave Request Escalated",
+        message: `Your ${existing.leaveType.name} request (${formattedStart} - ${formattedEnd}) has been forwarded to Admin for further approval.`,
+        entityType: "LEAVE_REQUEST",
+        entityId: leaveRequestId,
+      });
+
+      return NextResponse.json({
+        success: true,
+        message: `Leave request #${leaveRequestId} has been escalated to Administration.`,
+        leaveRequest: updated,
+      });
     }
 
-    const actionText =
-      status === "APPROVED"
-        ? "approved"
-        : status === "REJECTED"
-        ? "rejected"
-        : "escalated to Administrator";
-
-    return NextResponse.json({
-      success: true,
-      message: `Leave request #${id} has been ${actionText} successfully!`,
-      leaveRequest: updated,
-    });
+    return NextResponse.json({ success: false, error: `Invalid status: ${status}` }, { status: 400 });
   } catch (error: any) {
     console.error("TL Leave action error:", error);
     return NextResponse.json(
