@@ -6,6 +6,7 @@ import {
   canSendNotification,
   formatDateWithPattern,
 } from "@/lib/settings";
+import { sendLeaveDecisionEmail, sendLeaveEscalatedEmail } from "@/lib/mail";
 
 export const dynamic = "force-dynamic";
 
@@ -276,42 +277,89 @@ export async function PATCH(request: NextRequest) {
       }
     }
 
-    // Notifications
+    // Notifications (In-App & Email)
     try {
+      const durationDays = Math.max(
+        1,
+        Math.ceil((new Date(existing.endDate).getTime() - new Date(existing.startDate).getTime()) / (1000 * 60 * 60 * 24)) + 1
+      );
+
       if (status === "APPROVED" || status === "REJECTED") {
-        await prisma.notification.create({
-          data: {
-            userId: existing.userId,
-            title: `Leave Request ${status === "APPROVED" ? "Approved" : "Rejected"}`,
-            message: `Your Team Leader ${status.toLowerCase()} your ${existing.leaveType.name} request (${formattedStart} - ${formattedEnd}).${
-              status === "REJECTED" && noteText ? ` Reason: ${noteText}` : ""
-            }`,
-          },
-        });
-      } else if (status === "ESCALATED") {
-        // Notify employee of escalation
-        await prisma.notification.create({
-          data: {
-            userId: existing.userId,
-            title: "Leave Request Escalated",
-            message: `Your ${existing.leaveType.name} request (${formattedStart} - ${formattedEnd}) has been escalated to Administration for review.`,
-          },
-        });
-
-        // Notify admins that a request was escalated
-        const admins = await prisma.user.findMany({
-          where: { role: { in: ["ADMIN", "CEO"] }, isActive: true },
-          select: { id: true },
-        });
-
-        for (const adm of admins) {
+        // 1. In-App Notification to Employee
+        if (canSendNotification(status === "APPROVED" ? "LEAVE_APPROVED" : "LEAVE_REJECTED", "IN_APP", settings)) {
           await prisma.notification.create({
             data: {
-              userId: adm.id,
-              title: "Leave Request Escalated by TL",
-              message: `TL escalated leave request #${existing.id} for ${existing.user.name} (${existing.leaveType.name}: ${formattedStart} - ${formattedEnd}). Reason: ${noteText}`,
+              userId: existing.userId,
+              title: `Leave Request ${status === "APPROVED" ? "Approved" : "Rejected"}`,
+              message: `Your Team Leader ${status.toLowerCase()} your ${existing.leaveType.name} request (${formattedStart} - ${formattedEnd}).${
+                status === "REJECTED" && noteText ? ` Reason: ${noteText}` : ""
+              }`,
             },
           });
+        }
+
+        // 2. Email Notification to Employee
+        if (canSendNotification(status === "APPROVED" ? "LEAVE_APPROVED" : "LEAVE_REJECTED", "EMAIL", settings) && existing.user.email) {
+          sendLeaveDecisionEmail({
+            employeeName: existing.user.name,
+            employeeEmail: existing.user.email,
+            leaveType: existing.leaveType.name,
+            startDate: formattedStart,
+            endDate: formattedEnd,
+            days: durationDays,
+            status: status as "APPROVED" | "REJECTED",
+            reviewerName: session.user.name || "Team Leader",
+            reviewerRole: "Team Lead",
+            rejectionReason: status === "REJECTED" ? noteText : undefined,
+            settings,
+          }).catch((err) => console.warn("Async TL leave decision email failed:", err));
+        }
+      } else if (status === "ESCALATED") {
+        // 1. In-App Notification to Employee
+        if (canSendNotification("NEW_LEAVE_REQUEST", "IN_APP", settings)) {
+          await prisma.notification.create({
+            data: {
+              userId: existing.userId,
+              title: "Leave Request Escalated",
+              message: `Your ${existing.leaveType.name} request (${formattedStart} - ${formattedEnd}) has been escalated to Administration for review.`,
+            },
+          });
+        }
+
+        // 2. In-App & Email Notification to Admins / CEO
+        const admins = await prisma.user.findMany({
+          where: { role: { in: ["ADMIN", "CEO"] }, isActive: true },
+          select: { id: true, email: true },
+        });
+
+        if (canSendNotification("NEW_LEAVE_REQUEST", "IN_APP", settings)) {
+          for (const adm of admins) {
+            await prisma.notification.create({
+              data: {
+                userId: adm.id,
+                title: "Leave Request Escalated by TL",
+                message: `TL escalated leave request #${existing.id} for ${existing.user.name} (${existing.leaveType.name}: ${formattedStart} - ${formattedEnd}). Reason: ${noteText}`,
+              },
+            });
+          }
+        }
+
+        if (canSendNotification("NEW_LEAVE_REQUEST", "EMAIL", settings)) {
+          const adminEmails = admins.map((a) => a.email).filter(Boolean);
+          if (adminEmails.length > 0) {
+            sendLeaveEscalatedEmail({
+              applicantName: existing.user.name,
+              applicantEmail: existing.user.email,
+              leaveType: existing.leaveType.name,
+              startDate: formattedStart,
+              endDate: formattedEnd,
+              days: durationDays,
+              escalatedByName: session.user.name || "Team Leader",
+              escalationReason: noteText,
+              recipients: adminEmails,
+              settings,
+            }).catch((err) => console.warn("Async TL leave escalated email failed:", err));
+          }
         }
       }
     } catch (notifErr) {

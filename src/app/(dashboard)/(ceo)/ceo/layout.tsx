@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import CEOSidebar from "@/components/ceo/CEOSidebar";
+import NotificationDropdown from "@/components/ui/NotificationDropdown";
 import {
   Menu,
   X,
@@ -86,6 +87,8 @@ export default function CEOLayout({
             >
               <RotateCw className="w-4 h-4" />
             </button>
+
+            <NotificationDropdown />
 
             <div className="h-6 w-px bg-slate-200 mx-1 hidden sm:block" />
 

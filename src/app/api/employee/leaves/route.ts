@@ -7,6 +7,7 @@ import {
   formatDateWithPattern,
   validateLeaveApplication,
 } from "@/lib/settings";
+import { sendLeaveAppliedEmail } from "@/lib/mail";
 
 export const dynamic = "force-dynamic";
 
@@ -107,31 +108,50 @@ export async function POST(request: NextRequest) {
             name: true,
             email: true,
             teamId: true,
+            reportingToId: true,
           },
         },
         leaveType: true,
       },
     });
 
-    // Notify Team Leader & Admins
-    if (canSendNotification("NEW_LEAVE_REQUEST", "IN_APP", settings)) {
-      try {
-        const recipients = await prisma.user.findMany({
+    // Notify Team Leader (Only notify Admin/CEO if no TL is assigned or if request is escalated)
+    try {
+      const formattedStart = formatDateWithPattern(start, settings.dateFormat, settings.timezone);
+      const formattedEnd = formatDateWithPattern(end, settings.dateFormat, settings.timezone);
+
+      // Find the employee's assigned TL (Admins & CEO are ONLY notified upon TL Escalation)
+      const tlConditions: any[] = [];
+      if (newRequest.user.reportingToId) {
+        tlConditions.push({ id: newRequest.user.reportingToId, isActive: true });
+      }
+      if (newRequest.user.teamId) {
+        tlConditions.push({ teamId: newRequest.user.teamId, role: "TL" as const, isActive: true });
+      }
+
+      let recipients: { id: number; email: string }[] = [];
+      if (tlConditions.length > 0) {
+        recipients = await prisma.user.findMany({
           where: {
-            OR: [
-              { role: "ADMIN", isActive: true },
-              { role: "CEO", isActive: true },
-              ...(newRequest.user.teamId
-                ? [{ teamId: newRequest.user.teamId, role: "TL" as const, isActive: true }]
-                : []),
-            ],
+            OR: tlConditions,
           },
-          select: { id: true },
+          select: { id: true, email: true },
         });
+      }
 
-        const formattedStart = formatDateWithPattern(start, settings.dateFormat, settings.timezone);
-        const formattedEnd = formatDateWithPattern(end, settings.dateFormat, settings.timezone);
+      // If no specific TL is found for this team/reporting, find active Team Leaders (TL role only, NEVER Admin/CEO)
+      if (recipients.length === 0) {
+        recipients = await prisma.user.findMany({
+          where: {
+            role: "TL",
+            isActive: true,
+          },
+          select: { id: true, email: true },
+        });
+      }
 
+      // 1. In-App Notifications
+      if (canSendNotification("NEW_LEAVE_REQUEST", "IN_APP", settings)) {
         for (const recipient of recipients) {
           await prisma.notification.create({
             data: {
@@ -141,9 +161,27 @@ export async function POST(request: NextRequest) {
             },
           });
         }
-      } catch (notifErr) {
-        console.warn("Could not send leave notification:", notifErr);
       }
+
+      // 2. Email Notifications
+      if (canSendNotification("NEW_LEAVE_REQUEST", "EMAIL", settings)) {
+        const recipientEmails = recipients.map((r) => r.email).filter(Boolean);
+        if (recipientEmails.length > 0) {
+          sendLeaveAppliedEmail({
+            applicantName: newRequest.user.name,
+            applicantEmail: newRequest.user.email,
+            leaveType: newRequest.leaveType.name,
+            startDate: formattedStart,
+            endDate: formattedEnd,
+            days: requestedDays,
+            reason: reason?.trim() || null,
+            recipients: recipientEmails,
+            settings,
+          }).catch((err) => console.warn("Async leave applied email failed:", err));
+        }
+      }
+    } catch (notifErr) {
+      console.warn("Could not send leave notification:", notifErr);
     }
 
     // Audit Log

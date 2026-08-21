@@ -33,7 +33,21 @@ export async function GET() {
       cancelledLeaves,
       totalLeaves,
     ] = await Promise.all([
-      prisma.leaveRequest.count({ where: { status: "PENDING" } }),
+      prisma.leaveRequest.count({
+        where: {
+          OR: [
+            { status: "ESCALATED" },
+            {
+              status: "PENDING",
+              user: { role: { in: ["TL", "ADMIN"] } },
+            },
+            {
+              status: "PENDING",
+              user: { role: "EMPLOYEE", reportingToId: null, teamId: null },
+            },
+          ],
+        },
+      }),
       prisma.leaveRequest.count({ where: { status: "APPROVED" } }),
       prisma.leaveRequest.count({ where: { status: "REJECTED" } }),
       prisma.leaveRequest.count({ where: { status: "CANCELLED" } }),
@@ -96,7 +110,7 @@ export async function GET() {
     const attendanceRate = totalExpected > 0 ? Math.round((checkedInCount / totalExpected) * 100) : 0;
 
     // 5. Fetch Recent Leave Requests with relations
-    const recentLeaveRequests = await prisma.leaveRequest.findMany({
+    const rawRecentLeaves = await prisma.leaveRequest.findMany({
       take: 10,
       orderBy: {
         createdAt: "desc",
@@ -108,6 +122,8 @@ export async function GET() {
             name: true,
             email: true,
             role: true,
+            teamId: true,
+            reportingToId: true,
             team: {
               select: {
                 id: true,
@@ -124,6 +140,21 @@ export async function GET() {
           },
         },
       },
+    });
+
+    const recentLeaveRequests = rawRecentLeaves.map((l) => {
+      const isActionableForAdmin =
+        l.status === "ESCALATED" ||
+        l.user.role === "TL" ||
+        l.user.role === "ADMIN" ||
+        (!l.user.teamId && !l.user.reportingToId);
+
+      return {
+        ...l,
+        isActionableForAdmin,
+        displayStatus:
+          l.status === "PENDING" && !isActionableForAdmin ? "PENDING_TL_REVIEW" : l.status,
+      };
     });
 
     // 6. Fetch Teams overview

@@ -3,9 +3,9 @@
 import React, { useState } from "react";
 import { signOut } from "next-auth/react";
 import EmployeeSidebar from "@/components/employee/EmployeeSidebar";
+import NotificationDropdown from "@/components/ui/NotificationDropdown";
 import {
   Menu,
-  Bell,
   Calendar,
   RefreshCw,
   LogOut,
@@ -63,15 +63,7 @@ function EmployeeHeader({
           <RefreshCw className="w-4 h-4" />
         </button>
 
-        <div className="relative">
-          <button
-            type="button"
-            className="p-1.5 rounded-md text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-all"
-            aria-label="Notifications"
-          >
-            <Bell className="w-4 h-4" />
-          </button>
-        </div>
+        <NotificationDropdown />
 
         <div className="h-4 w-px bg-slate-200 hidden sm:block mx-1" />
 

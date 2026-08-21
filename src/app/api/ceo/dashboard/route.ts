@@ -76,7 +76,13 @@ export async function GET() {
 
       prisma.leaveRequest.findMany({
         where: {
-          status: "PENDING",
+          OR: [
+            { status: "ESCALATED" },
+            {
+              status: "PENDING",
+              user: { role: { in: ["TL", "ADMIN"] } },
+            },
+          ],
         },
         include: {
           user: {

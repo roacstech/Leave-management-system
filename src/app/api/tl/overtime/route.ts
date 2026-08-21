@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { getSystemSettings, canSendNotification } from "@/lib/settings";
+import { sendOvertimeUpdateEmail } from "@/lib/mail";
 
 export const dynamic = "force-dynamic";
 
@@ -206,7 +207,7 @@ export async function PATCH(request: NextRequest) {
         });
       }
 
-      // Notify Employee
+      // Notify Employee (In-App & Email)
       try {
         const claimLabel = claim.claimCompOff
           ? `+${claim.compOffDays} Day Comp-Off Leave Credit`
@@ -219,6 +220,19 @@ export async function PATCH(request: NextRequest) {
             message: `Your supervisor approved your claim for ${new Date(claim.date).toDateString()} (${claimLabel}).`,
           },
         });
+
+        if (claim.user.email) {
+          sendOvertimeUpdateEmail({
+            employeeName: claim.user.name,
+            employeeEmail: claim.user.email,
+            date: new Date(claim.date).toLocaleDateString(),
+            hours: claim.hours,
+            type: claim.type,
+            status: "APPROVED",
+            reviewerName: session.user.name || "Supervisor",
+            recipients: [claim.user.email],
+          }).catch((err) => console.warn("Async OT approve email failed:", err));
+        }
       } catch (notifErr) {
         console.warn("Notification error:", notifErr);
       }
@@ -255,7 +269,7 @@ export async function PATCH(request: NextRequest) {
         },
       });
 
-      // Notify Employee
+      // Notify Employee (In-App & Email)
       try {
         await prisma.notification.create({
           data: {
@@ -264,6 +278,20 @@ export async function PATCH(request: NextRequest) {
             message: `Your supervisor rejected your claim for ${new Date(claim.date).toDateString()}. Reason: ${rejectionReason || "Declined"}`,
           },
         });
+
+        if (claim.user.email) {
+          sendOvertimeUpdateEmail({
+            employeeName: claim.user.name,
+            employeeEmail: claim.user.email,
+            date: new Date(claim.date).toLocaleDateString(),
+            hours: claim.hours,
+            type: claim.type,
+            status: "REJECTED",
+            reviewerName: session.user.name || "Supervisor",
+            rejectionReason: rejectionReason?.trim() || "Declined by supervisor",
+            recipients: [claim.user.email],
+          }).catch((err) => console.warn("Async OT reject email failed:", err));
+        }
       } catch (notifErr) {
         console.warn("Notification error:", notifErr);
       }
