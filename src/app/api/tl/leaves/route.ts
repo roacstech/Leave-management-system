@@ -5,6 +5,7 @@ import {
   getSystemSettings,
   formatDateWithPattern,
 } from "@/lib/settings";
+import { sendLeaveDecisionEmail, sendLeaveEscalatedEmail } from "@/lib/mail";
 import { createNotification } from "@/lib/notifications";
 
 export const dynamic = "force-dynamic";

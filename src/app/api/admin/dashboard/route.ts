@@ -114,6 +114,8 @@ export async function GET() {
             name: true,
             email: true,
             role: true,
+            teamId: true,
+            reportingToId: true,
             team: {
               select: {
                 id: true,
@@ -130,6 +132,21 @@ export async function GET() {
           },
         },
       },
+    });
+
+    const recentLeaveRequests = rawRecentLeaves.map((l) => {
+      const isActionableForAdmin =
+        l.status === "ESCALATED" ||
+        l.user.role === "TL" ||
+        l.user.role === "ADMIN" ||
+        (!l.user.teamId && !l.user.reportingToId);
+
+      return {
+        ...l,
+        isActionableForAdmin,
+        displayStatus:
+          l.status === "PENDING" && !isActionableForAdmin ? "PENDING_TL_REVIEW" : l.status,
+      };
     });
 
     // 6. Fetch Teams overview

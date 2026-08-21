@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { getSystemSettings, canSendNotification } from "@/lib/settings";
+import { sendOvertimeUpdateEmail } from "@/lib/mail";
 
 export const dynamic = "force-dynamic";
 
@@ -283,7 +284,7 @@ export async function POST(request: NextRequest) {
 
     const employee = await prisma.user.findUnique({
       where: { id: userId },
-      select: { name: true, teamId: true },
+      select: { name: true, email: true, teamId: true, reportingToId: true },
     });
 
     const newRecord = await prisma.overtimeRecord.create({
@@ -304,17 +305,27 @@ export async function POST(request: NextRequest) {
     try {
       const settings = await getSystemSettings();
       if (canSendNotification("NEW_LEAVE_REQUEST", "IN_APP", settings)) {
-        const approvers = await prisma.user.findMany({
-          where: {
-            OR: [
-              { role: "ADMIN", isActive: true },
-              ...(employee?.teamId
-                ? [{ teamId: employee.teamId, role: "TL" as const, isActive: true }]
-                : []),
-            ],
-          },
-          select: { id: true },
-        });
+        const tlConditions: any[] = [];
+        if (employee?.reportingToId) {
+          tlConditions.push({ id: employee.reportingToId, isActive: true });
+        }
+        if (employee?.teamId) {
+          tlConditions.push({ teamId: employee.teamId, role: "TL" as const, isActive: true });
+        }
+
+        let approvers = tlConditions.length > 0
+          ? await prisma.user.findMany({
+              where: { OR: tlConditions },
+              select: { id: true, email: true },
+            })
+          : [];
+
+        if (approvers.length === 0) {
+          approvers = await prisma.user.findMany({
+            where: { role: "TL", isActive: true },
+            select: { id: true, email: true },
+          });
+        }
 
         const claimLabel = claimCompOff
           ? `Comp-Off Claim (+${compOffDays} Day${extraOtHours > 0 ? ` + ${extraOtHours}h OT` : ""})`
@@ -328,6 +339,22 @@ export async function POST(request: NextRequest) {
               message: `${employee?.name || "Employee"} submitted a ${claimLabel} for ${claimDate.toDateString()}.`,
             },
           });
+        }
+
+        // Email to Approvers
+        if (canSendNotification("NEW_LEAVE_REQUEST", "EMAIL", settings)) {
+          const approverEmails = approvers.map((a) => a.email).filter(Boolean);
+          if (approverEmails.length > 0) {
+            sendOvertimeUpdateEmail({
+              employeeName: employee?.name || "Employee",
+              employeeEmail: employee?.email || "",
+              date: claimDate.toLocaleDateString(),
+              hours: workedHours,
+              type: type || "WEEKDAY_OT",
+              status: "SUBMITTED",
+              recipients: approverEmails,
+            }).catch((err) => console.warn("Async OT claim email failed:", err));
+          }
         }
       }
     } catch (notifErr) {

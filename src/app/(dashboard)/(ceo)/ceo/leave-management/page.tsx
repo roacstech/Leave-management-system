@@ -385,7 +385,7 @@ export default function CEOLeaveManagementPage() {
                       </td>
 
                       <td className="py-3 px-4 text-right">
-                        {isPending ? (
+                        {isActionableForCeo ? (
                           <div className="flex items-center justify-end gap-1.5">
                             <button
                               onClick={() => handleApprove(l.id)}

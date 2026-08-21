@@ -483,6 +483,11 @@ export default function AdminDashboardPage() {
                       <div className="flex items-center gap-1.5 self-end sm:self-center shrink-0">
                         {req.status === "PENDING_ADMIN" ? (
                           <>
+                            {req.status === "ESCALATED" && (
+                              <span className="px-2 py-0.5 text-[10px] font-bold rounded bg-amber-50 text-amber-700 border border-amber-200">
+                                Escalated
+                              </span>
+                            )}
                             <button
                               onClick={() => handleUpdateLeaveStatus(req.id, "APPROVED")}
                               disabled={actionLoading === req.id}
@@ -502,6 +507,10 @@ export default function AdminDashboardPage() {
                               Reject
                             </button>
                           </>
+                        ) : req.status === "PENDING" ? (
+                          <span className="px-2 py-0.5 text-[11px] font-semibold rounded bg-blue-50 text-blue-700 border border-blue-200">
+                            Pending TL Review
+                          </span>
                         ) : (
                           <span
                             className={`px-2 py-0.5 text-[11px] font-semibold rounded ${

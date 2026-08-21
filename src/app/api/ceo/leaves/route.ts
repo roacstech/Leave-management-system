@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import {
+  getSystemSettings,
+  canSendNotification,
+  formatDateWithPattern,
+} from "@/lib/settings";
+import { sendLeaveDecisionEmail } from "@/lib/mail";
 
 export const dynamic = "force-dynamic";
 
@@ -71,7 +77,7 @@ export async function GET(request: NextRequest) {
     ]);
 
     const formattedLeaves = leaves.map((l) => {
-      const isExecutiveScope = l.user.role === "ADMIN" || l.user.role === "TL";
+      const isExecutiveScope = l.status === "ESCALATED" || l.user.role === "ADMIN" || l.user.role === "TL";
       const diffMs = new Date(l.endDate).getTime() - new Date(l.startDate).getTime();
       const duration = Math.max(1, Math.round(diffMs / (1000 * 60 * 60 * 24)) + 1);
 
@@ -155,6 +161,10 @@ export async function PATCH(request: NextRequest) {
     const diffMs = new Date(leaveRequest.endDate).getTime() - new Date(leaveRequest.startDate).getTime();
     const duration = Math.max(1, Math.round(diffMs / (1000 * 60 * 60 * 24)) + 1);
 
+    const settings = await getSystemSettings();
+    const formattedStart = formatDateWithPattern(leaveRequest.startDate, settings.dateFormat, settings.timezone);
+    const formattedEnd = formatDateWithPattern(leaveRequest.endDate, settings.dateFormat, settings.timezone);
+
     // Execute atomic update
     await prisma.$transaction(async (tx) => {
       // 1. Update Leave Request status
@@ -188,14 +198,18 @@ export async function PATCH(request: NextRequest) {
         }
       }
 
-      // 3. Create Notification for Employee
-      await tx.notification.create({
-        data: {
-          userId: leaveRequest.userId,
-          title: `Leave ${status === "APPROVED" ? "Approved" : "Rejected"} by CEO`,
-          message: `Your ${leaveRequest.leaveType.name} request for ${duration} day(s) was ${status.toLowerCase()} by executive management.`,
-        },
-      });
+      // 3. Create In-App Notification for Employee
+      if (canSendNotification(status === "APPROVED" ? "LEAVE_APPROVED" : "LEAVE_REJECTED", "IN_APP", settings)) {
+        await tx.notification.create({
+          data: {
+            userId: leaveRequest.userId,
+            title: `Leave ${status === "APPROVED" ? "Approved" : "Rejected"} by CEO`,
+            message: `Your ${leaveRequest.leaveType.name} request for ${duration} day(s) was ${status.toLowerCase()} by executive management.${
+              status === "REJECTED" && rejectionReason ? ` Reason: ${rejectionReason}` : ""
+            }`,
+          },
+        });
+      }
 
       // 4. Audit Log
       await tx.auditLog.create({
@@ -208,6 +222,26 @@ export async function PATCH(request: NextRequest) {
         },
       });
     });
+
+    // 5. Send Decision Email to Employee (Async / Non-blocking)
+    if (
+      canSendNotification(status === "APPROVED" ? "LEAVE_APPROVED" : "LEAVE_REJECTED", "EMAIL", settings) &&
+      leaveRequest.user.email
+    ) {
+      sendLeaveDecisionEmail({
+        employeeName: leaveRequest.user.name,
+        employeeEmail: leaveRequest.user.email,
+        leaveType: leaveRequest.leaveType.name,
+        startDate: formattedStart,
+        endDate: formattedEnd,
+        days: duration,
+        status: status as "APPROVED" | "REJECTED",
+        reviewerName: session.user.name || "Executive Management",
+        reviewerRole: "CEO",
+        rejectionReason: status === "REJECTED" ? rejectionReason?.trim() : undefined,
+        settings,
+      }).catch((err) => console.warn("Async CEO leave decision email failed:", err));
+    }
 
     return NextResponse.json({
       success: true,

@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import CEOSidebar from "@/components/ceo/CEOSidebar";
+import NotificationDropdown from "@/components/ui/NotificationDropdown";
 import {
   Menu,
   X,

@@ -6,6 +6,7 @@ import {
   formatDateWithPattern,
   validateLeaveApplication,
 } from "@/lib/settings";
+import { sendLeaveAppliedEmail } from "@/lib/mail";
 import { createNotification, resolveEmployeeTeamLead } from "@/lib/notifications";
 
 export const dynamic = "force-dynamic";
