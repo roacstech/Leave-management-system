@@ -483,15 +483,10 @@ export default function AdminDashboardPage() {
                       <div className="flex items-center gap-1.5 self-end sm:self-center shrink-0">
                         {req.status === "PENDING_ADMIN" ? (
                           <>
-                            {req.status === "ESCALATED" && (
-                              <span className="px-2 py-0.5 text-[10px] font-bold rounded bg-amber-50 text-amber-700 border border-amber-200">
-                                Escalated
-                              </span>
-                            )}
                             <button
                               onClick={() => handleUpdateLeaveStatus(req.id, "APPROVED")}
                               disabled={actionLoading === req.id}
-                              className="px-2.5 py-1 rounded bg-slate-900 hover:bg-slate-800 text-white text-xs font-medium transition-all active:scale-95 disabled:opacity-50"
+                              className="px-2.5 py-1 rounded bg-slate-900 hover:bg-slate-800 text-white text-xs font-medium transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
                             >
                               Approve
                             </button>
@@ -502,13 +497,13 @@ export default function AdminDashboardPage() {
                                 setRejectModalOpen(true);
                               }}
                               disabled={actionLoading === req.id}
-                              className="px-2.5 py-1 rounded bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-medium transition-all active:scale-95 disabled:opacity-50"
+                              className="px-2.5 py-1 rounded bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-medium transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
                             >
                               Reject
                             </button>
                           </>
-                        ) : req.status === "PENDING" ? (
-                          <span className="px-2 py-0.5 text-[11px] font-semibold rounded bg-blue-50 text-blue-700 border border-blue-200">
+                        ) : req.status === "PENDING_TL" ? (
+                          <span className="px-2 py-0.5 text-[11px] font-semibold rounded bg-amber-50 text-amber-700 border border-amber-200">
                             Pending TL Review
                           </span>
                         ) : (

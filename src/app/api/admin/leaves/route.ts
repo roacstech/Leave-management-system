@@ -264,6 +264,20 @@ export async function POST(request: NextRequest) {
           entityType: "LEAVE_REQUEST",
           entityId: newRequest.id,
         });
+
+        if (tlResolution.tl.email) {
+          sendLeaveAppliedEmail({
+            applicantName: newRequest.user.name,
+            applicantEmail: newRequest.user.email,
+            leaveType: newRequest.leaveType.name,
+            startDate: formattedStart,
+            endDate: formattedEnd,
+            days: requestedDays,
+            reason: newRequest.reason,
+            recipients: [tlResolution.tl.email],
+            settings,
+          }).catch((err) => console.error("Error sending leave applied email to TL:", err));
+        }
       }
     }
 
@@ -419,6 +433,21 @@ export async function PATCH(request: NextRequest) {
         entityId: leaveRequestId,
       });
 
+      if (existing.user.email) {
+        sendLeaveDecisionEmail({
+          employeeName: existing.user.name,
+          employeeEmail: existing.user.email,
+          leaveType: existing.leaveType.name,
+          startDate: formattedStart,
+          endDate: formattedEnd,
+          days: daysDiff,
+          status: "APPROVED",
+          reviewerName: session.user.name || "Administration",
+          reviewerRole: "Administration",
+          settings,
+        }).catch((err) => console.error("Error sending Admin approval email:", err));
+      }
+
       return NextResponse.json({
         success: true,
         message: wasEscalated
@@ -475,11 +504,27 @@ export async function PATCH(request: NextRequest) {
         type: "LEAVE_REJECTED",
         title: "Leave Request Rejected",
         message: wasEscalated
-          ? `Your escalated ${existing.leaveType.name} request from ${formattedStart} to ${formattedEnd} has been rejected by Admin. Reason: ${reason}`
-          : `Your ${existing.leaveType.name} request from ${formattedStart} to ${formattedEnd} has been rejected by Admin. Reason: ${reason}`,
+          ? `Your escalated ${existing.leaveType.name} request from ${formattedStart} to ${formattedEnd} was rejected by Admin. Reason: ${reason}`
+          : `Your ${existing.leaveType.name} request from ${formattedStart} to ${formattedEnd} was rejected by Admin. Reason: ${reason}`,
         entityType: "LEAVE_REQUEST",
         entityId: leaveRequestId,
       });
+
+      if (existing.user.email) {
+        sendLeaveDecisionEmail({
+          employeeName: existing.user.name,
+          employeeEmail: existing.user.email,
+          leaveType: existing.leaveType.name,
+          startDate: formattedStart,
+          endDate: formattedEnd,
+          days: daysDiff,
+          status: "REJECTED",
+          reviewerName: session.user.name || "Administration",
+          reviewerRole: "Administration",
+          rejectionReason: reason,
+          settings,
+        }).catch((err) => console.error("Error sending Admin rejection email:", err));
+      }
 
       return NextResponse.json({
         success: true,

@@ -6,7 +6,7 @@ import {
   formatDateWithPattern,
   validateLeaveApplication,
 } from "@/lib/settings";
-import { sendLeaveAppliedEmail } from "@/lib/mail";
+import { sendLeaveAppliedEmail, sendLeaveCancelledEmail } from "@/lib/mail";
 import { createNotification, resolveEmployeeTeamLead } from "@/lib/notifications";
 
 export const dynamic = "force-dynamic";
@@ -170,11 +170,25 @@ export async function POST(request: NextRequest) {
         entityType: "LEAVE_REQUEST",
         entityId: newRequest.id,
       });
+
+      if (assignedTL.email) {
+        sendLeaveAppliedEmail({
+          applicantName: newRequest.user.name,
+          applicantEmail: newRequest.user.email,
+          leaveType: newRequest.leaveType.name,
+          startDate: formattedStart,
+          endDate: formattedEnd,
+          days: requestedDays,
+          reason: newRequest.reason,
+          recipients: [assignedTL.email],
+          settings,
+        }).catch((err) => console.error("Error sending leave applied email:", err));
+      }
     } else if (userRole === "TL") {
       // TL leave -> Notify Admins directly
       const admins = await prisma.user.findMany({
         where: { role: { in: ["ADMIN", "CEO"] }, isActive: true },
-        select: { id: true },
+        select: { id: true, email: true },
       });
       for (const admin of admins) {
         await createNotification({
@@ -185,6 +199,21 @@ export async function POST(request: NextRequest) {
           entityType: "LEAVE_REQUEST",
           entityId: newRequest.id,
         });
+      }
+
+      const adminEmails = admins.map((a) => a.email).filter(Boolean);
+      if (adminEmails.length > 0) {
+        sendLeaveAppliedEmail({
+          applicantName: newRequest.user.name,
+          applicantEmail: newRequest.user.email,
+          leaveType: newRequest.leaveType.name,
+          startDate: formattedStart,
+          endDate: formattedEnd,
+          days: requestedDays,
+          reason: newRequest.reason,
+          recipients: adminEmails,
+          settings,
+        }).catch((err) => console.error("Error sending TL leave applied email:", err));
       }
     }
 
@@ -290,6 +319,10 @@ export async function PATCH(request: NextRequest) {
     const formattedStart = formatDateWithPattern(existing.startDate, settings.dateFormat, settings.timezone);
     const formattedEnd = formatDateWithPattern(existing.endDate, settings.dateFormat, settings.timezone);
 
+    // Compute duration
+    const diffMs = new Date(existing.endDate).getTime() - new Date(existing.startDate).getTime();
+    const daysDiff = Math.max(1, Math.round(diffMs / (1000 * 60 * 60 * 24)) + 1);
+
     // Notify appropriate reviewer
     if (previousStatus === "PENDING_TL") {
       const tlResolution = await resolveEmployeeTeamLead(userId);
@@ -302,11 +335,24 @@ export async function PATCH(request: NextRequest) {
           entityType: "LEAVE_REQUEST",
           entityId: existing.id,
         });
+
+        if (tlResolution.tl.email) {
+          sendLeaveCancelledEmail({
+            employeeName: existing.user.name,
+            applicantEmail: existing.user.email,
+            leaveType: existing.leaveType.name,
+            startDate: formattedStart,
+            endDate: formattedEnd,
+            days: daysDiff,
+            recipients: [tlResolution.tl.email],
+            settings,
+          }).catch((err) => console.error("Error sending cancellation email:", err));
+        }
       }
     } else if (previousStatus === "PENDING_ADMIN") {
       const admins = await prisma.user.findMany({
         where: { role: { in: ["ADMIN", "CEO"] }, isActive: true },
-        select: { id: true },
+        select: { id: true, email: true },
       });
       for (const admin of admins) {
         await createNotification({
@@ -317,6 +363,20 @@ export async function PATCH(request: NextRequest) {
           entityType: "LEAVE_REQUEST",
           entityId: existing.id,
         });
+      }
+
+      const adminEmails = admins.map((a) => a.email).filter(Boolean);
+      if (adminEmails.length > 0) {
+        sendLeaveCancelledEmail({
+          employeeName: existing.user.name,
+          applicantEmail: existing.user.email,
+          leaveType: existing.leaveType.name,
+          startDate: formattedStart,
+          endDate: formattedEnd,
+          days: daysDiff,
+          recipients: adminEmails,
+          settings,
+        }).catch((err) => console.error("Error sending cancellation email to admins:", err));
       }
     }
 

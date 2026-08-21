@@ -22,6 +22,7 @@ interface DatePickerProps {
   disabled?: boolean;
   className?: string;
   error?: string;
+  align?: "left" | "right";
 }
 
 const MONTH_NAMES = [
@@ -69,6 +70,7 @@ export default function DatePicker({
   disabled = false,
   className = "",
   error,
+  align = "left",
 }: DatePickerProps) {
   const { formatDate } = useSettings();
 
@@ -90,8 +92,14 @@ export default function DatePicker({
         setViewYear(parsed.getFullYear());
         setViewMonth(parsed.getMonth());
       }
+    } else if (minDate) {
+      const parsed = parseISODate(minDate);
+      if (parsed) {
+        setViewYear(parsed.getFullYear());
+        setViewMonth(parsed.getMonth());
+      }
     }
-  }, [value]);
+  }, [value, minDate]);
 
   // Click outside listener
   useEffect(() => {
@@ -279,7 +287,11 @@ export default function DatePicker({
 
       {/* Formal Calendar Popup */}
       {isOpen && (
-        <div className="absolute top-full left-0 mt-1.5 z-50 w-72 bg-white rounded-2xl border border-slate-200/90 shadow-xl p-3.5 animate-in fade-in zoom-in-95 duration-100">
+        <div
+          className={`absolute top-full mt-1.5 z-[70] w-72 bg-white rounded-2xl border border-slate-200 shadow-2xl p-3.5 animate-in fade-in zoom-in-95 duration-100 ${
+            align === "right" ? "right-0" : "left-0"
+          }`}
+        >
           {/* Header Month / Year controls */}
           <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-100">
             <button

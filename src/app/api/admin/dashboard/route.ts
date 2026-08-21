@@ -96,7 +96,7 @@ export async function GET() {
     const attendanceRate = totalExpected > 0 ? Math.round((checkedInCount / totalExpected) * 100) : 0;
 
     // 5. Fetch Recent Leave Requests with relations (Admin-scoped)
-    const recentLeaveRequests = await prisma.leaveRequest.findMany({
+    const rawRecentLeaves = await prisma.leaveRequest.findMany({
       where: {
         OR: [
           { status: "PENDING_ADMIN" },
@@ -136,16 +136,15 @@ export async function GET() {
 
     const recentLeaveRequests = rawRecentLeaves.map((l) => {
       const isActionableForAdmin =
-        l.status === "ESCALATED" ||
+        l.status === "PENDING_ADMIN" ||
         l.user.role === "TL" ||
-        l.user.role === "ADMIN" ||
-        (!l.user.teamId && !l.user.reportingToId);
+        l.user.role === "ADMIN";
 
       return {
         ...l,
         isActionableForAdmin,
         displayStatus:
-          l.status === "PENDING" && !isActionableForAdmin ? "PENDING_TL_REVIEW" : l.status,
+          l.status === "PENDING_TL" ? "PENDING_TL_REVIEW" : l.status,
       };
     });
 

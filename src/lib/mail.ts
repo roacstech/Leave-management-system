@@ -98,7 +98,7 @@ export async function sendEmail(options: SendEmailOptions): Promise<boolean> {
 
 // ─── Real Company Enterprise HTML Email Template Builder ─────────────────────
 
-interface CompanyEmailOptions {
+export interface CompanyEmailOptions {
   title: string;
   statusBadge: {
     text: string;
@@ -120,7 +120,7 @@ interface CompanyEmailOptions {
   ctaUrl?: string;
 }
 
-function renderRealCompanyEmail(opts: CompanyEmailOptions): string {
+export function renderRealCompanyEmail(opts: CompanyEmailOptions): string {
   const appUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
   const actionUrl = opts.ctaUrl
     ? opts.ctaUrl.startsWith("http")
@@ -346,7 +346,7 @@ export async function sendLeaveAppliedEmail({
         }
       : undefined,
     ctaText: "Review Leave Request",
-    ctaUrl: "/tl/leave-management",
+    ctaUrl: "/tl/leave-requests",
   });
 
   return sendEmail({ to: recipients, subject, html });
@@ -481,6 +481,58 @@ export async function sendLeaveEscalatedEmail({
       : undefined,
     ctaText: "Review Escalated Request",
     ctaUrl: "/admin/leaves",
+  });
+
+  return sendEmail({ to: recipients, subject, html });
+}
+
+/**
+ * Triggered when an employee cancels their leave request.
+ */
+export async function sendLeaveCancelledEmail({
+  employeeName,
+  applicantEmail,
+  leaveType,
+  startDate,
+  endDate,
+  days,
+  recipients,
+  settings,
+}: {
+  employeeName: string;
+  applicantEmail?: string;
+  leaveType: string;
+  startDate: string;
+  endDate: string;
+  days: number;
+  recipients: string[];
+  settings?: SystemSettingsData;
+}): Promise<boolean> {
+  const currentSettings = settings || (await getSystemSettings());
+  if (!canSendNotification("LEAVE_CANCELLATION", "EMAIL", currentSettings)) {
+    return false;
+  }
+
+  const subject = `Leave Request Cancelled: ${employeeName} (${leaveType})`;
+
+  const html = renderRealCompanyEmail({
+    title: subject,
+    statusBadge: {
+      text: "Cancelled",
+      type: "INFO",
+    },
+    headline: "Leave Request Cancelled",
+    subheadline: `<strong>${employeeName}</strong> has cancelled their ${leaveType} application for ${startDate} to ${endDate}.`,
+    rows: [
+      { label: "Employee Name", value: employeeName, isBold: true },
+      ...(applicantEmail ? [{ label: "Employee Email", value: applicantEmail }] : []),
+      { label: "Leave Type", value: leaveType },
+      { label: "Duration", value: `${days} ${days === 1 ? "Day" : "Days"}` },
+      { label: "Leave Dates", value: `${startDate} to ${endDate}` },
+      { label: "Status", value: "Cancelled by Employee", isBold: true },
+    ],
+    ctaText: "View Leave Records",
+    ctaUrl: "/tl/leave-requests",
   });
 
   return sendEmail({ to: recipients, subject, html });

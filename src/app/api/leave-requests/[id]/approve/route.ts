@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { getSystemSettings, formatDateWithPattern } from "@/lib/settings";
 import { createNotification } from "@/lib/notifications";
+import { sendLeaveDecisionEmail } from "@/lib/mail";
 
 export const dynamic = "force-dynamic";
 
@@ -174,6 +175,21 @@ export async function PATCH(
       entityType: "LEAVE_REQUEST",
       entityId: leaveRequestId,
     });
+
+    if (existing.user.email) {
+      sendLeaveDecisionEmail({
+        employeeName: existing.user.name,
+        employeeEmail: existing.user.email,
+        leaveType: existing.leaveType.name,
+        startDate: formattedStart,
+        endDate: formattedEnd,
+        days: daysDiff,
+        status: "APPROVED",
+        reviewerName: userName,
+        reviewerRole: userRole === "TL" ? "Team Lead" : "Administration",
+        settings,
+      }).catch((err) => console.error("Error sending approval email:", err));
+    }
 
     return NextResponse.json({
       success: true,

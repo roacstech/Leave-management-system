@@ -16,6 +16,8 @@ import {
   Unlock,
   CheckSquare,
   Square,
+  Mail,
+  Send,
 } from "lucide-react";
 import {
   SystemSettingsData,
@@ -151,6 +153,9 @@ export default function AdminSettingsPage() {
     notifyNewLeaveRequest: DEFAULT_SYSTEM_SETTINGS.notifyNewLeaveRequest,
     notifyLeaveCancellation: DEFAULT_SYSTEM_SETTINGS.notifyLeaveCancellation,
   });
+
+  const [testEmailLoading, setTestEmailLoading] = useState(false);
+  const [testEmailRecipient, setTestEmailRecipient] = useState("");
 
   // Load Settings from API
   const loadSettings = useCallback(async () => {
@@ -347,6 +352,27 @@ export default function AdminSettingsPage() {
       showToast("Unable to update settings. Please try again.", "error");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleSendTestEmail = async () => {
+    setTestEmailLoading(true);
+    try {
+      const res = await fetch("/api/admin/settings/test-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: testEmailRecipient || orgForm.companyEmail }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(data.message || "Test email dispatched successfully!", "success");
+      } else {
+        showToast(data.error || "Failed to send test email.", "error");
+      }
+    } catch {
+      showToast("Failed to send test email. Check SMTP settings.", "error");
+    } finally {
+      setTestEmailLoading(false);
     }
   };
 
@@ -1103,6 +1129,44 @@ export default function AdminSettingsPage() {
                       <div className="text-[11px] text-slate-500">Notify Admin/TL when an employee cancels leave.</div>
                     </div>
                   </label>
+                </div>
+              </div>
+
+              {/* Email Delivery Diagnostics & Test Email */}
+              <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/60 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-700">
+                      <Mail className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-slate-900">Email Delivery Diagnostics</h4>
+                      <p className="text-[11px] text-slate-500">Send an instant test email to verify SMTP configuration and connectivity.</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 pt-1">
+                  <input
+                    type="email"
+                    placeholder="Recipient email (e.g. roacstech@gmail.com)"
+                    value={testEmailRecipient}
+                    onChange={(e) => setTestEmailRecipient(e.target.value)}
+                    className="flex-1 px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-xs text-slate-900 focus:outline-none focus:border-slate-800 shadow-2xs"
+                  />
+                  <button
+                    type="button"
+                    disabled={testEmailLoading}
+                    onClick={handleSendTestEmail}
+                    className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-all shadow-xs disabled:opacity-50 cursor-pointer"
+                  >
+                    {testEmailLoading ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Send className="w-3.5 h-3.5" />
+                    )}
+                    <span>{testEmailLoading ? "Sending..." : "Send Test Email"}</span>
+                  </button>
                 </div>
               </div>
 

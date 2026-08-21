@@ -310,6 +310,7 @@ export default function CEOLeaveManagementPage() {
               <tbody className="divide-y divide-slate-100 text-xs">
                 {displayedLeaves.map((l) => {
                   const isPending = l.status === "PENDING_ADMIN" || l.status === "PENDING_TL";
+                  const isActionableForCeo = l.isExecutiveScope && isPending;
 
                   return (
                     <tr key={l.id} className="hover:bg-slate-50/60 transition-colors">

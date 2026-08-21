@@ -392,6 +392,7 @@ export default function HolidaysPage() {
                 <DatePicker
                   label="To Date"
                   required
+                  align="right"
                   value={formData.toDate}
                   minDate={formData.fromDate}
                   disabled={isSaving}

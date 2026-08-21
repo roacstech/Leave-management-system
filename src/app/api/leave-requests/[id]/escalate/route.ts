@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { getSystemSettings, formatDateWithPattern } from "@/lib/settings";
 import { createNotification } from "@/lib/notifications";
+import { sendLeaveEscalatedEmail } from "@/lib/mail";
 
 export const dynamic = "force-dynamic";
 
@@ -122,7 +124,7 @@ export async function PATCH(
     // 1. Notify all active Administrators
     const admins = await prisma.user.findMany({
       where: { role: { in: ["ADMIN", "CEO"] }, isActive: true },
-      select: { id: true },
+      select: { id: true, email: true },
     });
 
     for (const adm of admins) {
@@ -134,6 +136,28 @@ export async function PATCH(
         entityType: "LEAVE_REQUEST",
         entityId: leaveRequestId,
       });
+    }
+
+    const settings = await getSystemSettings();
+    const formattedStart = formatDateWithPattern(existing.startDate, settings.dateFormat, settings.timezone);
+    const formattedEnd = formatDateWithPattern(existing.endDate, settings.dateFormat, settings.timezone);
+    const diffMs = new Date(existing.endDate).getTime() - new Date(existing.startDate).getTime();
+    const daysDiff = Math.max(1, Math.round(diffMs / (1000 * 60 * 60 * 24)) + 1);
+
+    const adminEmails = admins.map((a) => a.email).filter(Boolean);
+    if (adminEmails.length > 0) {
+      sendLeaveEscalatedEmail({
+        applicantName: existing.user.name,
+        applicantEmail: existing.user.email,
+        leaveType: existing.leaveType.name,
+        startDate: formattedStart,
+        endDate: formattedEnd,
+        days: daysDiff,
+        escalatedByName: userName,
+        escalationReason: reason,
+        recipients: adminEmails,
+        settings,
+      }).catch((err) => console.error("Error sending escalation email:", err));
     }
 
     // 2. Notify Employee

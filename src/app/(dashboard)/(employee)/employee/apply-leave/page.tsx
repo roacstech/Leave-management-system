@@ -508,6 +508,7 @@ function ApplyLeaveContent() {
                   <DatePicker
                     label="End Date"
                     required
+                    align="right"
                     disableSundays={true}
                     value={endDate}
                     minDate={startDate || todayStr}

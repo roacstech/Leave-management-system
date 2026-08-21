@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { getSystemSettings, formatDateWithPattern } from "@/lib/settings";
 import { createNotification } from "@/lib/notifications";
+import { sendLeaveDecisionEmail } from "@/lib/mail";
 
 export const dynamic = "force-dynamic";
 
@@ -151,6 +152,25 @@ export async function PATCH(
       entityType: "LEAVE_REQUEST",
       entityId: leaveRequestId,
     });
+
+    const diffMs = new Date(existing.endDate).getTime() - new Date(existing.startDate).getTime();
+    const daysDiff = Math.max(1, Math.round(diffMs / (1000 * 60 * 60 * 24)) + 1);
+
+    if (existing.user.email) {
+      sendLeaveDecisionEmail({
+        employeeName: existing.user.name,
+        employeeEmail: existing.user.email,
+        leaveType: existing.leaveType.name,
+        startDate: formattedStart,
+        endDate: formattedEnd,
+        days: daysDiff,
+        status: "REJECTED",
+        reviewerName: userName,
+        reviewerRole: userRole === "TL" ? "Team Lead" : "Administration",
+        rejectionReason: reason,
+        settings,
+      }).catch((err) => console.error("Error sending rejection email:", err));
+    }
 
     return NextResponse.json({
       success: true,

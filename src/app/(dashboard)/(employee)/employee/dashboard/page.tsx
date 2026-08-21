@@ -866,9 +866,9 @@ export default function EmployeeDashboardPage() {
       {/* 5. QUICK APPLY LEAVE MODAL */}
       {applyModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
-          <div className="w-full max-w-lg bg-white rounded-2xl border border-slate-200 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95">
+          <div className="w-full max-w-lg bg-white rounded-2xl border border-slate-200 shadow-2xl animate-in fade-in zoom-in-95">
             {/* Header */}
-            <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+            <div className="p-5 border-b border-slate-100 flex items-center justify-between rounded-t-2xl">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-xl bg-[#1e293b] text-white flex items-center justify-center font-bold text-xs">
                   <PlusCircle className="w-4 h-4" />
@@ -892,7 +892,7 @@ export default function EmployeeDashboardPage() {
             </div>
 
             {/* Form */}
-            <form onSubmit={handleApplyLeave} className="p-5 space-y-4 text-xs">
+            <form onSubmit={handleApplyLeave} className="p-5 space-y-4 text-xs rounded-b-2xl">
               {/* Leave Type Select */}
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1.5">
@@ -934,6 +934,7 @@ export default function EmployeeDashboardPage() {
                 <DatePicker
                   label="End Date"
                   required
+                  align="right"
                   disableSundays={true}
                   value={applyForm.endDate}
                   minDate={applyForm.startDate || todayStr}

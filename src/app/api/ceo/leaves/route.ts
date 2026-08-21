@@ -77,7 +77,10 @@ export async function GET(request: NextRequest) {
     ]);
 
     const formattedLeaves = leaves.map((l) => {
-      const isExecutiveScope = l.status === "ESCALATED" || l.user.role === "ADMIN" || l.user.role === "TL";
+      const isExecutiveScope =
+        (l.status === "PENDING_ADMIN" && Boolean(l.escalatedById)) ||
+        l.user.role === "ADMIN" ||
+        l.user.role === "TL";
       const diffMs = new Date(l.endDate).getTime() - new Date(l.startDate).getTime();
       const duration = Math.max(1, Math.round(diffMs / (1000 * 60 * 60 * 24)) + 1);
 

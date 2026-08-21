@@ -321,6 +321,21 @@ export async function PATCH(request: NextRequest) {
         entityId: leaveRequestId,
       });
 
+      if (existing.user.email) {
+        sendLeaveDecisionEmail({
+          employeeName: existing.user.name,
+          employeeEmail: existing.user.email,
+          leaveType: existing.leaveType.name,
+          startDate: formattedStart,
+          endDate: formattedEnd,
+          days: daysDiff,
+          status: "APPROVED",
+          reviewerName: tlName,
+          reviewerRole: "Team Lead",
+          settings,
+        }).catch((err) => console.error("Error sending TL approval email:", err));
+      }
+
       return NextResponse.json({
         success: true,
         message: `Leave request #${leaveRequestId} has been approved successfully!`,
@@ -378,6 +393,22 @@ export async function PATCH(request: NextRequest) {
         entityId: leaveRequestId,
       });
 
+      if (existing.user.email) {
+        sendLeaveDecisionEmail({
+          employeeName: existing.user.name,
+          employeeEmail: existing.user.email,
+          leaveType: existing.leaveType.name,
+          startDate: formattedStart,
+          endDate: formattedEnd,
+          days: daysDiff,
+          status: "REJECTED",
+          reviewerName: tlName,
+          reviewerRole: "Team Lead",
+          rejectionReason: reason,
+          settings,
+        }).catch((err) => console.error("Error sending TL rejection email:", err));
+      }
+
       return NextResponse.json({
         success: true,
         message: `Leave request #${leaveRequestId} has been rejected.`,
@@ -427,7 +458,7 @@ export async function PATCH(request: NextRequest) {
       // 1. Notify all active Admin users
       const admins = await prisma.user.findMany({
         where: { role: { in: ["ADMIN", "CEO"] }, isActive: true },
-        select: { id: true },
+        select: { id: true, email: true },
       });
 
       for (const adm of admins) {
@@ -439,6 +470,22 @@ export async function PATCH(request: NextRequest) {
           entityType: "LEAVE_REQUEST",
           entityId: leaveRequestId,
         });
+      }
+
+      const adminEmails = admins.map((a) => a.email).filter(Boolean);
+      if (adminEmails.length > 0) {
+        sendLeaveEscalatedEmail({
+          applicantName: existing.user.name,
+          applicantEmail: existing.user.email,
+          leaveType: existing.leaveType.name,
+          startDate: formattedStart,
+          endDate: formattedEnd,
+          days: daysDiff,
+          escalatedByName: tlName,
+          escalationReason: note,
+          recipients: adminEmails,
+          settings,
+        }).catch((err) => console.error("Error sending escalation email:", err));
       }
 
       // 2. Notify Employee
