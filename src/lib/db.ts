@@ -3,10 +3,10 @@ import { PrismaClient } from "@/generated/prisma/client";
 
 function getDatabaseConfig() {
   const dbUrl = process.env.DATABASE_URL || "";
-  let host = "localhost";
+  let host = "leave_management_system";
   let port = 3306;
-  let user = "root";
-  let password = process.env.DB_PASSWORD || "Roacs2025";
+  let user = "mysql_lms";
+  let password = process.env.DB_PASSWORD || "vpu06ce5lny4pmdlhm3f";
   let database = "leave_management";
 
   if (dbUrl) {
@@ -39,12 +39,11 @@ function getDatabaseConfig() {
     user,
     password,
     database: database || "leave_management",
-    connectionLimit: 10,
-    connectTimeout: 10000,
+    connectionLimit: 5,
+    connectTimeout: 5000,
+    acquireTimeout: 5000,
   };
 }
-
-const adapter = new PrismaMariaDb(getDatabaseConfig());
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
@@ -52,7 +51,9 @@ const globalForPrisma = globalThis as unknown as {
 
 export const prisma =
   globalForPrisma.prisma ??
-  new PrismaClient({ adapter });
+  new PrismaClient({
+    adapter: new PrismaMariaDb(getDatabaseConfig()),
+  });
 
 if (process.env.NODE_ENV !== "production") {
   globalForPrisma.prisma = prisma;
