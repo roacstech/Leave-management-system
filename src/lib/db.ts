@@ -7,28 +7,40 @@ function getDatabaseConfig() {
   let port = 3306;
   let user = "root";
   let password = process.env.DB_PASSWORD || "Roacs2025";
-  let database = "LMS";
+  let database = "leave_management";
 
   if (dbUrl) {
-    try {
-      const url = new URL(dbUrl.replace(/^mysql:\/\//, "http://"));
-      if (url.hostname) host = url.hostname;
-      if (url.port) port = parseInt(url.port, 10);
-      if (url.username) user = url.username;
-      if (url.password) password = url.password;
-      if (url.pathname) database = url.pathname.replace(/^\//, "");
-    } catch {
-      // fallback to defaults if URL parsing fails
+    const match = dbUrl.match(/mysql:\/\/([^:]+):([^@]*)@([^:]+):(\d+)\/(.+)/);
+    if (match) {
+      user = match[1];
+      password = decodeURIComponent(match[2]);
+      host = match[3];
+      port = Number(match[4]);
+      database = match[5].split("?")[0];
+    } else {
+      try {
+        const url = new URL(dbUrl.replace(/^mysql:\/\//, "http://"));
+        if (url.hostname) host = url.hostname;
+        if (url.port) port = parseInt(url.port, 10);
+        if (url.username) user = url.username;
+        if (url.password) password = decodeURIComponent(url.password);
+        if (url.pathname) database = url.pathname.replace(/^\//, "").split("?")[0];
+      } catch (err) {
+        console.error("DB URL parse error:", err);
+      }
     }
   }
+
+  console.log(`[DB Config] Connecting to ${user}@${host}:${port}/${database}`);
 
   return {
     host,
     port,
     user,
     password,
-    database: database || "LMS",
+    database: database || "leave_management",
     connectionLimit: 10,
+    connectTimeout: 10000,
   };
 }
 
