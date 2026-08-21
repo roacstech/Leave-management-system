@@ -265,7 +265,7 @@ export default function TLLeaveHistoryPage() {
           </div>
           <div className="mt-2.5">
             <div className="text-2xl font-bold text-slate-900">
-              {loading ? "--" : `${summary.totalApprovedDays} Days`}
+              {loading ? "--" : `${summary.totalApprovedDays ?? 0} Days`}
             </div>
             <div className="text-[11px] text-slate-400 mt-0.5">
               Cumulative approved duration

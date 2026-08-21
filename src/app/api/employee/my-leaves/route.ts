@@ -141,6 +141,7 @@ export async function GET(request: NextRequest) {
         rejected: rejectedCount,
         escalated: pendingAdminCount,
         cancelled: cancelledCount,
+        totalApprovedDays,
         approvedDays: totalApprovedDays,
       },
       pagination: {

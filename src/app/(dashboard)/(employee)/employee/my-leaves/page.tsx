@@ -56,6 +56,7 @@ interface SummaryData {
   escalated: number;
   cancelled: number;
   totalApprovedDays: number;
+  approvedDays?: number;
 }
 
 export default function EmployeeMyLeavesPage() {
@@ -262,7 +263,7 @@ export default function EmployeeMyLeavesPage() {
           </div>
           <div className="mt-2.5">
             <div className="text-2xl font-bold text-slate-900">
-              {loading ? "--" : `${summary.totalApprovedDays} Days`}
+              {loading ? "--" : `${summary.totalApprovedDays ?? summary.approvedDays ?? 0} Days`}
             </div>
             <div className="text-[11px] text-emerald-600 font-medium mt-0.5">
               {summary.approved} requests approved
