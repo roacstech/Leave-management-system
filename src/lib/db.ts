@@ -36,6 +36,7 @@ function getDatabaseConfig() {
     user,
     password,
     database,
+    allowPublicKeyRetrieval: true,
     connectionLimit: 10,
     connectTimeout: 10000,
     acquireTimeout: 10000,
