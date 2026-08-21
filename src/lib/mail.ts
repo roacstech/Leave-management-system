@@ -354,6 +354,7 @@ export async function sendLeaveAppliedEmail({
 
 /**
  * Triggered when a leave request is Approved or Rejected. Sent to the employee.
+ * Explicitly mentions the exact reviewer (Team Lead [Name] or Admin [Name]).
  */
 export async function sendLeaveDecisionEmail({
   employeeName,
@@ -364,7 +365,7 @@ export async function sendLeaveDecisionEmail({
   days,
   status,
   reviewerName,
-  reviewerRole = "Management",
+  reviewerRole = "ADMIN",
   rejectionReason,
   settings,
 }: {
@@ -376,7 +377,7 @@ export async function sendLeaveDecisionEmail({
   days: number;
   status: "APPROVED" | "REJECTED";
   reviewerName?: string;
-  reviewerRole?: string;
+  reviewerRole?: "ADMIN" | "TL" | "CEO" | "Team Lead" | "Administrator" | string;
   rejectionReason?: string | null;
   settings?: SystemSettingsData;
 }): Promise<boolean> {
@@ -387,43 +388,58 @@ export async function sendLeaveDecisionEmail({
   }
 
   const isApproved = status === "APPROVED";
+  const isTL = reviewerRole === "TL" || reviewerRole === "Team Lead";
+  const isCeo = reviewerRole === "CEO";
+  
+  // Format reviewer role label and full designation
+  const roleLabel = isTL ? "Team Lead" : isCeo ? "CEO" : "Admin";
+  const reviewerFullName = reviewerName?.trim() || "";
+  const reviewerBadge = reviewerFullName ? `${roleLabel} ${reviewerFullName}` : roleLabel;
+
   const subject = isApproved
-    ? `Leave Request Approved: ${leaveType} (${startDate} - ${endDate})`
-    : `Leave Request Rejected: ${leaveType} (${startDate} - ${endDate})`;
+    ? `Your Leave Application is Approved by ${reviewerBadge} (${leaveType})`
+    : `Your Leave Application is Rejected by ${reviewerBadge} (${leaveType})`;
+
+  const headline = isApproved
+    ? `Leave Application Approved by ${roleLabel}`
+    : `Leave Application Rejected by ${roleLabel}`;
+
+  const subheadline = isApproved
+    ? `Hello <strong>${employeeName}</strong>, your leave application has been approved by ${roleLabel} <strong>${reviewerFullName || "Management"}</strong>.`
+    : `Hello <strong>${employeeName}</strong>, your leave application has been rejected by ${roleLabel} <strong>${reviewerFullName || "Management"}</strong>.`;
 
   const html = renderRealCompanyEmail({
     title: subject,
     statusBadge: {
-      text: isApproved ? "Approved" : "Rejected",
+      text: isApproved ? `Approved by ${roleLabel}` : `Rejected by ${roleLabel}`,
       type: isApproved ? "APPROVED" : "REJECTED",
     },
-    headline: isApproved ? "Leave Request Approved" : "Leave Request Rejected",
-    subheadline: isApproved
-      ? `Hello <strong>${employeeName}</strong>, your leave application has been approved by ${reviewerName || "Management"}.`
-      : `Hello <strong>${employeeName}</strong>, your leave application was reviewed and rejected by ${reviewerName || "Management"}.`,
+    headline,
+    subheadline,
     rows: [
+      { label: "Employee Name", value: employeeName, isBold: true },
       { label: "Leave Type", value: leaveType, isBold: true },
       { label: "Duration", value: `${days} ${days === 1 ? "Day" : "Days"}` },
       { label: "Leave Dates", value: `${startDate} to ${endDate}` },
-      { label: "Status", value: isApproved ? "Approved" : "Rejected", isBold: true },
-      { label: "Decided By", value: `${reviewerName || "Administrator"} (${reviewerRole})` },
+      { label: "Decision", value: isApproved ? "Approved" : "Rejected", isBold: true },
+      { label: "Decided By", value: `${roleLabel} ${reviewerFullName}`.trim(), isBold: true },
     ],
     noteBox: !isApproved && rejectionReason
       ? {
-          label: "Rejection Reason",
+          label: `Rejection Reason (from ${roleLabel})`,
           text: rejectionReason,
           isAlert: true,
         }
       : undefined,
-    ctaText: "View in Leave Dashboard",
-    ctaUrl: "/employee/dashboard",
+    ctaText: "View in My Leaves",
+    ctaUrl: "/employee/my-leaves",
   });
 
   return sendEmail({ to: employeeEmail, subject, html });
 }
 
 /**
- * Triggered when a TL escalates a leave request to Admins/CEO.
+ * Triggered when a TL escalates a leave request to Admins/CEO. Sent to Administrators.
  */
 export async function sendLeaveEscalatedEmail({
   applicantName,
@@ -453,28 +469,28 @@ export async function sendLeaveEscalatedEmail({
     return false;
   }
 
-  const subject = `Escalated Leave Request: ${applicantName} (${leaveType})`;
+  const subject = `Escalated Leave Request: ${applicantName} (${leaveType}) - Escalated by TL ${escalatedByName}`;
   
   const html = renderRealCompanyEmail({
     title: subject,
     statusBadge: {
-      text: "Escalated",
+      text: "Escalated by TL",
       type: "ESCALATED",
     },
     headline: "Escalated Leave Request",
-    subheadline: `A leave request for <strong>${applicantName}</strong> has been escalated by <strong>${escalatedByName}</strong> for executive review.`,
+    subheadline: `A leave request for <strong>${applicantName}</strong> has been escalated by Team Lead <strong>${escalatedByName}</strong> for executive review.`,
     rows: [
       { label: "Employee Name", value: applicantName, isBold: true },
       ...(applicantEmail ? [{ label: "Employee Email", value: applicantEmail }] : []),
       { label: "Leave Type", value: leaveType },
       { label: "Duration", value: `${days} ${days === 1 ? "Day" : "Days"}` },
       { label: "Leave Dates", value: `${startDate} to ${endDate}` },
-      { label: "Escalated By", value: escalatedByName },
+      { label: "Escalated By", value: `Team Lead ${escalatedByName}`, isBold: true },
       { label: "Status", value: "Escalated to Administration", isBold: true },
     ],
     noteBox: escalationReason
       ? {
-          label: "Escalation Note",
+          label: "Team Lead Escalation Note",
           text: escalationReason,
           isAlert: true,
         }
@@ -484,6 +500,67 @@ export async function sendLeaveEscalatedEmail({
   });
 
   return sendEmail({ to: recipients, subject, html });
+}
+
+/**
+ * Triggered when a TL escalates a leave request to Admins/CEO. Sent to the applicant Employee.
+ */
+export async function sendLeaveEscalatedToEmployeeEmail({
+  employeeName,
+  employeeEmail,
+  leaveType,
+  startDate,
+  endDate,
+  days,
+  escalatedByName,
+  escalationReason,
+  settings,
+}: {
+  employeeName: string;
+  employeeEmail: string;
+  leaveType: string;
+  startDate: string;
+  endDate: string;
+  days: number;
+  escalatedByName: string;
+  escalationReason?: string | null;
+  settings?: SystemSettingsData;
+}): Promise<boolean> {
+  const currentSettings = settings || (await getSystemSettings());
+  if (!canSendNotification("NEW_LEAVE_REQUEST", "EMAIL", currentSettings)) {
+    return false;
+  }
+
+  const subject = `Your Leave Application is Escalated to Admin by Team Lead ${escalatedByName}`;
+
+  const html = renderRealCompanyEmail({
+    title: subject,
+    statusBadge: {
+      text: "Escalated to Admin",
+      type: "ESCALATED",
+    },
+    headline: "Leave Application Escalated to Admin",
+    subheadline: `Hello <strong>${employeeName}</strong>, your leave application has been escalated to Administration by Team Lead <strong>${escalatedByName}</strong> for further review.`,
+    rows: [
+      { label: "Employee Name", value: employeeName, isBold: true },
+      { label: "Leave Type", value: leaveType, isBold: true },
+      { label: "Duration", value: `${days} ${days === 1 ? "Day" : "Days"}` },
+      { label: "Leave Dates", value: `${startDate} to ${endDate}` },
+      { label: "Escalated By", value: `Team Lead ${escalatedByName}`, isBold: true },
+      { label: "Status", value: "Pending Administration Review", isBold: true },
+    ],
+    noteBox: escalationReason
+      ? {
+          label: "Team Lead Escalation Reason",
+          text: escalationReason,
+          isAlert: true,
+        }
+      : undefined,
+    ctaText: "View in My Leaves",
+    ctaUrl: "/employee/my-leaves",
+  });
+
+  return sendEmail({ to: employeeEmail, subject, html });
 }
 
 /**

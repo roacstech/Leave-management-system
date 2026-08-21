@@ -5,7 +5,11 @@ import {
   getSystemSettings,
   formatDateWithPattern,
 } from "@/lib/settings";
-import { sendLeaveDecisionEmail, sendLeaveEscalatedEmail } from "@/lib/mail";
+import {
+  sendLeaveDecisionEmail,
+  sendLeaveEscalatedEmail,
+  sendLeaveEscalatedToEmployeeEmail,
+} from "@/lib/mail";
 import { createNotification } from "@/lib/notifications";
 
 export const dynamic = "force-dynamic";
@@ -497,6 +501,20 @@ export async function PATCH(request: NextRequest) {
         entityType: "LEAVE_REQUEST",
         entityId: leaveRequestId,
       });
+
+      if (existing.user.email) {
+        sendLeaveEscalatedToEmployeeEmail({
+          employeeName: existing.user.name,
+          employeeEmail: existing.user.email,
+          leaveType: existing.leaveType.name,
+          startDate: formattedStart,
+          endDate: formattedEnd,
+          days: daysDiff,
+          escalatedByName: tlName,
+          escalationReason: note,
+          settings,
+        }).catch((err) => console.error("Error sending escalation email to employee:", err));
+      }
 
       return NextResponse.json({
         success: true,

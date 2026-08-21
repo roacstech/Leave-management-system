@@ -3,7 +3,10 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { getSystemSettings, formatDateWithPattern } from "@/lib/settings";
 import { createNotification } from "@/lib/notifications";
-import { sendLeaveEscalatedEmail } from "@/lib/mail";
+import {
+  sendLeaveEscalatedEmail,
+  sendLeaveEscalatedToEmployeeEmail,
+} from "@/lib/mail";
 
 export const dynamic = "force-dynamic";
 
@@ -169,6 +172,20 @@ export async function PATCH(
       entityType: "LEAVE_REQUEST",
       entityId: leaveRequestId,
     });
+
+    if (existing.user.email) {
+      sendLeaveEscalatedToEmployeeEmail({
+        employeeName: existing.user.name,
+        employeeEmail: existing.user.email,
+        leaveType: existing.leaveType.name,
+        startDate: formattedStart,
+        endDate: formattedEnd,
+        days: daysDiff,
+        escalatedByName: userName,
+        escalationReason: reason,
+        settings,
+      }).catch((err) => console.error("Error sending escalation email to employee:", err));
+    }
 
     return NextResponse.json({
       success: true,
