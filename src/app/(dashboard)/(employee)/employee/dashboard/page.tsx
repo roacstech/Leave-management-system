@@ -364,7 +364,7 @@ export default function EmployeeDashboardPage() {
           </div>
 
           <h1 className="text-xl sm:text-2xl font-bold text-[#1a2333] tracking-tight">
-            Welcome, {data?.employee?.name || "Employee"}! 👋
+            Welcome, <span className="uppercase">{data?.employee?.name || "Employee"}</span>! 👋
           </h1>
           <p className="text-xs text-slate-500 mt-1">
             Track your annual leave balances, submit leave applications, and punch daily attendance.

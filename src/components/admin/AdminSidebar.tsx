@@ -119,25 +119,8 @@ export default function AdminSidebar({
         }`}
       >
         {/* Brand Header */}
-        <div className="px-5 py-5 border-b border-slate-100 bg-white">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-slate-900 text-white">
-              <Building2 className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="flex items-center gap-1.5">
-                <span className="font-bold text-sm tracking-tight text-slate-900">
-                  LMS Portal
-                </span>
-                <span className="text-[10px] font-semibold px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 border border-slate-200">
-                  Manager
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-400 font-normal truncate max-w-[130px]" title={settings.companyName}>
-                {settings.companyName || "Roacs Corporation"}
-              </p>
-            </div>
-          </div>
+        <div className="px-5 py-5 border-b border-slate-100 bg-white flex flex-col items-center justify-center gap-2">
+          <img src="/logo.png" alt="Embassy of India" className="h-10 w-auto object-contain" />
         </div>
 
         {/* Menu Navigation - Only Menus (No Submenus) */}
@@ -197,7 +180,7 @@ export default function AdminSidebar({
                 M
               </div>
               <div className="overflow-hidden">
-                <div className="text-xs font-semibold text-slate-900 truncate">
+                <div className="text-xs font-semibold text-slate-900 truncate uppercase">
                   Admin
                 </div>
                 <div className="flex items-center gap-1 text-[11px] text-slate-500">

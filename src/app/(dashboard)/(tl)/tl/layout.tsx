@@ -23,6 +23,7 @@ function TLHeader({
 }) {
   const { formatDate } = useSettings();
   const currentDate = formatDate(new Date());
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -80,28 +81,43 @@ function TLHeader({
 
         <div className="h-4 w-px bg-slate-200 hidden sm:block mx-1" />
 
-        <div className="flex items-center gap-2 pl-1">
-          <div className="w-7 h-7 rounded-md bg-indigo-600 flex items-center justify-center text-white font-bold text-xs shadow-2xs">
-            TL
-          </div>
+        <div className="relative">
+          <button
+            onClick={() => setProfileMenuOpen(!profileMenuOpen)}
+            className="flex items-center gap-2 pl-1 p-1 rounded-md hover:bg-slate-50 transition-colors cursor-pointer text-left"
+          >
+            <div className="w-7 h-7 rounded-md bg-indigo-600 flex items-center justify-center text-white font-bold text-xs shadow-2xs">
+              TL
+            </div>
 
-          <div className="hidden sm:block text-left">
-            <div className="text-xs font-semibold text-slate-900 leading-tight">
-              Team Leader
+            <div className="hidden sm:block text-left">
+              <div className="text-xs font-semibold text-slate-900 leading-tight uppercase">
+                Team Leader
+              </div>
+              <div className="text-[10px] text-slate-500 leading-none">
+                Supervisor
+              </div>
             </div>
-            <div className="text-[10px] text-slate-500 leading-none">
-              Supervisor
-            </div>
-          </div>
+          </button>
+          
+          {profileMenuOpen && (
+            <>
+              <div 
+                className="fixed inset-0 z-40" 
+                onClick={() => setProfileMenuOpen(false)} 
+              />
+              <div className="absolute right-0 mt-2 w-48 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-50">
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors font-medium cursor-pointer"
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Sign Out
+                </button>
+              </div>
+            </>
+          )}
         </div>
-
-        <button
-          onClick={handleLogout}
-          title="Sign Out"
-          className="p-1.5 rounded-md text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors ml-1"
-        >
-          <LogOut className="w-4 h-4" />
-        </button>
       </div>
     </header>
   );

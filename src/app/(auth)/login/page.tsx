@@ -58,35 +58,24 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 flex flex-col justify-between py-10 px-4 sm:px-6 lg:px-8">
-      {/* Background Decorative Pattern */}
-      <div className="absolute inset-0 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:24px_24px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_70%,transparent_100%)] pointer-events-none opacity-60" />
-
+    <main 
+      className="min-h-screen flex flex-col justify-between py-10 px-4 sm:px-6 lg:px-8 bg-cover bg-center bg-no-repeat"
+      style={{ backgroundImage: 'url("/login-bg.png")' }}
+    >
       {/* Top Brand Logo */}
       <div className="relative z-10 flex flex-col items-center justify-center">
-        <div className="flex items-center gap-2.5">
-          <div className="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center shadow-md">
-            <Shield className="w-5 h-5" />
-          </div>
-          <div className="text-left">
-            <span className="font-bold text-lg text-slate-900 tracking-tight block leading-tight">
-              LMS Portal
-            </span>
-            <span className="text-[10px] text-slate-500 font-semibold tracking-wider uppercase">
-              Leave & Attendance Management
-            </span>
-          </div>
-        </div>
+        <img src="/logo.png" alt="Embassy of India" className="h-20 w-auto object-contain mb-3" />
+        <h2 className="text-xl font-bold text-slate-900 tracking-tight">LMS Portal</h2>
       </div>
 
       {/* Main Login Card */}
       <div className="relative z-10 w-full max-w-md mx-auto my-auto pt-6 pb-4">
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-xl shadow-slate-200/50 p-7 sm:p-9">
-          <div className="text-center mb-6">
-            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
-              Sign in to your account
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-xl shadow-slate-200/50 p-7 sm:p-9 flex flex-col">
+          <div className="text-center mb-8">
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight mb-2">
+              Sign in
             </h1>
-            <p className="text-xs text-slate-500 mt-1">
+            <p className="text-xs text-slate-500">
               Enter your corporate credentials to access your dashboard.
             </p>
           </div>
@@ -107,7 +96,7 @@ export default function LoginPage() {
                 htmlFor="email"
                 className="block text-xs font-semibold text-slate-700 mb-1.5"
               >
-                Work Email Address
+                Email Address
               </label>
               <div className="relative">
                 <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -173,35 +162,7 @@ export default function LoginPage() {
             </button>
           </form>
 
-          {/* Quick Demo Role Switcher */}
-          <div className="mt-6 pt-5 border-t border-slate-100">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-                Demo Accounts
-              </span>
-              <span className="text-[10px] text-slate-400">Click to autofill</span>
-            </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
-              {demoAccounts.map((demo) => {
-                const isSelected = email === demo.email;
-                return (
-                  <button
-                    key={demo.role}
-                    type="button"
-                    onClick={() => handleQuickFill(demo.email, demo.pass)}
-                    className={`py-1.5 px-2 rounded-lg border text-center transition-all cursor-pointer ${
-                      isSelected
-                        ? "bg-slate-900 text-white border-slate-900 font-semibold shadow-2xs"
-                        : "bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700 font-medium text-xs"
-                    }`}
-                  >
-                    <span className="text-xs block">{demo.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
         </div>
       </div>
 
