@@ -1,8 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useCallback } from "react";
-import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import {
   Bell,
   Check,
@@ -105,8 +104,7 @@ function getBadgeDetails(type: NotificationItem["type"]) {
 }
 
 export function NotificationsCenter() {
-  const sessionResult = useSession?.();
-  const session = sessionResult?.data;
+  const pathname = usePathname();
   const router = useRouter();
 
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
@@ -119,8 +117,6 @@ export function NotificationsCenter() {
   const [readFilter, setReadFilter] = useState<"ALL" | "UNREAD" | "READ">("ALL");
   const [typeFilter, setTypeFilter] = useState<string>("ALL");
   const [search, setSearch] = useState("");
-
-  const userRole = session?.user?.role;
 
   const fetchNotifications = useCallback(async () => {
     try {
@@ -190,12 +186,13 @@ export function NotificationsCenter() {
       handleMarkAsRead(notif.id);
     }
 
-    if (userRole === "TL") {
-      router.push("/tl/leave-requests");
-    } else if (userRole === "ADMIN") {
+    // Determine current portal and redirect to appropriate section
+    if (pathname?.startsWith("/admin")) {
       router.push("/admin/leaves");
-    } else if (userRole === "CEO") {
-      router.push("/ceo/leaves");
+    } else if (pathname?.startsWith("/tl")) {
+      router.push("/tl/leave-requests");
+    } else if (pathname?.startsWith("/ceo")) {
+      router.push("/ceo/leave-management");
     } else {
       router.push("/employee/my-leaves");
     }
