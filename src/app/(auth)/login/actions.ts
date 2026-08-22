@@ -57,19 +57,18 @@ export async function loginWithCredentials(formData: {
       };
     }
 
-    // 4. Authenticate via NextAuth to create session cookie.
-    // NOTE: Do NOT pass redirect: false in Auth.js v5 Server Actions.
-    // redirect: false triggers an internal HTTP fetch that can receive HTML
-    // instead of JSON (ClientFetchError). Let signIn throw NEXT_REDIRECT
-    // instead — it is caught and re-thrown below, triggering the server-side
-    // redirect to "/". Validation is already done above so this will succeed.
+    // 4. Authenticate via NextAuth to create session cookie and redirect directly to role dashboard
+    let targetPath = "/employee/dashboard";
+    if (user.role === "ADMIN") targetPath = "/admin/dashboard";
+    else if (user.role === "TL") targetPath = "/tl/dashboard";
+    else if (user.role === "CEO") targetPath = "/ceo/dashboard";
+
     await signIn("credentials", {
       email,
       password,
-      redirectTo: "/",
+      redirectTo: targetPath,
     });
-    // Unreachable: signIn always throws NEXT_REDIRECT on success.
-    // Required so TypeScript sees a complete return path.
+
     return { success: true };
   } catch (error: any) {
     if (error instanceof AuthError) {
@@ -80,8 +79,14 @@ export async function loginWithCredentials(formData: {
       };
     }
 
-    // If it's a redirect error (NEXT_REDIRECT thrown by NextAuth), rethrow
-    if (error?.message?.includes("NEXT_REDIRECT")) {
+    // If it's a redirect error (NEXT_REDIRECT thrown by NextAuth/Next.js), rethrow
+    if (
+      error?.message?.includes("NEXT_REDIRECT") ||
+      error?.digest?.startsWith("NEXT_REDIRECT") ||
+      error?.name === "NEXT_REDIRECT" ||
+      error?.message === "NEXT_REDIRECT" ||
+      (typeof error?.digest === "string" && error.digest.includes("NEXT_REDIRECT"))
+    ) {
       throw error;
     }
 

@@ -45,13 +45,22 @@ export default function LoginPage() {
         password: password.trim(),
       });
 
-      if (!res.success) {
+      if (res && !res.success) {
         setLoading(false);
         setError(res.message || "Invalid email or password. Please verify and try again.");
-      } else {
-        window.location.href = "/";
       }
-    } catch {
+    } catch (err: any) {
+      // In Next.js App Router, when a Server Action triggers redirect() or signIn with redirectTo,
+      // it throws a NEXT_REDIRECT control exception. Do not display network error on redirect.
+      if (
+        err?.message?.includes("NEXT_REDIRECT") ||
+        err?.digest?.startsWith("NEXT_REDIRECT") ||
+        err?.name === "NEXT_REDIRECT" ||
+        err?.message === "NEXT_REDIRECT" ||
+        (typeof err?.digest === "string" && err.digest.includes("NEXT_REDIRECT"))
+      ) {
+        return;
+      }
       setLoading(false);
       setError("An unexpected network error occurred. Please try again.");
     }

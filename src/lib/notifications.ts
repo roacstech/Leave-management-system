@@ -51,18 +51,16 @@ export async function resolveEmployeeTeamLead(employeeId: number): Promise<{
     return { success: false, tl: null, team: null, error: "Employee record not found." };
   }
 
-  // 1. Resolve via Team TL
-  if (employee.team) {
-    if (employee.team.tl && employee.team.tl.isActive) {
-      return {
-        success: true,
-        tl: employee.team.tl,
-        team: { id: employee.team.id, name: employee.team.name },
-      };
-    }
+  // 1. Resolve via Team's assigned TL (team.tlId)
+  if (employee.team?.tl && employee.team.tl.isActive) {
+    return {
+      success: true,
+      tl: employee.team.tl,
+      team: { id: employee.team.id, name: employee.team.name },
+    };
   }
 
-  // 2. Fallback to direct reportingTo
+  // 2. Fallback to direct reportingTo hierarchy
   if (employee.reportingTo && employee.reportingTo.isActive) {
     return {
       success: true,
@@ -71,12 +69,40 @@ export async function resolveEmployeeTeamLead(employeeId: number): Promise<{
     };
   }
 
-  if (!employee.teamId) {
+  // 3. Fallback to any active TL in the employee's team
+  if (employee.teamId) {
+    const teamTL = await prisma.user.findFirst({
+      where: {
+        teamId: employee.teamId,
+        role: "TL",
+        isActive: true,
+      },
+      select: { id: true, name: true, email: true, role: true, isActive: true },
+    });
+
+    if (teamTL) {
+      return {
+        success: true,
+        tl: teamTL,
+        team: employee.team ? { id: employee.team.id, name: employee.team.name } : null,
+      };
+    }
+  }
+
+  // 4. Fallback to active Admin if no TL is assigned
+  const fallbackAdmin = await prisma.user.findFirst({
+    where: {
+      role: "ADMIN",
+      isActive: true,
+    },
+    select: { id: true, name: true, email: true, role: true, isActive: true },
+  });
+
+  if (fallbackAdmin) {
     return {
-      success: false,
-      tl: null,
-      team: null,
-      error: "Employee is not assigned to a team.",
+      success: true,
+      tl: fallbackAdmin,
+      team: employee.team ? { id: employee.team.id, name: employee.team.name } : null,
     };
   }
 
@@ -84,7 +110,7 @@ export async function resolveEmployeeTeamLead(employeeId: number): Promise<{
     success: false,
     tl: null,
     team: employee.team ? { id: employee.team.id, name: employee.team.name } : null,
-    error: "No active Team Lead is assigned to this employee's team. Please contact Admin.",
+    error: "No active supervisor or administrator found.",
   };
 }
 
