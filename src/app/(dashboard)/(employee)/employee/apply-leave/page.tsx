@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { useSettings } from "@/contexts/SettingsContext";
 import DatePicker from "@/components/ui/DatePicker";
+import ThemedSelect from "@/components/ui/ThemedSelect";
 
 interface LeaveBalance {
   id: number;
@@ -360,33 +361,30 @@ function ApplyLeaveContent() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* 1. SELECT LEAVE TYPE DROPDOWN */}
                 <div>
-                  <label className="block text-xs font-bold text-[#1a2333] mb-1.5">
+                  <label className="block text-xs font-bold text-base-content mb-1.5">
                     Select Leave Type <span className="text-rose-500">*</span>
                   </label>
-                  <select
+                  <ThemedSelect
                     value={leaveTypeId}
-                    onChange={(e) => setLeaveTypeId(e.target.value)}
+                    onChange={(val) => setLeaveTypeId(val)}
                     disabled={loading || balances.length === 0}
-                    className="w-full rounded-xl border border-slate-200 p-2.5 text-xs text-slate-900 bg-white outline-none focus:border-[#1e293b] focus:ring-1 focus:ring-[#1e293b]/20 font-medium cursor-pointer shadow-2xs"
-                    required
-                  >
-                    {loading ? (
-                      <option value="">Loading leave types from database...</option>
-                    ) : balances.length === 0 ? (
-                      <option value="">No leave types found in database</option>
-                    ) : (
-                      balances.map((bal) => (
-                        <option key={bal.id} value={bal.leaveType.id.toString()}>
-                          {bal.leaveType.name} ({bal.leaveType.code}) — {bal.remaining} Days Available
-                        </option>
-                      ))
-                    )}
-                  </select>
-                  <div className="text-[11px] text-slate-400 mt-1 flex items-center justify-between">
+                    placeholder={
+                      loading
+                        ? "Loading leave types..."
+                        : balances.length === 0
+                        ? "No leave types found"
+                        : "Select Leave Type"
+                    }
+                    options={balances.map((bal) => ({
+                      value: bal.leaveType.id.toString(),
+                      label: `${bal.leaveType.name} (${bal.leaveType.code}) — ${bal.remaining} Days Available`,
+                    }))}
+                  />
+                  <div className="text-[11px] text-base-content/60 mt-1 flex items-center justify-between">
                     <span>
                       {selectedBalance?.leaveType.isPaid ? "Paid Leave" : "Unpaid / Loss of Pay"}
                     </span>
-                    <span className="font-semibold text-emerald-700">
+                    <span className="font-semibold text-emerald-600">
                       Balance: {selectedBalance?.remaining ?? 0} Days
                     </span>
                   </div>
@@ -395,51 +393,53 @@ function ApplyLeaveContent() {
                 {/* 2. COMP-OFF DROPDOWN (NEXT TO LEAVE TYPE) */}
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
-                    <label className="text-xs font-bold text-[#1a2333] flex items-center gap-1.5">
+                    <label className="text-xs font-bold text-base-content flex items-center gap-1.5">
                       <span>Comp-Off Credit / Ref</span>
                       {isCompOffSelected && (
-                        <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-amber-50 text-amber-800 border border-amber-200">
+                        <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-amber-500/10 text-amber-600 border border-amber-500/20">
                           Active
                         </span>
                       )}
                     </label>
                   </div>
 
-                  <select
+                  <ThemedSelect
                     value={compOffReference}
-                    onChange={(e) => setCompOffReference(e.target.value)}
+                    onChange={(val) => setCompOffReference(val)}
                     disabled={!isCompOffSelected}
-                    className={`w-full rounded-xl border p-2.5 text-xs outline-none transition-all shadow-2xs font-medium ${
+                    placeholder="Select Comp-Off Credit"
+                    options={
                       isCompOffSelected
-                        ? "border-amber-300 bg-amber-50/40 text-amber-950 focus:border-amber-500 cursor-pointer"
-                        : "border-slate-200 bg-slate-50 text-slate-400 cursor-not-allowed"
-                    }`}
-                  >
-                    {isCompOffSelected ? (
-                      <>
-                        <option value="GENERAL_CREDIT">
-                          General Comp-Off Quota ({selectedBalance?.remaining || 5} Days in Balance)
-                        </option>
-                        <option value="WEEKEND_DUTY_EARNED">
-                          Worked Weekend Shift (1.0 Day Credit Earned)
-                        </option>
-                        <option value="PUBLIC_HOLIDAY_DUTY">
-                          Worked Official Holiday Duty (1.0 Day Credit Earned)
-                        </option>
-                        <option value="OVERTIME_EXTRA_HOURS">
-                          Approved Overtime / Extra Shift Hours
-                        </option>
-                      </>
-                    ) : (
-                      <option value="NOT_APPLICABLE">
-                        Not Applicable (Select Comp-Off leave to activate)
-                      </option>
-                    )}
-                  </select>
+                        ? [
+                            {
+                              value: "GENERAL_CREDIT",
+                              label: `General Comp-Off Quota (${selectedBalance?.remaining || 5} Days in Balance)`,
+                            },
+                            {
+                              value: "WEEKEND_DUTY_EARNED",
+                              label: "Worked Weekend Shift (1.0 Day Credit Earned)",
+                            },
+                            {
+                              value: "PUBLIC_HOLIDAY_DUTY",
+                              label: "Worked Official Holiday Duty (1.0 Day Credit Earned)",
+                            },
+                            {
+                              value: "OVERTIME_EXTRA_HOURS",
+                              label: "Approved Overtime / Extra Shift Hours",
+                            },
+                          ]
+                        : [
+                            {
+                              value: "NOT_APPLICABLE",
+                              label: "Not Applicable (Select Comp-Off leave to activate)",
+                            },
+                          ]
+                    }
+                  />
 
-                  <div className="text-[11px] text-slate-400 mt-1">
+                  <div className="text-[11px] text-base-content/60 mt-1">
                     {isCompOffSelected ? (
-                      <span className="text-amber-800 font-medium">
+                      <span className="text-amber-600 font-medium">
                         Select the worked weekend / holiday credit being redeemed.
                       </span>
                     ) : (

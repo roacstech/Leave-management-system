@@ -635,12 +635,12 @@ export default function AttendanceAdminPage() {
 
           <div className="flex items-center gap-2.5 flex-wrap">
             {/* View switcher */}
-            <div className="flex items-center gap-0.5 p-0.5 bg-slate-100 rounded-lg border border-slate-200">
+            <div className="flex items-center gap-1 p-1 bg-base-200 rounded-xl border border-base-300">
               {(["daily", "monthly"] as const).map((v) => (
                 <button
                   key={v}
                   onClick={() => setView(v)}
-                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${view === v ? "bg-white text-slate-900 shadow-xs font-semibold" : "text-slate-500 hover:text-slate-800"}`}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${view === v ? "bg-primary text-primary-content shadow-xs font-bold" : "text-base-content/70 hover:text-base-content hover:bg-base-300/50"}`}
                 >
                   {v === "daily" ? "Daily View" : "Monthly View"}
                 </button>
@@ -747,10 +747,10 @@ export default function AttendanceAdminPage() {
                 <button
                   key={tab.key}
                   onClick={() => setStatusTab(tab.key)}
-                  className={`flex items-center gap-1.5 px-4 py-3 text-xs font-medium whitespace-nowrap transition-all border-b-2 ${statusTab === tab.key ? "border-slate-900 text-slate-900 font-semibold" : "border-transparent text-slate-500 hover:text-slate-800"}`}
+                  className={`flex items-center gap-1.5 px-4 py-3 text-xs font-medium whitespace-nowrap transition-all border-b-2 cursor-pointer ${statusTab === tab.key ? "border-primary text-primary font-bold" : "border-transparent text-base-content/70 hover:text-base-content"}`}
                 >
                   {tab.label}
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${statusTab === tab.key ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-600"}`}>
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${statusTab === tab.key ? "bg-primary text-primary-content" : "bg-base-200 text-base-content border border-base-300"}`}>
                     {tabCounts[tab.key] ?? 0}
                   </span>
                 </button>

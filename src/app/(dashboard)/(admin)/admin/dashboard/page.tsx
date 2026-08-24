@@ -411,15 +411,15 @@ export default function AdminDashboardPage() {
             </div>
 
             {/* Filter Tabs */}
-            <div className="flex items-center gap-1 p-0.5 bg-slate-100 rounded-lg text-xs">
+            <div className="flex items-center gap-1 p-1 bg-base-200 border border-base-300 rounded-xl text-xs">
               {(["PENDING_ADMIN", "APPROVED", "REJECTED", "ALL"] as const).map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setLeaveTab(tab)}
-                  className={`px-2.5 py-1 rounded-md text-xs transition-all cursor-pointer ${
+                  className={`px-2.5 py-1 rounded-lg text-xs transition-all cursor-pointer ${
                     leaveTab === tab
-                      ? "bg-white text-slate-900 font-semibold shadow-2xs"
-                      : "text-slate-500 hover:text-slate-800"
+                      ? "bg-primary text-primary-content font-bold shadow-2xs"
+                      : "text-base-content/70 hover:text-base-content hover:bg-base-300/50"
                   }`}
                 >
                   {tab === "ALL"
@@ -541,15 +541,15 @@ export default function AdminDashboardPage() {
             </div>
 
             {/* Attendance Status Filter */}
-            <div className="flex items-center gap-1 p-0.5 bg-slate-100 rounded-lg text-xs">
+            <div className="flex items-center gap-1 p-1 bg-base-200 border border-base-300 rounded-xl text-xs">
               {(["ALL", "PRESENT", "LATE", "ABSENT"] as const).map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setAttendanceTab(tab)}
-                  className={`px-2 py-1 rounded-md text-xs transition-all ${
+                  className={`px-2 py-1 rounded-lg text-xs transition-all cursor-pointer ${
                     attendanceTab === tab
-                      ? "bg-white text-slate-900 font-semibold shadow-2xs"
-                      : "text-slate-500 hover:text-slate-800"
+                      ? "bg-primary text-primary-content font-bold shadow-2xs"
+                      : "text-base-content/70 hover:text-base-content hover:bg-base-300/50"
                   }`}
                 >
                   {tab === "ALL" ? "All" : tab.charAt(0) + tab.slice(1).toLowerCase()}

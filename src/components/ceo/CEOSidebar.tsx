@@ -98,15 +98,15 @@ export default function CEOSidebar({
 
 
   return (
-    <aside className="w-60 bg-white text-slate-800 flex flex-col h-full border-r border-slate-200 select-none">
+    <aside className="w-60 bg-base-100 text-base-content flex flex-col h-full border-r border-base-300 select-none">
       {/* Brand Header */}
-      <div className="px-5 py-5 border-b border-slate-100 bg-white flex flex-col items-center justify-center gap-2">
+      <div className="px-5 py-5 border-b border-base-300 bg-base-100 flex flex-col items-center justify-center gap-2">
         <img src="/logo.png" alt="Embassy of India" className="h-10 w-auto object-contain" />
       </div>
 
       {/* Menu Navigation */}
       <div className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
-        <div className="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+        <div className="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-base-content/50">
           Executive Workspace
         </div>
 
@@ -121,16 +121,16 @@ export default function CEOSidebar({
               key={item.name}
               href={item.href}
               onClick={onClose}
-              className={`flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+              className={`flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-all cursor-pointer ${
                 isActive
-                  ? "bg-slate-900 text-white font-semibold shadow-xs"
-                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                  ? "bg-primary text-primary-content font-semibold shadow-xs"
+                  : "text-base-content/70 hover:text-base-content hover:bg-base-200"
               }`}
             >
               <div className="flex items-center gap-2.5">
                 <Icon
                   className={`w-4 h-4 ${
-                    isActive ? "text-white" : "text-slate-500"
+                    isActive ? "text-primary-content" : "text-base-content/60"
                   }`}
                 />
                 <span>{item.name}</span>
@@ -140,8 +140,8 @@ export default function CEOSidebar({
                 <span
                   className={`text-[10px] font-bold px-1.5 py-0.2 rounded-full ${
                     isActive
-                      ? "bg-white text-slate-900"
-                      : "bg-amber-100 text-amber-800 border border-amber-200"
+                      ? "bg-primary-content text-primary"
+                      : "bg-base-200 text-base-content border border-base-300"
                   }`}
                 >
                   {item.badge}
@@ -153,20 +153,20 @@ export default function CEOSidebar({
       </div>
 
       {/* CEO Profile Footer */}
-      <div className="p-3.5 border-t border-slate-100 bg-white relative">
+      <div className="p-3.5 border-t border-base-300 bg-base-100 relative">
         <button
           onClick={() => setProfileMenuOpen(!profileMenuOpen)}
-          className="flex items-center justify-between w-full p-2 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer text-left"
+          className="flex items-center justify-between w-full p-2 rounded-lg hover:bg-base-200 transition-colors cursor-pointer text-left"
         >
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-full bg-slate-900 flex items-center justify-center font-bold text-white text-xs shadow-2xs shrink-0">
+            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center font-bold text-primary-content text-xs shadow-2xs shrink-0">
               C
             </div>
             <div className="overflow-hidden">
-              <div className="text-xs font-semibold text-slate-900 truncate uppercase">
+              <div className="text-xs font-semibold text-base-content truncate uppercase">
                 Chief Executive Officer
               </div>
-              <div className="flex items-center gap-1 text-[11px] text-slate-500">
+              <div className="flex items-center gap-1 text-[11px] text-base-content/60">
                 <span>Executive Head</span>
               </div>
             </div>

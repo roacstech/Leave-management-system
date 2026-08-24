@@ -281,10 +281,10 @@ export default function LeavesAdminPage() {
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="p-4 rounded-2xl bg-white border border-slate-200/80 shadow-xs space-y-3">
+      <div className="p-4 rounded-2xl bg-base-100 border border-base-300 shadow-xs space-y-3">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
           {/* Status Tabs */}
-          <div className="flex items-center p-0.5 bg-slate-100/80 rounded-xl gap-1 w-full sm:w-auto overflow-x-auto">
+          <div className="flex items-center p-1 bg-base-200 rounded-xl border border-base-300 gap-1 w-full sm:w-auto overflow-x-auto">
             {[
               { id: "ALL", label: `All (${summary.all})` },
               { id: "PENDING_ADMIN", label: `Pending Review (${summary.pending})` },
@@ -300,8 +300,8 @@ export default function LeavesAdminPage() {
                 }}
                 className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all cursor-pointer ${
                   filter === t.id
-                    ? "bg-white text-slate-900 shadow-2xs font-bold"
-                    : "text-slate-500 hover:text-slate-900"
+                    ? "bg-primary text-primary-content shadow-xs font-bold"
+                    : "text-base-content/70 hover:text-base-content hover:bg-base-300/50"
                 }`}
               >
                 {t.label}
@@ -311,24 +311,24 @@ export default function LeavesAdminPage() {
 
           {/* Search Box */}
           <div className="relative w-full sm:w-64">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-base-content/40" />
             <input
               type="text"
               placeholder="Search employee, reason..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-slate-800 placeholder-slate-400"
+              className="w-full pl-9 pr-3 py-1.5 text-xs bg-base-100 border border-base-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-base-content placeholder:text-base-content/40"
             />
           </div>
         </div>
       </div>
 
       {/* Table Card */}
-      <div className="rounded-2xl bg-white border border-slate-200/80 shadow-xs overflow-hidden">
+      <div className="rounded-2xl bg-base-100 border border-base-300 shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-slate-50 border-b border-slate-200 text-[11px] uppercase tracking-wider text-slate-500 font-semibold">
+              <tr className="bg-base-200 border-b border-base-300 text-[11px] uppercase tracking-wider text-base-content/70 font-semibold">
                 <th className="px-5 py-3.5">Requester & Team</th>
                 <th className="px-5 py-3.5">Role</th>
                 <th className="px-5 py-3.5">Leave Type</th>
@@ -337,20 +337,20 @@ export default function LeavesAdminPage() {
                 <th className="px-5 py-3.5 text-center">Status / Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 text-xs">
+            <tbody className="divide-y divide-base-300 text-xs">
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="py-12 text-center text-slate-400">
-                    <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-slate-400" />
+                  <td colSpan={6} className="py-12 text-center text-base-content/50">
+                    <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-primary" />
                     <span>Loading leave requests...</span>
                   </td>
                 </tr>
               ) : displayedLeaves.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="p-12 text-center text-slate-400">
-                    <Calendar className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                    <p className="font-semibold text-slate-700 text-xs">No leave requests found</p>
-                    <p className="text-[11px] text-slate-400 mt-0.5">
+                  <td colSpan={6} className="p-12 text-center text-base-content/50">
+                    <Calendar className="w-8 h-8 text-base-content/30 mx-auto mb-2" />
+                    <p className="font-semibold text-base-content text-xs">No leave requests found</p>
+                    <p className="text-[11px] text-base-content/50 mt-0.5">
                       {filter === "ESCALATED"
                         ? "No leave applications are currently escalated to Administration."
                         : "No records matching current filter."}
@@ -365,18 +365,18 @@ export default function LeavesAdminPage() {
                   const assignedTL = req.user.team?.tl?.name || req.user.reportingTo?.name;
 
                   return (
-                    <tr key={req.id} className="hover:bg-slate-50/70 transition-colors">
+                    <tr key={req.id} className="hover:bg-base-200/50 transition-colors">
                       {/* Requester & Team */}
                       <td className="px-5 py-3.5">
                         <div className="flex items-center gap-2.5">
-                          <div className="w-8 h-8 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700 font-bold text-xs shrink-0">
+                          <div className="w-8 h-8 rounded-lg bg-base-200 border border-base-300 flex items-center justify-center text-base-content font-bold text-xs shrink-0">
                             {req.user.name.charAt(0).toUpperCase()}
                           </div>
                           <div>
-                            <div className="font-semibold text-slate-900">{req.user.name}</div>
-                            <div className="text-[11px] text-slate-400">{req.user.email}</div>
+                            <div className="font-semibold text-base-content">{req.user.name}</div>
+                            <div className="text-[11px] text-base-content/50">{req.user.email}</div>
                             {req.user.team && (
-                              <div className="text-[10px] text-slate-500 font-medium mt-0.5">
+                              <div className="text-[10px] text-base-content/60 font-medium mt-0.5">
                                 Team: {req.user.team.name}
                                 {assignedTL && ` (TL: ${assignedTL})`}
                               </div>
@@ -390,8 +390,8 @@ export default function LeavesAdminPage() {
                         <span
                           className={`text-[11px] px-2 py-0.5 rounded-md font-semibold whitespace-nowrap ${
                             req.user.role === "TL"
-                              ? "bg-purple-50 text-purple-700 border border-purple-200"
-                              : "bg-slate-100 text-slate-700 border border-slate-200"
+                              ? "bg-purple-500/10 text-purple-600 border border-purple-500/20"
+                              : "bg-base-200 text-base-content border border-base-300"
                           }`}
                         >
                           {req.user.role === "TL" ? "Team Lead" : "Employee"}
@@ -400,17 +400,17 @@ export default function LeavesAdminPage() {
 
                       {/* Leave Type */}
                       <td className="px-5 py-3.5">
-                        <span className="text-[11px] px-2.5 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200 font-medium whitespace-nowrap">
+                        <span className="text-[11px] px-2.5 py-0.5 rounded-md bg-base-200 text-base-content border border-base-300 font-medium whitespace-nowrap">
                           {req.leaveType.name}
                         </span>
                       </td>
 
                       {/* Duration */}
                       <td className="px-5 py-3.5">
-                        <div className="text-slate-800 font-medium whitespace-nowrap">
+                        <div className="text-base-content font-medium whitespace-nowrap">
                           {formatDate(new Date(req.startDate))} - {formatDate(new Date(req.endDate))}
                         </div>
-                        <div className="text-[11px] text-slate-400 mt-0.5 font-medium">
+                        <div className="text-[11px] text-base-content/50 mt-0.5 font-medium">
                           {days} day{days > 1 ? "s" : ""}
                         </div>
                       </td>
@@ -418,20 +418,20 @@ export default function LeavesAdminPage() {
                       {/* Reason & Escalation Details */}
                       <td className="px-5 py-3.5 max-w-[280px]">
                         {req.reason && (
-                          <p className="text-slate-600 text-xs leading-relaxed" title={req.reason}>
-                            <span className="font-semibold text-slate-700">Reason:</span> &quot;{req.reason}&quot;
+                          <p className="text-base-content/80 text-xs leading-relaxed" title={req.reason}>
+                            <span className="font-semibold text-base-content">Reason:</span> &quot;{req.reason}&quot;
                           </p>
                         )}
 
                         {/* If Escalated, show Escalation Note & Escalator */}
                         {isEscalated && (
-                          <div className="mt-1.5 p-2 rounded-xl bg-purple-50/70 border border-purple-200 text-[11px] text-purple-950 space-y-0.5">
-                            <div className="flex items-center gap-1 font-bold text-purple-800">
-                              <ArrowUpRight className="w-3.5 h-3.5 text-purple-600" />
+                          <div className="mt-1.5 p-2 rounded-xl bg-purple-500/10 border border-purple-500/20 text-[11px] text-purple-600 space-y-0.5">
+                            <div className="flex items-center gap-1 font-bold text-purple-600">
+                              <ArrowUpRight className="w-3.5 h-3.5 text-purple-500" />
                               <span>Escalated by: {req.escalatedBy?.name || "Team Lead"}</span>
                             </div>
                             {req.escalationReason && (
-                              <p className="text-purple-900 text-xs">
+                              <p className="text-purple-600/90 text-xs">
                                 <span className="font-semibold">Note:</span> {req.escalationReason}
                               </p>
                             )}
@@ -440,7 +440,7 @@ export default function LeavesAdminPage() {
 
                         {/* If Rejected, show rejection reason */}
                         {req.status === "REJECTED" && req.rejectionReason && (
-                          <p className="text-[11px] text-rose-600 font-medium mt-1 truncate" title={req.rejectionReason}>
+                          <p className="text-[11px] text-rose-500 font-medium mt-1 truncate" title={req.rejectionReason}>
                             Rejection Note: {req.rejectionReason}
                           </p>
                         )}
@@ -521,8 +521,8 @@ export default function LeavesAdminPage() {
                   onClick={() => setPage(p)}
                   className={`w-7 h-7 flex items-center justify-center rounded-lg text-xs font-medium transition-colors cursor-pointer ${
                     page === p
-                      ? "bg-blue-600 text-white font-bold"
-                      : "text-slate-600 hover:bg-slate-100"
+                      ? "bg-primary text-primary-content font-bold shadow-2xs"
+                      : "text-base-content/70 hover:bg-base-200"
                   }`}
                 >
                   {p}

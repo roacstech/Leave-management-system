@@ -131,7 +131,7 @@ export default function NotificationDropdown() {
         title="View Notifications"
       >
         <div className="relative inline-flex items-center justify-center">
-          <Bell className="w-4.5 h-4.5 text-slate-600" />
+          <Bell className="w-4.5 h-4.5 text-base-content/70" />
           {unreadCount > 0 && (
             <span className="absolute -top-1 -right-1.5 flex h-3.5 min-w-[14px] px-0.5 items-center justify-center rounded-full bg-rose-600 text-[9px] font-bold text-white leading-none shadow-2xs">
               {unreadCount > 9 ? "9+" : unreadCount}
@@ -141,15 +141,15 @@ export default function NotificationDropdown() {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 sm:w-96 rounded-xl bg-white border border-slate-200 shadow-xl z-50 overflow-hidden text-left">
+        <div className="absolute right-0 mt-2 w-80 sm:w-96 rounded-2xl bg-base-100 border border-base-300 shadow-2xl z-50 overflow-hidden text-left animate-in fade-in zoom-in-95 duration-100">
           {/* Header */}
-          <div className="px-4 py-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+          <div className="px-4 py-3 bg-base-200 border-b border-base-300 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+              <span className="text-xs font-bold text-base-content uppercase tracking-wider">
                 Notifications
               </span>
               {unreadCount > 0 && (
-                <span className="px-1.5 py-0.5 text-[10px] font-bold bg-blue-100 text-blue-700 rounded-full">
+                <span className="px-1.5 py-0.5 text-[10px] font-bold bg-primary/10 text-primary rounded-full">
                   {unreadCount} new
                 </span>
               )}
@@ -160,7 +160,7 @@ export default function NotificationDropdown() {
                 type="button"
                 onClick={handleMarkAllRead}
                 disabled={loading}
-                className="flex items-center gap-1 text-[11px] font-semibold text-blue-600 hover:text-blue-800 disabled:opacity-50 transition-colors"
+                className="flex items-center gap-1 text-[11px] font-semibold text-primary hover:opacity-80 disabled:opacity-50 transition-colors cursor-pointer"
               >
                 <CheckCheck className="w-3.5 h-3.5" />
                 Mark all read
@@ -169,12 +169,12 @@ export default function NotificationDropdown() {
           </div>
 
           {/* Notifications List */}
-          <div className="max-h-80 overflow-y-auto divide-y divide-slate-100">
+          <div className="max-h-80 overflow-y-auto divide-y divide-base-300">
             {notifications.length === 0 ? (
-              <div className="p-8 text-center text-slate-400">
-                <Inbox className="w-8 h-8 mx-auto mb-2 text-slate-300" />
-                <p className="text-xs font-medium text-slate-500">No notifications yet</p>
-                <p className="text-[11px] text-slate-400 mt-0.5">
+              <div className="p-8 text-center text-base-content/40">
+                <Inbox className="w-8 h-8 mx-auto mb-2 text-base-content/30" />
+                <p className="text-xs font-medium text-base-content/70">No notifications yet</p>
+                <p className="text-[11px] text-base-content/40 mt-0.5">
                   You will receive alerts here when leaves or attendance updates occur.
                 </p>
               </div>
@@ -183,30 +183,30 @@ export default function NotificationDropdown() {
                 <div
                   key={notif.id}
                   onClick={() => !notif.isRead && handleMarkOneRead(notif.id)}
-                  className={`p-3.5 transition-colors cursor-pointer text-left hover:bg-slate-50 ${
-                    !notif.isRead ? "bg-blue-50/40" : "bg-white"
+                  className={`p-3.5 transition-colors cursor-pointer text-left hover:bg-base-200/70 ${
+                    !notif.isRead ? "bg-primary/5" : "bg-base-100"
                   }`}
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-1.5">
                       {!notif.isRead && (
-                        <span className="w-2 h-2 rounded-full bg-blue-600 shrink-0" />
+                        <span className="w-2 h-2 rounded-full bg-primary shrink-0" />
                       )}
                       <h4
                         className={`text-xs ${
-                          !notif.isRead ? "font-bold text-slate-900" : "font-semibold text-slate-700"
+                          !notif.isRead ? "font-bold text-base-content" : "font-semibold text-base-content/80"
                         }`}
                       >
                         {notif.title}
                       </h4>
                     </div>
-                    <span className="text-[10px] text-slate-400 flex items-center gap-1 shrink-0">
+                    <span className="text-[10px] text-base-content/50 flex items-center gap-1 shrink-0">
                       <Clock className="w-3 h-3" />
                       {formatTimeAgo(notif.createdAt)}
                     </span>
                   </div>
 
-                  <p className="text-xs text-slate-600 mt-1 leading-relaxed pl-3.5">
+                  <p className="text-xs text-base-content/80 mt-1 leading-relaxed pl-3.5">
                     {notif.message}
                   </p>
                 </div>
@@ -215,8 +215,8 @@ export default function NotificationDropdown() {
           </div>
 
           {/* Footer */}
-          <div className="px-4 py-2.5 bg-slate-50 border-t border-slate-100 text-center">
-            <p className="text-[11px] text-slate-400">
+          <div className="px-4 py-2.5 bg-base-200 border-t border-base-300 text-center">
+            <p className="text-[11px] text-base-content/50">
               Showing latest {notifications.length} alerts
             </p>
           </div>

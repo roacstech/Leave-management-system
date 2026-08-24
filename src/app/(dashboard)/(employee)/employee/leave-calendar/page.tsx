@@ -404,11 +404,11 @@ export default function EmployeeLeaveCalendarPage() {
             onClick={() => setShowLeaves(!showLeaves)}
             className={`px-2.5 py-1 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer border ${
               showLeaves
-                ? "bg-blue-50 text-blue-900 border-blue-300 shadow-2xs"
-                : "bg-slate-50 text-slate-400 border-slate-200"
+                ? "bg-primary/10 text-primary border-primary/30 shadow-2xs"
+                : "bg-base-200 text-base-content/40 border-base-300"
             }`}
           >
-            <span className="w-2 h-2 rounded-full bg-blue-600" />
+            <span className="w-2 h-2 rounded-full bg-primary" />
             <span>My Leaves ({monthStats.leaveCount})</span>
           </button>
 
