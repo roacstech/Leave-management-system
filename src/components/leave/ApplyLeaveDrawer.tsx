@@ -294,11 +294,11 @@ export default function ApplyLeaveDrawer({
                 <select
                   value={selectedLeaveTypeId}
                   onChange={(e) => setSelectedLeaveTypeId(Number(e.target.value))}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-base-100 border border-base-300 text-xs font-medium text-base-content hover:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-150 cursor-pointer"
+                  className="select select-bordered w-full text-xs font-medium bg-base-100"
                   required
                 >
                   {availableTypes.map((type) => (
-                    <option key={type.id} value={type.id} className="py-1">
+                    <option key={type.id} value={type.id}>
                       {type.name} {type.balance !== undefined ? `(Balance: ${type.balance})` : type.availed !== undefined ? `(Availed: ${type.availed})` : ""}
                     </option>
                   ))}
@@ -313,7 +313,7 @@ export default function ApplyLeaveDrawer({
                 <select
                   value={leaveOption}
                   onChange={(e: any) => setLeaveOption(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-base-100 border border-base-300 text-xs font-medium text-base-content hover:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-150 cursor-pointer"
+                  className="select select-bordered w-full text-xs font-medium bg-base-100"
                 >
                   <option value="FULL_DAY">Full Day</option>
                   <option value="HALF_DAY_FIRST">Half Day - First Half</option>
@@ -334,7 +334,7 @@ export default function ApplyLeaveDrawer({
                       setFromDate(e.target.value);
                       if (!toDate) setToDate(e.target.value);
                     }}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-base-100 border border-base-300 text-xs text-base-content hover:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-150"
+                    className="input input-bordered w-full text-xs bg-base-100"
                     required
                   />
                 </div>
@@ -348,7 +348,7 @@ export default function ApplyLeaveDrawer({
                     value={toDate}
                     min={fromDate}
                     onChange={(e) => setToDate(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-base-100 border border-base-300 text-xs text-base-content hover:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-150"
+                    className="input input-bordered w-full text-xs bg-base-100"
                     required
                   />
                 </div>
@@ -378,7 +378,7 @@ export default function ApplyLeaveDrawer({
                   onChange={(e) => setReason(e.target.value)}
                   placeholder="State the reason for your leave request..."
                   rows={4}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-base-100 border border-base-300 text-xs text-base-content hover:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none transition-all duration-150"
+                  className="textarea textarea-bordered w-full text-xs bg-base-100 resize-none"
                   required
                 />
               </div>
@@ -394,7 +394,7 @@ export default function ApplyLeaveDrawer({
                   type="date"
                   value={workedDate}
                   onChange={(e) => setWorkedDate(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-base-100 border border-base-300 text-xs text-base-content hover:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-150"
+                  className="input input-bordered w-full text-xs bg-base-100"
                   required
                 />
               </div>
@@ -406,7 +406,7 @@ export default function ApplyLeaveDrawer({
                 <select
                   value={hoursWorked}
                   onChange={(e) => setHoursWorked(Number(e.target.value))}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-base-100 border border-base-300 text-xs font-medium text-base-content hover:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-150 cursor-pointer"
+                  className="select select-bordered w-full text-xs font-medium bg-base-100"
                 >
                   <option value={4}>4 Hours (Half Day Credit)</option>
                   <option value={8}>8 Hours (Full Day Credit)</option>
@@ -424,7 +424,7 @@ export default function ApplyLeaveDrawer({
                   onChange={(e) => setCompOffReason(e.target.value)}
                   placeholder="Explain duties performed on the overtime date..."
                   rows={4}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-base-100 border border-base-300 text-xs text-base-content hover:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none transition-all duration-150"
+                  className="textarea textarea-bordered w-full text-xs bg-base-100 resize-none"
                   required
                 />
               </div>

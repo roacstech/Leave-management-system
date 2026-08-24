@@ -204,7 +204,7 @@ export default function UnifiedLeavePortal({
               <select
                 value={selectedYear}
                 onChange={(e) => setSelectedYear(Number(e.target.value))}
-                className="w-full px-3 py-1.5 rounded-xl bg-base-100 border border-base-300 text-xs font-semibold text-base-content hover:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-150 cursor-pointer"
+                className="select select-bordered select-xs w-full text-xs font-semibold bg-base-100"
               >
                 <option value={currentYear}>{currentYear}</option>
                 <option value={currentYear - 1}>{currentYear - 1}</option>
@@ -220,7 +220,7 @@ export default function UnifiedLeavePortal({
               <select
                 value={selectedLeaveType}
                 onChange={(e) => setSelectedLeaveType(e.target.value)}
-                className="w-full px-3 py-1.5 rounded-xl bg-base-100 border border-base-300 text-xs font-semibold text-base-content hover:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-150 cursor-pointer"
+                className="select select-bordered select-xs w-full text-xs font-semibold bg-base-100"
               >
                 <option value="ALL">All Leaves</option>
                 <option value="Casual Leave">Casual Leave</option>
@@ -240,7 +240,7 @@ export default function UnifiedLeavePortal({
                 type="date"
                 value={fromDate}
                 onChange={(e) => setFromDate(e.target.value)}
-                className="w-full px-3 py-1.5 rounded-xl bg-base-100 border border-base-300 text-xs text-base-content hover:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-150"
+                className="input input-bordered input-xs w-full text-xs bg-base-100"
               />
             </div>
 
@@ -253,7 +253,7 @@ export default function UnifiedLeavePortal({
                 type="date"
                 value={toDate}
                 onChange={(e) => setToDate(e.target.value)}
-                className="w-full px-3 py-1.5 rounded-xl bg-base-100 border border-base-300 text-xs text-base-content hover:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-150"
+                className="input input-bordered input-xs w-full text-xs bg-base-100"
               />
             </div>
 
@@ -265,7 +265,7 @@ export default function UnifiedLeavePortal({
               <select
                 value={selectedStatus}
                 onChange={(e) => setSelectedStatus(e.target.value)}
-                className="w-full px-3 py-1.5 rounded-xl bg-base-100 border border-base-300 text-xs font-semibold text-base-content hover:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-150 cursor-pointer"
+                className="select select-bordered select-xs w-full text-xs font-semibold bg-base-100"
               >
                 <option value="ALL">All Status</option>
                 <option value="Approved">Approved</option>
