@@ -97,7 +97,7 @@ export default function CEOSidebar({
 
 
   return (
-    <aside className="w-60 bg-base-100 text-base-content flex flex-col h-full border-r border-base-300 select-none">
+    <aside className="w-60 shrink-0 bg-base-100 text-base-content flex flex-col h-full border-r border-base-300 select-none">
       {/* Brand Header */}
       <div className="px-5 py-5 border-b border-base-300 bg-base-100">
         <div className="flex items-center gap-3">
@@ -137,9 +137,9 @@ export default function CEOSidebar({
               key={item.name}
               href={item.href}
               onClick={onClose}
-              className={`flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+              className={`flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
                 isActive
-                  ? "bg-primary text-primary-content font-semibold shadow-xs"
+                  ? "bg-primary text-primary-content shadow-xs"
                   : "text-base-content/70 hover:text-base-content hover:bg-base-200"
               }`}
             >
@@ -188,7 +188,7 @@ export default function CEOSidebar({
           <button
             onClick={handleLogout}
             title="Sign out"
-            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+            className="p-1.5 rounded-lg text-base-content/60 hover:text-primary hover:bg-primary/10 transition-colors cursor-pointer"
           >
             <LogOut className="w-4 h-4" />
           </button>

@@ -15,6 +15,30 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { useSettings } from "@/contexts/SettingsContext";
+import ThemedSelect from "@/components/ui/ThemedSelect";
+
+const YEAR_OPTIONS = [
+  { value: "2027", label: "2027" },
+  { value: "2026", label: "2026" },
+  { value: "2025", label: "2025" },
+  { value: "2024", label: "2024" },
+];
+
+const MONTH_OPTIONS = [
+  { value: "ALL", label: "Full Year (Jan - Dec)" },
+  { value: "1", label: "January" },
+  { value: "2", label: "February" },
+  { value: "3", label: "March" },
+  { value: "4", label: "April" },
+  { value: "5", label: "May" },
+  { value: "6", label: "June" },
+  { value: "7", label: "July" },
+  { value: "8", label: "August" },
+  { value: "9", label: "September" },
+  { value: "10", label: "October" },
+  { value: "11", label: "November" },
+  { value: "12", label: "December" },
+];
 
 interface LeaveReportData {
   year: number;
@@ -136,59 +160,36 @@ export default function CEOLeaveReportsPage() {
           <label className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1">
             Fiscal Year
           </label>
-          <select
+          <ThemedSelect
             value={year}
-            onChange={(e) => setYear(e.target.value)}
-            className="w-full py-2 px-3 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none focus:border-indigo-500"
-          >
-            <option value="2027">2027</option>
-            <option value="2026">2026</option>
-            <option value="2025">2025</option>
-            <option value="2024">2024</option>
-          </select>
+            onChange={(val) => setYear(val)}
+            options={YEAR_OPTIONS}
+          />
         </div>
 
         <div>
           <label className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1">
             Report Month
           </label>
-          <select
+          <ThemedSelect
             value={month}
-            onChange={(e) => setMonth(e.target.value)}
-            className="w-full py-2 px-3 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none focus:border-indigo-500"
-          >
-            <option value="ALL">Full Year (Jan - Dec)</option>
-            <option value="1">January</option>
-            <option value="2">February</option>
-            <option value="3">March</option>
-            <option value="4">April</option>
-            <option value="5">May</option>
-            <option value="6">June</option>
-            <option value="7">July</option>
-            <option value="8">August</option>
-            <option value="9">September</option>
-            <option value="10">October</option>
-            <option value="11">November</option>
-            <option value="12">December</option>
-          </select>
+            onChange={(val) => setMonth(val)}
+            options={MONTH_OPTIONS}
+          />
         </div>
 
         <div>
           <label className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1">
             Business Unit
           </label>
-          <select
+          <ThemedSelect
             value={teamId}
-            onChange={(e) => setTeamId(e.target.value)}
-            className="w-full py-2 px-3 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none focus:border-indigo-500"
-          >
-            <option value="ALL">All Departments & Teams</option>
-            {data?.teams.map((t) => (
-              <option key={t.id} value={t.id.toString()}>
-                {t.name}
-              </option>
-            ))}
-          </select>
+            onChange={(val) => setTeamId(val)}
+            options={[
+              { value: "ALL", label: "All Departments & Teams" },
+              ...(data?.teams.map((t) => ({ value: t.id.toString(), label: t.name })) || []),
+            ]}
+          />
         </div>
       </div>
 

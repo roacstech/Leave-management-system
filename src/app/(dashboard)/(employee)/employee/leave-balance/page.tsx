@@ -19,6 +19,7 @@ import {
   FileSpreadsheet,
 } from "lucide-react";
 import { useSettings } from "@/contexts/SettingsContext";
+import ThemedSelect from "@/components/ui/ThemedSelect";
 
 interface LeaveCategoryBalance {
   id: number;
@@ -132,14 +133,16 @@ export default function EmployeeLeaveBalancePage() {
           {/* Year Switcher */}
           <div className="flex items-center gap-1.5 bg-slate-50 p-1 rounded-xl border border-slate-200 text-xs">
             <span className="text-slate-500 font-medium pl-1.5">Cycle:</span>
-            <select
-              value={selectedYear}
-              onChange={(e) => setSelectedYear(Number(e.target.value))}
-              className="bg-white px-2 py-1 rounded-lg border border-slate-200 text-xs font-semibold text-slate-900 shadow-2xs focus:outline-none cursor-pointer"
-            >
-              <option value={2026}>2026 Cycle</option>
-              <option value={2025}>2025 Cycle</option>
-            </select>
+            <ThemedSelect
+              value={String(selectedYear)}
+              onChange={(val) => setSelectedYear(Number(val))}
+              options={[
+                { value: "2026", label: "2026 Cycle" },
+                { value: "2025", label: "2025 Cycle" },
+              ]}
+              size="xs"
+              className="min-w-[110px]"
+            />
           </div>
 
           <Link

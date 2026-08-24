@@ -27,6 +27,53 @@ import {
   ArrowRight,
   AlertTriangle,
 } from "lucide-react";
+import ThemedSelect from "@/components/ui/ThemedSelect";
+
+const CATEGORY_FILTER_OPTIONS = [
+  { value: "ALL", label: "All Categories" },
+  { value: "Annual", label: "Annual" },
+  { value: "Casual", label: "Casual" },
+  { value: "Sick", label: "Sick" },
+  { value: "Maternity", label: "Maternity" },
+  { value: "Paternity", label: "Paternity" },
+  { value: "Compensatory", label: "Compensatory" },
+  { value: "Other", label: "Other / Unpaid" },
+];
+
+const CATEGORY_FORM_OPTIONS = [
+  { value: "Annual", label: "Annual" },
+  { value: "Casual", label: "Casual" },
+  { value: "Sick", label: "Sick" },
+  { value: "Maternity", label: "Maternity" },
+  { value: "Paternity", label: "Paternity" },
+  { value: "Compensatory", label: "Compensatory" },
+  { value: "Other", label: "Other / Special" },
+];
+
+const PAID_OPTIONS = [
+  { value: "true", label: "Paid Leave" },
+  { value: "false", label: "Unpaid Leave" },
+];
+
+const ACTIVE_STATUS_OPTIONS = [
+  { value: "true", label: "Active" },
+  { value: "false", label: "Inactive" },
+];
+
+const CARRY_FORWARD_OPTIONS = [
+  { value: "false", label: "No Carry Forward" },
+  { value: "true", label: "Yes, Allow Carry Forward" },
+];
+
+const APPROVAL_OPTIONS = [
+  { value: "true", label: "Yes, Requires Approval" },
+  { value: "false", label: "No, Auto-Approved" },
+];
+
+const ATTACHMENT_OPTIONS = [
+  { value: "false", label: "No (Optional)" },
+  { value: "true", label: "Yes, Attachment Required" },
+];
 
 interface LeaveTypeItem {
   id: number;
@@ -358,12 +405,12 @@ export default function LeaveTypesPage() {
 
         <div className="flex items-center gap-2.5 self-start sm:self-auto">
           {/* View Mode Toggle: Cards / Table */}
-          <div className="flex items-center p-0.5 bg-slate-100 rounded-lg border border-slate-200 text-xs">
+          <div className="flex items-center p-0.5 bg-slate-100 rounded-lg border border-slate-200 text-xs font-medium">
             <button
               onClick={() => setViewMode("cards")}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md transition-all ${
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md transition-colors ${
                 viewMode === "cards"
-                  ? "bg-white text-slate-900 font-semibold shadow-2xs"
+                  ? "bg-white text-slate-900 shadow-2xs"
                   : "text-slate-500 hover:text-slate-800"
               }`}
             >
@@ -372,9 +419,9 @@ export default function LeaveTypesPage() {
             </button>
             <button
               onClick={() => setViewMode("table")}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md transition-all ${
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md transition-colors ${
                 viewMode === "table"
-                  ? "bg-white text-slate-900 font-semibold shadow-2xs"
+                  ? "bg-white text-slate-900 shadow-2xs"
                   : "text-slate-500 hover:text-slate-800"
               }`}
             >
@@ -490,12 +537,12 @@ export default function LeaveTypesPage() {
           {/* Filters Cluster */}
           <div className="flex flex-wrap items-center gap-2">
             {/* Status Filter Tabs */}
-            <div className="flex items-center gap-0.5 p-0.5 bg-slate-100 rounded-lg text-xs">
+            <div className="flex items-center gap-0.5 p-0.5 bg-slate-100 rounded-lg text-xs font-medium">
               <button
                 onClick={() => setFilterStatus("ALL")}
-                className={`px-2.5 py-1 rounded-md transition-all ${
+                className={`px-2.5 py-1 rounded-md transition-colors ${
                   filterStatus === "ALL"
-                    ? "bg-white text-slate-900 font-semibold shadow-2xs"
+                    ? "bg-white text-slate-900 shadow-2xs"
                     : "text-slate-500 hover:text-slate-800"
                 }`}
               >
@@ -503,9 +550,9 @@ export default function LeaveTypesPage() {
               </button>
               <button
                 onClick={() => setFilterStatus("ACTIVE")}
-                className={`px-2.5 py-1 rounded-md transition-all ${
+                className={`px-2.5 py-1 rounded-md transition-colors ${
                   filterStatus === "ACTIVE"
-                    ? "bg-white text-slate-900 font-semibold shadow-2xs"
+                    ? "bg-white text-slate-900 shadow-2xs"
                     : "text-slate-500 hover:text-slate-800"
                 }`}
               >
@@ -513,9 +560,9 @@ export default function LeaveTypesPage() {
               </button>
               <button
                 onClick={() => setFilterStatus("INACTIVE")}
-                className={`px-2.5 py-1 rounded-md transition-all ${
+                className={`px-2.5 py-1 rounded-md transition-colors ${
                   filterStatus === "INACTIVE"
-                    ? "bg-white text-slate-900 font-semibold shadow-2xs"
+                    ? "bg-white text-slate-900 shadow-2xs"
                     : "text-slate-500 hover:text-slate-800"
                 }`}
               >
@@ -524,14 +571,14 @@ export default function LeaveTypesPage() {
             </div>
 
             {/* Paid / Unpaid Filter Tabs */}
-            <div className="flex items-center gap-0.5 p-0.5 bg-slate-100 rounded-lg text-xs">
+            <div className="flex items-center gap-0.5 p-0.5 bg-slate-100 rounded-lg text-xs font-medium">
               {(["ALL", "PAID", "UNPAID"] as const).map((p) => (
                 <button
                   key={p}
                   onClick={() => setFilterPaid(p)}
-                  className={`px-2.5 py-1 rounded-md transition-all ${
+                  className={`px-2.5 py-1 rounded-md transition-colors ${
                     filterPaid === p
-                      ? "bg-white text-slate-900 font-semibold shadow-2xs"
+                      ? "bg-white text-slate-900 shadow-2xs"
                       : "text-slate-500 hover:text-slate-800"
                   }`}
                 >
@@ -541,20 +588,13 @@ export default function LeaveTypesPage() {
             </div>
 
             {/* Category Dropdown Filter */}
-            <select
+            <ThemedSelect
               value={filterCategory}
-              onChange={(e) => setFilterCategory(e.target.value)}
-              className="px-2.5 py-1 rounded-lg bg-slate-100 border border-slate-200 text-xs text-slate-700 font-medium focus:outline-none focus:border-slate-400"
-            >
-              <option value="ALL">All Categories</option>
-              <option value="Annual">Annual</option>
-              <option value="Casual">Casual</option>
-              <option value="Sick">Sick</option>
-              <option value="Maternity">Maternity</option>
-              <option value="Paternity">Paternity</option>
-              <option value="Compensatory">Compensatory</option>
-              <option value="Other">Other / Unpaid</option>
-            </select>
+              onChange={(val) => setFilterCategory(val)}
+              options={CATEGORY_FILTER_OPTIONS}
+              size="xs"
+              className="min-w-[135px]"
+            />
           </div>
         </div>
       </div>
@@ -925,19 +965,11 @@ export default function LeaveTypesPage() {
                     <label className="block text-xs font-medium text-slate-700 mb-1">
                       Category
                     </label>
-                    <select
+                    <ThemedSelect
                       value={formData.category}
-                      onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                      className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-slate-400"
-                    >
-                      <option value="Annual">Annual</option>
-                      <option value="Casual">Casual</option>
-                      <option value="Sick">Sick</option>
-                      <option value="Maternity">Maternity</option>
-                      <option value="Paternity">Paternity</option>
-                      <option value="Compensatory">Compensatory</option>
-                      <option value="Other">Other / Special</option>
-                    </select>
+                      onChange={(val) => setFormData({ ...formData, category: val })}
+                      options={CATEGORY_FORM_OPTIONS}
+                    />
                   </div>
 
                   <div>
@@ -957,28 +989,22 @@ export default function LeaveTypesPage() {
                     <label className="block text-xs font-medium text-slate-700 mb-1">
                       Paid / Unpaid
                     </label>
-                    <select
+                    <ThemedSelect
                       value={formData.isPaid ? "true" : "false"}
-                      onChange={(e) => setFormData({ ...formData, isPaid: e.target.value === "true" })}
-                      className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-slate-400"
-                    >
-                      <option value="true">Paid Leave</option>
-                      <option value="false">Unpaid Leave</option>
-                    </select>
+                      onChange={(val) => setFormData({ ...formData, isPaid: val === "true" })}
+                      options={PAID_OPTIONS}
+                    />
                   </div>
 
                   <div>
                     <label className="block text-xs font-medium text-slate-700 mb-1">
                       Initial Status
                     </label>
-                    <select
+                    <ThemedSelect
                       value={formData.isActive ? "true" : "false"}
-                      onChange={(e) => setFormData({ ...formData, isActive: e.target.value === "true" })}
-                      className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-slate-400"
-                    >
-                      <option value="true">Active</option>
-                      <option value="false">Inactive</option>
-                    </select>
+                      onChange={(val) => setFormData({ ...formData, isActive: val === "true" })}
+                      options={ACTIVE_STATUS_OPTIONS}
+                    />
                   </div>
 
                   <div className="sm:col-span-2">
@@ -1006,14 +1032,11 @@ export default function LeaveTypesPage() {
                     <label className="block text-xs font-medium text-slate-700 mb-1">
                       Carry Forward to Next Year?
                     </label>
-                    <select
+                    <ThemedSelect
                       value={formData.carryForward ? "true" : "false"}
-                      onChange={(e) => setFormData({ ...formData, carryForward: e.target.value === "true" })}
-                      className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-slate-400"
-                    >
-                      <option value="false">No Carry Forward</option>
-                      <option value="true">Yes, Allow Carry Forward</option>
-                    </select>
+                      onChange={(val) => setFormData({ ...formData, carryForward: val === "true" })}
+                      options={CARRY_FORWARD_OPTIONS}
+                    />
                   </div>
 
                   {formData.carryForward && (
@@ -1061,28 +1084,22 @@ export default function LeaveTypesPage() {
                     <label className="block text-xs font-medium text-slate-700 mb-1">
                       Requires Manager Approval?
                     </label>
-                    <select
+                    <ThemedSelect
                       value={formData.requiresApproval ? "true" : "false"}
-                      onChange={(e) => setFormData({ ...formData, requiresApproval: e.target.value === "true" })}
-                      className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-slate-400"
-                    >
-                      <option value="true">Yes, Requires Approval</option>
-                      <option value="false">No, Auto-Approved</option>
-                    </select>
+                      onChange={(val) => setFormData({ ...formData, requiresApproval: val === "true" })}
+                      options={APPROVAL_OPTIONS}
+                    />
                   </div>
 
                   <div>
                     <label className="block text-xs font-medium text-slate-700 mb-1">
                       Requires Document Attachment?
                     </label>
-                    <select
+                    <ThemedSelect
                       value={formData.requiresAttachment ? "true" : "false"}
-                      onChange={(e) => setFormData({ ...formData, requiresAttachment: e.target.value === "true" })}
-                      className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-slate-400"
-                    >
-                      <option value="false">No (Optional)</option>
-                      <option value="true">Yes, Attachment Required</option>
-                    </select>
+                      onChange={(val) => setFormData({ ...formData, requiresAttachment: val === "true" })}
+                      options={ATTACHMENT_OPTIONS}
+                    />
                   </div>
                 </div>
               </div>
@@ -1314,19 +1331,11 @@ export default function LeaveTypesPage() {
                     <label className="block text-xs font-medium text-slate-700 mb-1">
                       Category
                     </label>
-                    <select
+                    <ThemedSelect
                       value={formData.category}
-                      onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                      className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-slate-400"
-                    >
-                      <option value="Annual">Annual</option>
-                      <option value="Casual">Casual</option>
-                      <option value="Sick">Sick</option>
-                      <option value="Maternity">Maternity</option>
-                      <option value="Paternity">Paternity</option>
-                      <option value="Compensatory">Compensatory</option>
-                      <option value="Other">Other / Special</option>
-                    </select>
+                      onChange={(val) => setFormData({ ...formData, category: val })}
+                      options={CATEGORY_FORM_OPTIONS}
+                    />
                   </div>
 
                   <div>
@@ -1346,28 +1355,22 @@ export default function LeaveTypesPage() {
                     <label className="block text-xs font-medium text-slate-700 mb-1">
                       Paid / Unpaid
                     </label>
-                    <select
+                    <ThemedSelect
                       value={formData.isPaid ? "true" : "false"}
-                      onChange={(e) => setFormData({ ...formData, isPaid: e.target.value === "true" })}
-                      className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-slate-400"
-                    >
-                      <option value="true">Paid Leave</option>
-                      <option value="false">Unpaid Leave</option>
-                    </select>
+                      onChange={(val) => setFormData({ ...formData, isPaid: val === "true" })}
+                      options={PAID_OPTIONS}
+                    />
                   </div>
 
                   <div>
                     <label className="block text-xs font-medium text-slate-700 mb-1">
                       Status
                     </label>
-                    <select
+                    <ThemedSelect
                       value={formData.isActive ? "true" : "false"}
-                      onChange={(e) => setFormData({ ...formData, isActive: e.target.value === "true" })}
-                      className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-slate-400"
-                    >
-                      <option value="true">Active</option>
-                      <option value="false">Inactive</option>
-                    </select>
+                      onChange={(val) => setFormData({ ...formData, isActive: val === "true" })}
+                      options={ACTIVE_STATUS_OPTIONS}
+                    />
                   </div>
 
                   <div className="sm:col-span-2">
@@ -1394,14 +1397,11 @@ export default function LeaveTypesPage() {
                     <label className="block text-xs font-medium text-slate-700 mb-1">
                       Carry Forward to Next Year?
                     </label>
-                    <select
+                    <ThemedSelect
                       value={formData.carryForward ? "true" : "false"}
-                      onChange={(e) => setFormData({ ...formData, carryForward: e.target.value === "true" })}
-                      className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-slate-400"
-                    >
-                      <option value="false">No Carry Forward</option>
-                      <option value="true">Yes, Allow Carry Forward</option>
-                    </select>
+                      onChange={(val) => setFormData({ ...formData, carryForward: val === "true" })}
+                      options={CARRY_FORWARD_OPTIONS}
+                    />
                   </div>
 
                   {formData.carryForward && (
@@ -1449,28 +1449,22 @@ export default function LeaveTypesPage() {
                     <label className="block text-xs font-medium text-slate-700 mb-1">
                       Requires Manager Approval?
                     </label>
-                    <select
+                    <ThemedSelect
                       value={formData.requiresApproval ? "true" : "false"}
-                      onChange={(e) => setFormData({ ...formData, requiresApproval: e.target.value === "true" })}
-                      className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-slate-400"
-                    >
-                      <option value="true">Yes, Requires Approval</option>
-                      <option value="false">No, Auto-Approved</option>
-                    </select>
+                      onChange={(val) => setFormData({ ...formData, requiresApproval: val === "true" })}
+                      options={APPROVAL_OPTIONS}
+                    />
                   </div>
 
                   <div>
                     <label className="block text-xs font-medium text-slate-700 mb-1">
                       Requires Document Attachment?
                     </label>
-                    <select
+                    <ThemedSelect
                       value={formData.requiresAttachment ? "true" : "false"}
-                      onChange={(e) => setFormData({ ...formData, requiresAttachment: e.target.value === "true" })}
-                      className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-slate-400"
-                    >
-                      <option value="false">No (Optional)</option>
-                      <option value="true">Yes, Attachment Required</option>
-                    </select>
+                      onChange={(val) => setFormData({ ...formData, requiresAttachment: val === "true" })}
+                      options={ATTACHMENT_OPTIONS}
+                    />
                   </div>
                 </div>
               </div>

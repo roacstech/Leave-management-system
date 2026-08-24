@@ -17,6 +17,7 @@ import {
   Calendar,
 } from "lucide-react";
 import { useSettings } from "@/contexts/SettingsContext";
+import ThemedSelect from "@/components/ui/ThemedSelect";
 
 interface AttendanceRecordItem {
   userId: number;
@@ -244,18 +245,14 @@ export default function CEOAttendancePage() {
         </div>
 
         <div>
-          <select
+          <ThemedSelect
             value={teamFilter}
-            onChange={(e) => setTeamFilter(e.target.value)}
-            className="w-full py-2 px-3 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-indigo-500"
-          >
-            <option value="ALL">All Departments & Teams</option>
-            {teams.map((t) => (
-              <option key={t.id} value={t.id.toString()}>
-                {t.name}
-              </option>
-            ))}
-          </select>
+            onChange={(val) => setTeamFilter(val)}
+            options={[
+              { value: "ALL", label: "All Departments & Teams" },
+              ...teams.map((t) => ({ value: t.id.toString(), label: t.name })),
+            ]}
+          />
         </div>
       </div>
 

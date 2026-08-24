@@ -16,6 +16,12 @@ import {
   Layers,
 } from "lucide-react";
 import { useSettings } from "@/contexts/SettingsContext";
+import ThemedSelect from "@/components/ui/ThemedSelect";
+
+const STATUS_OPTIONS = [
+  { value: "true", label: "Active" },
+  { value: "false", label: "Inactive" },
+];
 
 interface DepartmentItem {
   id: number;
@@ -355,11 +361,11 @@ export default function DepartmentsPage() {
           </div>
 
           {/* Status Tabs */}
-          <div className="flex items-center gap-1 p-1 bg-white border border-slate-200 rounded-xl w-full sm:w-auto justify-center">
+          <div className="flex items-center gap-1 p-1 bg-white border border-slate-200 rounded-xl w-full sm:w-auto justify-center text-xs font-medium">
             <button
               type="button"
               onClick={() => setFilterStatus("ALL")}
-              className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${
+              className={`px-3 py-1 rounded-lg transition-colors ${
                 filterStatus === "ALL"
                   ? "bg-slate-900 text-white shadow-2xs"
                   : "text-slate-500 hover:text-slate-900"
@@ -370,7 +376,7 @@ export default function DepartmentsPage() {
             <button
               type="button"
               onClick={() => setFilterStatus("ACTIVE")}
-              className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${
+              className={`px-3 py-1 rounded-lg transition-colors ${
                 filterStatus === "ACTIVE"
                   ? "bg-emerald-600 text-white shadow-2xs"
                   : "text-slate-500 hover:text-slate-900"
@@ -381,7 +387,7 @@ export default function DepartmentsPage() {
             <button
               type="button"
               onClick={() => setFilterStatus("INACTIVE")}
-              className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${
+              className={`px-3 py-1 rounded-lg transition-colors ${
                 filterStatus === "INACTIVE"
                   ? "bg-slate-700 text-white shadow-2xs"
                   : "text-slate-500 hover:text-slate-900"
@@ -589,16 +595,13 @@ export default function DepartmentsPage() {
                 <label className="block text-xs font-bold text-slate-700 mb-1">
                   Status
                 </label>
-                <select
+                <ThemedSelect
                   value={formData.isActive ? "true" : "false"}
-                  onChange={(e) =>
-                    setFormData({ ...formData, isActive: e.target.value === "true" })
+                  onChange={(val) =>
+                    setFormData({ ...formData, isActive: val === "true" })
                   }
-                  className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400"
-                >
-                  <option value="true">Active</option>
-                  <option value="false">Inactive</option>
-                </select>
+                  options={STATUS_OPTIONS}
+                />
               </div>
             </div>
 
@@ -674,16 +677,13 @@ export default function DepartmentsPage() {
                 <label className="block text-xs font-bold text-slate-700 mb-1">
                   Active Status
                 </label>
-                <select
+                <ThemedSelect
                   value={formData.isActive ? "true" : "false"}
-                  onChange={(e) =>
-                    setFormData({ ...formData, isActive: e.target.value === "true" })
+                  onChange={(val) =>
+                    setFormData({ ...formData, isActive: val === "true" })
                   }
-                  className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400"
-                >
-                  <option value="true">Active</option>
-                  <option value="false">Inactive</option>
-                </select>
+                  options={STATUS_OPTIONS}
+                />
               </div>
             </div>
 

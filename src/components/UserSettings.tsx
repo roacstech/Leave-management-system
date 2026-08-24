@@ -111,7 +111,7 @@ export default function UserSettings() {
             <button
               type="button"
               onClick={() => setActiveTab("security")}
-              className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl font-semibold text-xs transition-all text-left cursor-pointer ${
+              className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl font-semibold text-xs transition-colors text-left cursor-pointer ${
                 activeTab === "security"
                   ? "bg-slate-900 text-white shadow-2xs"
                   : "text-base-content/70 hover:bg-base-200 hover:text-base-content"
@@ -124,7 +124,7 @@ export default function UserSettings() {
             <button
               type="button"
               onClick={() => setActiveTab("theme")}
-              className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl font-semibold text-xs transition-all text-left cursor-pointer ${
+              className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl font-semibold text-xs transition-colors text-left cursor-pointer ${
                 activeTab === "theme"
                   ? "bg-slate-900 text-white shadow-2xs"
                   : "text-base-content/70 hover:bg-base-200 hover:text-base-content"

@@ -298,9 +298,9 @@ export default function LeavesAdminPage() {
                   setFilter(t.id);
                   setPage(1);
                 }}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all cursor-pointer ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
                   filter === t.id
-                    ? "bg-primary text-primary-content shadow-xs font-bold"
+                    ? "bg-primary text-primary-content shadow-xs"
                     : "text-base-content/70 hover:text-base-content hover:bg-base-300/50"
                 }`}
               >

@@ -411,14 +411,14 @@ export default function AdminDashboardPage() {
             </div>
 
             {/* Filter Tabs */}
-            <div className="flex items-center gap-1 p-1 bg-base-200 border border-base-300 rounded-xl text-xs">
+            <div className="flex items-center gap-1 p-1 bg-base-200 border border-base-300 rounded-xl text-xs font-medium">
               {(["PENDING_ADMIN", "APPROVED", "REJECTED", "ALL"] as const).map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setLeaveTab(tab)}
-                  className={`px-2.5 py-1 rounded-lg text-xs transition-all cursor-pointer ${
+                  className={`px-2.5 py-1 rounded-lg text-xs transition-colors cursor-pointer ${
                     leaveTab === tab
-                      ? "bg-primary text-primary-content font-bold shadow-2xs"
+                      ? "bg-primary text-primary-content shadow-2xs"
                       : "text-base-content/70 hover:text-base-content hover:bg-base-300/50"
                   }`}
                 >
@@ -541,14 +541,14 @@ export default function AdminDashboardPage() {
             </div>
 
             {/* Attendance Status Filter */}
-            <div className="flex items-center gap-1 p-1 bg-base-200 border border-base-300 rounded-xl text-xs">
+            <div className="flex items-center gap-1 p-1 bg-base-200 border border-base-300 rounded-xl text-xs font-medium">
               {(["ALL", "PRESENT", "LATE", "ABSENT"] as const).map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setAttendanceTab(tab)}
-                  className={`px-2 py-1 rounded-lg text-xs transition-all cursor-pointer ${
+                  className={`px-2 py-1 rounded-lg text-xs transition-colors cursor-pointer ${
                     attendanceTab === tab
-                      ? "bg-primary text-primary-content font-bold shadow-2xs"
+                      ? "bg-primary text-primary-content shadow-2xs"
                       : "text-base-content/70 hover:text-base-content hover:bg-base-300/50"
                   }`}
                 >

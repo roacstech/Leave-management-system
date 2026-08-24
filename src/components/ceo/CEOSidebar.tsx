@@ -98,7 +98,7 @@ export default function CEOSidebar({
 
 
   return (
-    <aside className="w-60 bg-base-100 text-base-content flex flex-col h-full border-r border-base-300 select-none">
+    <aside className="w-60 shrink-0 bg-base-100 text-base-content flex flex-col h-full border-r border-base-300 select-none">
       {/* Brand Header */}
       <div className="px-5 py-5 border-b border-base-300 bg-base-100 flex flex-col items-center justify-center gap-2">
         <img src="/logo.png" alt="Embassy of India" className="h-10 w-auto object-contain" />
@@ -121,9 +121,9 @@ export default function CEOSidebar({
               key={item.name}
               href={item.href}
               onClick={onClose}
-              className={`flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+              className={`flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
                 isActive
-                  ? "bg-primary text-primary-content font-semibold shadow-xs"
+                  ? "bg-primary text-primary-content shadow-xs"
                   : "text-base-content/70 hover:text-base-content hover:bg-base-200"
               }`}
             >
@@ -179,13 +179,13 @@ export default function CEOSidebar({
               className="fixed inset-0 z-40" 
               onClick={() => setProfileMenuOpen(false)} 
             />
-            <div className="absolute bottom-full mb-2 left-3 w-52 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-50">
+            <div className="absolute bottom-full mb-2 left-3 w-52 bg-base-100 border border-base-300 rounded-xl shadow-xl p-1 z-50 animate-in fade-in zoom-in-95 duration-100">
               <button
                 onClick={handleLogout}
-                className="flex items-center w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors font-medium cursor-pointer"
+                className="flex items-center w-full text-left px-3.5 py-2 text-xs text-base-content hover:bg-primary/10 hover:text-primary transition-colors font-semibold cursor-pointer rounded-lg gap-2"
               >
-                <LogOut className="w-4 h-4 mr-2" />
-                Sign Out
+                <LogOut className="w-4 h-4 text-primary" />
+                <span>Sign Out</span>
               </button>
             </div>
           </>

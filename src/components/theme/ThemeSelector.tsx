@@ -21,10 +21,10 @@ export default function ThemeSelector() {
         <div>
           <h2 className="text-base font-bold text-base-content flex items-center gap-2">
             <Palette className="w-4 h-4 text-primary" />
-            System Themes
+            <span>Theme & Visual Identity</span>
           </h2>
           <p className="text-xs text-base-content/70 mt-0.5">
-            Select your preferred color scheme. The chosen theme applies instantly across your dashboard.
+            Select your preferred color theme ({AVAILABLE_THEMES.length} enterprise options available).
           </p>
         </div>
 
@@ -40,7 +40,7 @@ export default function ThemeSelector() {
             }`}
           >
             <span className="flex items-center gap-1.5">
-              <Sparkles className="w-3 h-3" />
+              <Sparkles className="w-3 h-3 text-primary" />
               All ({AVAILABLE_THEMES.length})
             </span>
           </button>
@@ -55,7 +55,7 @@ export default function ThemeSelector() {
           >
             <span className="flex items-center gap-1.5">
               <Sun className="w-3 h-3 text-amber-500" />
-              Light
+              Light ({AVAILABLE_THEMES.filter((t) => t.type === "light").length})
             </span>
           </button>
           <button
@@ -69,14 +69,14 @@ export default function ThemeSelector() {
           >
             <span className="flex items-center gap-1.5">
               <Moon className="w-3 h-3 text-indigo-400" />
-              Dark
+              Dark ({AVAILABLE_THEMES.filter((t) => t.type === "dark").length})
             </span>
           </button>
         </div>
       </div>
 
-      {/* Themes Grid Preview */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3.5">
+      {/* Clean Theme Cards (Name + Exact Theme Swatch + Active Indicator) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-3">
         {filteredThemes.map((t: ThemeOption) => {
           const isSelected = currentTheme === t.id;
 
@@ -84,57 +84,36 @@ export default function ThemeSelector() {
             <div
               key={t.id}
               onClick={() => setTheme(t.id)}
-              className={`group relative rounded-2xl border-2 p-3 transition-all cursor-pointer flex flex-col justify-between gap-3 text-left ${
+              className={`group flex items-center justify-between p-3.5 rounded-xl border transition-all cursor-pointer ${
                 isSelected
-                  ? "border-primary bg-base-100 shadow-md ring-2 ring-primary/20 scale-[1.02]"
-                  : "border-base-300 bg-base-100 hover:border-primary/50 hover:shadow-xs"
+                  ? "border-primary ring-2 ring-primary/25 bg-base-100 shadow-sm"
+                  : "border-base-300 bg-base-100 hover:border-primary/40 hover:bg-base-200/50"
               }`}
             >
-              {/* Theme Name & Selected Badge */}
-              <div className="flex items-center justify-between gap-1">
-                <span className="text-xs font-bold text-base-content truncate capitalize">
-                  {t.name}
-                </span>
-                {isSelected && (
-                  <span className="w-4 h-4 rounded-full bg-primary text-primary-content flex items-center justify-center shrink-0">
-                    <Check className="w-2.5 h-2.5 stroke-[3]" />
-                  </span>
-                )}
-              </div>
-
-              {/* DaisyUI Color Swatches Box (Matches your screenshot) */}
-              <div
-                data-theme={t.id}
-                className="bg-base-100 text-base-content rounded-xl p-2 border border-base-content/10 shadow-2xs space-y-1.5"
-              >
-                <div className="grid grid-cols-4 gap-1">
-                  <div
-                    style={{ backgroundColor: t.primary }}
-                    className="h-5 rounded-md flex items-center justify-center text-[9px] font-black text-white shadow-2xs"
-                  >
-                    A
+              {/* Left: Swatch (uses exact theme primary color) + Title */}
+              <div className="flex items-center gap-3 min-w-0">
+                <div data-theme={t.id} className="shrink-0 flex items-center justify-center">
+                  <div className="w-5 h-5 rounded-full bg-primary ring-2 ring-base-300/80 shadow-2xs" />
+                </div>
+                <div className="min-w-0">
+                  <div className="text-xs font-bold text-base-content truncate">
+                    {t.name}
                   </div>
-                  <div
-                    style={{ backgroundColor: t.secondary }}
-                    className="h-5 rounded-md flex items-center justify-center text-[9px] font-black text-white shadow-2xs"
-                  >
-                    A
-                  </div>
-                  <div
-                    style={{ backgroundColor: t.accent }}
-                    className="h-5 rounded-md flex items-center justify-center text-[9px] font-black text-white shadow-2xs"
-                  >
-                    A
-                  </div>
-                  <div
-                    style={{ backgroundColor: t.neutral }}
-                    className="h-5 rounded-md flex items-center justify-center text-[9px] font-black text-white shadow-2xs"
-                  >
-                    A
+                  <div className="text-[10px] text-base-content/50 uppercase tracking-wider font-medium">
+                    {t.type} theme
                   </div>
                 </div>
+              </div>
 
-                <div className="h-2 rounded-sm bg-base-200 w-full" />
+              {/* Right: Active Check or Radio */}
+              <div>
+                {isSelected ? (
+                  <span className="w-5 h-5 rounded-full bg-primary text-primary-content flex items-center justify-center shadow-xs">
+                    <Check className="w-3 h-3 stroke-[3]" />
+                  </span>
+                ) : (
+                  <span className="w-4 h-4 rounded-full border border-base-300 group-hover:border-primary/50 transition-colors block" />
+                )}
               </div>
             </div>
           );

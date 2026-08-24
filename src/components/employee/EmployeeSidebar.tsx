@@ -99,7 +99,7 @@ export default function EmployeeSidebar({
       )}
 
       <aside
-        className={`fixed lg:sticky top-0 left-0 z-50 flex flex-col h-screen w-60 bg-base-100 text-base-content border-r border-base-300 transition-transform duration-200 ease-in-out ${
+        className={`fixed lg:sticky top-0 left-0 z-50 flex flex-col h-screen w-60 shrink-0 bg-base-100 text-base-content border-r border-base-300 transition-transform duration-200 ease-in-out ${
           mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
       >
@@ -125,9 +125,9 @@ export default function EmployeeSidebar({
                 key={item.name}
                 href={item.href}
                 onClick={onCloseMobile}
-                className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer ${
+                className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-colors cursor-pointer ${
                   isActive
-                    ? "bg-primary text-primary-content font-semibold shadow-xs"
+                    ? "bg-primary text-primary-content shadow-xs"
                     : "text-base-content/70 hover:text-base-content hover:bg-base-200"
                 }`}
               >

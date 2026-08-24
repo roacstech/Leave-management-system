@@ -422,12 +422,12 @@ export default function EmployeesPage() {
           {/* Filter Tabs */}
           <div className="flex flex-wrap items-center gap-2">
             {/* Status filter */}
-            <div className="flex items-center gap-1 p-1 bg-base-200 border border-base-300 rounded-xl text-xs">
+            <div className="flex items-center gap-1 p-1 bg-base-200 border border-base-300 rounded-xl text-xs font-medium">
               <button
                 onClick={() => handleStatusChange("ALL")}
-                className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+                className={`px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
                   filterStatus === "ALL"
-                    ? "bg-primary text-primary-content font-bold shadow-2xs"
+                    ? "bg-primary text-primary-content shadow-2xs"
                     : "text-base-content/70 hover:text-base-content hover:bg-base-300/50"
                 }`}
               >
@@ -435,9 +435,9 @@ export default function EmployeesPage() {
               </button>
               <button
                 onClick={() => handleStatusChange("ACTIVE")}
-                className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+                className={`px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
                   filterStatus === "ACTIVE"
-                    ? "bg-primary text-primary-content font-bold shadow-2xs"
+                    ? "bg-primary text-primary-content shadow-2xs"
                     : "text-base-content/70 hover:text-base-content hover:bg-base-300/50"
                 }`}
               >
@@ -445,9 +445,9 @@ export default function EmployeesPage() {
               </button>
               <button
                 onClick={() => handleStatusChange("INACTIVE")}
-                className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+                className={`px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
                   filterStatus === "INACTIVE"
-                    ? "bg-primary text-primary-content font-bold shadow-2xs"
+                    ? "bg-primary text-primary-content shadow-2xs"
                     : "text-base-content/70 hover:text-base-content hover:bg-base-300/50"
                 }`}
               >
@@ -456,14 +456,14 @@ export default function EmployeesPage() {
             </div>
 
             {/* Role filter */}
-            <div className="flex items-center gap-1 p-1 bg-base-200 border border-base-300 rounded-xl text-xs">
+            <div className="flex items-center gap-1 p-1 bg-base-200 border border-base-300 rounded-xl text-xs font-medium">
               {["ALL", "EMPLOYEE", "TL"].map((role) => (
                 <button
                   key={role}
                   onClick={() => handleRoleChange(role)}
-                  className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+                  className={`px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
                     filterRole === role
-                      ? "bg-primary text-primary-content font-bold shadow-2xs"
+                      ? "bg-primary text-primary-content shadow-2xs"
                       : "text-base-content/70 hover:text-base-content hover:bg-base-300/50"
                   }`}
                 >

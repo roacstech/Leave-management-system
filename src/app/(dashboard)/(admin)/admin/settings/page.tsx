@@ -26,6 +26,7 @@ import {
   DEFAULT_SYSTEM_SETTINGS,
 } from "@/lib/settings-client";
 import { useSettings } from "@/contexts/SettingsContext";
+import ThemedSelect from "@/components/ui/ThemedSelect";
 
 type TabType =
   | "organization"
@@ -525,7 +526,7 @@ export default function AdminSettingsPage() {
           <button
             type="button"
             onClick={() => setActiveTab("organization")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-colors whitespace-nowrap cursor-pointer ${
               activeTab === "organization"
                 ? "bg-primary text-primary-content shadow-xs"
                 : "text-base-content/70 hover:text-base-content hover:bg-base-300/50"
@@ -538,7 +539,7 @@ export default function AdminSettingsPage() {
           <button
             type="button"
             onClick={() => setActiveTab("attendance")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-colors whitespace-nowrap cursor-pointer ${
               activeTab === "attendance"
                 ? "bg-primary text-primary-content shadow-xs"
                 : "text-base-content/70 hover:text-base-content hover:bg-base-300/50"
@@ -551,7 +552,7 @@ export default function AdminSettingsPage() {
           <button
             type="button"
             onClick={() => setActiveTab("leave")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-colors whitespace-nowrap cursor-pointer ${
               activeTab === "leave"
                 ? "bg-primary text-primary-content shadow-xs"
                 : "text-base-content/70 hover:text-base-content hover:bg-base-300/50"
@@ -564,7 +565,7 @@ export default function AdminSettingsPage() {
           <button
             type="button"
             onClick={() => setActiveTab("notifications")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-colors whitespace-nowrap cursor-pointer ${
               activeTab === "notifications"
                 ? "bg-primary text-primary-content shadow-xs"
                 : "text-base-content/70 hover:text-base-content hover:bg-base-300/50"
@@ -577,7 +578,7 @@ export default function AdminSettingsPage() {
           <button
             type="button"
             onClick={() => setActiveTab("themes")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-colors whitespace-nowrap cursor-pointer ${
               activeTab === "themes"
                 ? "bg-primary text-primary-content shadow-xs"
                 : "text-base-content/70 hover:text-base-content hover:bg-base-300/50"
@@ -673,24 +674,14 @@ export default function AdminSettingsPage() {
                   <label className="block text-xs font-bold text-slate-700">
                     Timezone <span className="text-rose-500">*</span>
                   </label>
-                  <select
+                  <ThemedSelect
                     disabled={!isEditing}
                     value={orgForm.timezone}
-                    onChange={(e) =>
-                      setOrgForm({ ...orgForm, timezone: e.target.value })
+                    onChange={(val) =>
+                      setOrgForm({ ...orgForm, timezone: val })
                     }
-                    className={`w-full px-3 py-2 text-xs border rounded-xl transition-colors ${
-                      isEditing
-                        ? "border-slate-200 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400"
-                        : "border-slate-200/60 bg-slate-50/70 text-slate-600 cursor-not-allowed"
-                    }`}
-                  >
-                    {TIMEZONE_OPTIONS.map((opt) => (
-                      <option key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </option>
-                    ))}
-                  </select>
+                    options={TIMEZONE_OPTIONS}
+                  />
                   <p className="text-[11px] text-slate-400">
                     Used for check-in/out timestamps and notification logs.
                   </p>
@@ -701,24 +692,14 @@ export default function AdminSettingsPage() {
                   <label className="block text-xs font-bold text-slate-700">
                     Date Format <span className="text-rose-500">*</span>
                   </label>
-                  <select
+                  <ThemedSelect
                     disabled={!isEditing}
                     value={orgForm.dateFormat}
-                    onChange={(e) =>
-                      setOrgForm({ ...orgForm, dateFormat: e.target.value })
+                    onChange={(val) =>
+                      setOrgForm({ ...orgForm, dateFormat: val })
                     }
-                    className={`w-full px-3 py-2 text-xs border rounded-xl transition-colors ${
-                      isEditing
-                        ? "border-slate-200 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400"
-                        : "border-slate-200/60 bg-slate-50/70 text-slate-600 cursor-not-allowed"
-                    }`}
-                  >
-                    {DATE_FORMAT_OPTIONS.map((opt) => (
-                      <option key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </option>
-                    ))}
-                  </select>
+                    options={DATE_FORMAT_OPTIONS}
+                  />
                   <p className="text-[11px] text-slate-400">
                     Applies globally across all attendance, leaves, and
                     dashboard tables.
@@ -1010,24 +991,14 @@ export default function AdminSettingsPage() {
                   <label className="block text-xs font-bold text-slate-700">
                     Leave Year <span className="text-rose-500">*</span>
                   </label>
-                  <select
+                  <ThemedSelect
                     disabled={!isEditing}
                     value={leaveForm.leaveYear}
-                    onChange={(e) =>
-                      setLeaveForm({ ...leaveForm, leaveYear: e.target.value })
+                    onChange={(val) =>
+                      setLeaveForm({ ...leaveForm, leaveYear: val })
                     }
-                    className={`w-full px-3 py-2 text-xs border rounded-xl transition-colors ${
-                      isEditing
-                        ? "border-slate-200 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400"
-                        : "border-slate-200/60 bg-slate-50/70 text-slate-600 cursor-not-allowed"
-                    }`}
-                  >
-                    {LEAVE_YEAR_OPTIONS.map((opt) => (
-                      <option key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </option>
-                    ))}
-                  </select>
+                    options={LEAVE_YEAR_OPTIONS}
+                  />
                   <p className="text-[11px] text-slate-400">
                     Determines the annual balance allocation and reset period.
                   </p>
