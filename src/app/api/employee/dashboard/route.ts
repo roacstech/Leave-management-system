@@ -35,11 +35,34 @@ export async function GET() {
       );
     }
 
-    // 2. Fetch all active leave types from DB and ensure user has a balance record for each
-    const allLeaveTypes = await prisma.leaveType.findMany({
+    // 2. Fetch all active leave types from DB (seed defaults if empty)
+    let allLeaveTypes = await prisma.leaveType.findMany({
       where: { isActive: true },
       orderBy: { id: "asc" },
     });
+
+    if (allLeaveTypes.length === 0) {
+      const defaultTypeConfigs = [
+        { name: "Casual Leave", code: "CL", annualAllocation: 12, isPaid: true },
+        { name: "Sick Day", code: "SL", annualAllocation: 10, isPaid: true },
+        { name: "Vacation Leave", code: "VL", annualAllocation: 15, isPaid: true },
+        { name: "Comp Off", code: "CO", annualAllocation: 0, isPaid: true },
+        { name: "Loss Of Pay", code: "LOP", annualAllocation: 0, isPaid: false },
+      ];
+
+      for (const dt of defaultTypeConfigs) {
+        await prisma.leaveType.upsert({
+          where: { code: dt.code },
+          update: { name: dt.name, annualAllocation: dt.annualAllocation, isPaid: dt.isPaid, isActive: true },
+          create: { name: dt.name, code: dt.code, annualAllocation: dt.annualAllocation, isPaid: dt.isPaid, isActive: true },
+        });
+      }
+
+      allLeaveTypes = await prisma.leaveType.findMany({
+        where: { isActive: true },
+        orderBy: { id: "asc" },
+      });
+    }
 
     let existingBalances = await prisma.leaveBalance.findMany({
       where: { userId, year: currentYear },

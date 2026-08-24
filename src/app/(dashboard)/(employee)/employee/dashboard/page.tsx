@@ -18,28 +18,31 @@ export default function EmployeeDashboardPage() {
       if (res.ok) {
         const data = await res.json();
 
-        if (data.balances && Array.isArray(data.balances)) {
+        const rawBalances = data.leaveBalances || data.balances || [];
+        if (Array.isArray(rawBalances) && rawBalances.length > 0) {
           setBalances(
-            data.balances.map((b: any) => ({
-              name: b.name,
-              code: b.code,
-              availed: b.used,
-              balance: b.remaining,
+            rawBalances.map((b: any) => ({
+              name: b.leaveType?.name || b.name || "Leave",
+              code: b.leaveType?.code || b.code || "LV",
+              availed: b.used ?? 0,
+              balance: b.remaining ?? (b.total - b.used),
             }))
           );
           setLeaveTypes(
-            data.balances.map((b: any) => ({
-              id: b.id,
-              name: b.name,
-              code: b.code,
-              balance: b.remaining,
+            rawBalances.map((b: any) => ({
+              id: b.leaveType?.id || b.id,
+              name: b.leaveType?.name || b.name || "Leave",
+              code: b.leaveType?.code || b.code || "LV",
+              balance: b.remaining ?? (b.total - b.used),
+              availed: b.used ?? 0,
             }))
           );
         }
 
-        if (data.recentLeaves && Array.isArray(data.recentLeaves)) {
+        const rawLeaves = data.recentRequests || data.recentLeaves || [];
+        if (Array.isArray(rawLeaves)) {
           setRecords(
-            data.recentLeaves.map((l: any) => {
+            rawLeaves.map((l: any) => {
               const start = new Date(l.startDate);
               const end = new Date(l.endDate);
               const days = Math.ceil(Math.abs(end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;

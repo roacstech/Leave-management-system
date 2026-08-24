@@ -45,28 +45,31 @@ export default function ManagerDashboardPage() {
       const myLeavesRes = await fetch("/api/employee/dashboard");
       if (myLeavesRes.ok) {
         const myData = await myLeavesRes.json();
-        if (myData.balances && Array.isArray(myData.balances)) {
+        const rawBalances = myData.leaveBalances || myData.balances || [];
+        if (Array.isArray(rawBalances) && rawBalances.length > 0) {
           setMyBalances(
-            myData.balances.map((b: any) => ({
-              name: b.name,
-              code: b.code,
-              availed: b.used,
-              balance: b.remaining,
+            rawBalances.map((b: any) => ({
+              name: b.leaveType?.name || b.name || "Leave",
+              code: b.leaveType?.code || b.code || "LV",
+              availed: b.used ?? 0,
+              balance: b.remaining ?? (b.total - b.used),
             }))
           );
           setMyLeaveTypes(
-            myData.balances.map((b: any) => ({
-              id: b.id,
-              name: b.name,
-              code: b.code,
-              balance: b.remaining,
+            rawBalances.map((b: any) => ({
+              id: b.leaveType?.id || b.id,
+              name: b.leaveType?.name || b.name || "Leave",
+              code: b.leaveType?.code || b.code || "LV",
+              balance: b.remaining ?? (b.total - b.used),
+              availed: b.used ?? 0,
             }))
           );
         }
 
-        if (myData.recentLeaves && Array.isArray(myData.recentLeaves)) {
+        const rawLeaves = myData.recentRequests || myData.recentLeaves || [];
+        if (Array.isArray(rawLeaves)) {
           setMyRecords(
-            myData.recentLeaves.map((l: any) => {
+            rawLeaves.map((l: any) => {
               const start = new Date(l.startDate);
               const end = new Date(l.endDate);
               const days = Math.ceil(Math.abs(end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;

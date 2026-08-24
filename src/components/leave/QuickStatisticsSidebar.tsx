@@ -76,47 +76,53 @@ export default function QuickStatisticsSidebar({
 
       {/* Balance List */}
       <div className="flex flex-col gap-2.5 mt-3">
-        {displayBalances.map((item) => {
-          if (collapsed) {
+        {displayBalances.length === 0 ? (
+          <div className="py-6 text-center text-2xs text-base-content/50">
+            {collapsed ? "—" : "No active leave quotas found."}
+          </div>
+        ) : (
+          displayBalances.map((item) => {
+            if (collapsed) {
+              return (
+                <div
+                  key={item.name}
+                  className="group relative flex items-center justify-center p-2 rounded-xl hover:bg-base-200 transition-all cursor-pointer"
+                  title={`${item.name}: ${item.balance !== undefined ? `Balance ${item.balance}` : `Availed ${item.availed}`}`}
+                >
+                  {getLeaveIcon(item.name)}
+                  <span className="absolute left-full ml-2 hidden group-hover:flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold bg-neutral text-neutral-content rounded-lg shadow-lg whitespace-nowrap z-50">
+                    {item.name}: {item.balance !== undefined ? `${item.balance} left` : `${item.availed} used`}
+                  </span>
+                </div>
+              );
+            }
+
             return (
               <div
                 key={item.name}
-                className="group relative flex items-center justify-center p-2 rounded-xl hover:bg-base-200 transition-all cursor-pointer"
-                title={`${item.name}: ${item.balance !== undefined ? `Balance ${item.balance}` : `Availed ${item.availed}`}`}
+                className="p-2.5 rounded-xl bg-base-200/50 hover:bg-base-200 border border-base-300/50 transition-all"
               >
-                {getLeaveIcon(item.name)}
-                <span className="absolute left-full ml-2 hidden group-hover:flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold bg-neutral text-neutral-content rounded-lg shadow-lg whitespace-nowrap z-50">
-                  {item.name}: {item.balance !== undefined ? `${item.balance} left` : `${item.availed} used`}
-                </span>
+                <div className="flex items-center gap-2 mb-1.5">
+                  {getLeaveIcon(item.name)}
+                  <span className="text-xs font-semibold text-base-content truncate">
+                    {item.name}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between text-xs text-base-content/70">
+                  <span className="inline-flex items-center gap-1">
+                    Availed <strong className="text-base-content font-bold">{item.availed}</strong>
+                  </span>
+                  {item.balance !== undefined && (
+                    <span className="inline-flex items-center gap-1 border-l border-base-300 pl-2">
+                      Balance <strong className="text-primary font-bold">{item.balance}</strong>
+                    </span>
+                  )}
+                </div>
               </div>
             );
-          }
-
-          return (
-            <div
-              key={item.name}
-              className="p-2.5 rounded-xl bg-base-200/50 hover:bg-base-200 border border-base-300/50 transition-all"
-            >
-              <div className="flex items-center gap-2 mb-1.5">
-                {getLeaveIcon(item.name)}
-                <span className="text-xs font-semibold text-base-content truncate">
-                  {item.name}
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between text-xs text-base-content/70">
-                <span className="inline-flex items-center gap-1">
-                  Availed <strong className="text-base-content font-bold">{item.availed}</strong>
-                </span>
-                {item.balance !== undefined && (
-                  <span className="inline-flex items-center gap-1 border-l border-base-300 pl-2">
-                    Balance <strong className="text-primary font-bold">{item.balance}</strong>
-                  </span>
-                )}
-              </div>
-            </div>
-          );
-        })}
+          })
+        )}
       </div>
     </aside>
   );
