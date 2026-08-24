@@ -41,7 +41,7 @@ export default function AdminMyLeavesPage() {
 
         const rawLeaves = data.recentRequests || data.recentLeaves || [];
         if (Array.isArray(rawLeaves)) {
-          setMyRecords(
+          setRecords(
             rawLeaves.map((l: any) => {
               const start = new Date(l.startDate);
               const end = new Date(l.endDate);
