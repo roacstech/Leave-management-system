@@ -80,15 +80,15 @@ function TLHeader({
             className="flex items-center gap-2 pl-1 p-1 rounded-md hover:bg-slate-50 transition-colors cursor-pointer text-left"
           >
             <div className="w-7 h-7 rounded-md bg-primary flex items-center justify-center text-primary-content font-bold text-xs shadow-2xs uppercase">
-              TL
+              M
             </div>
 
             <div className="hidden sm:block text-left">
               <div className="text-xs font-semibold text-slate-900 leading-tight uppercase">
-                Team Leader
+                Manager
               </div>
               <div className="text-[10px] text-slate-500 leading-none">
-                Supervisor
+                Reporting Officer
               </div>
             </div>
           </button>

@@ -152,19 +152,19 @@ export default function TLSidebar({
           })}
         </div>
 
-        {/* Team Leader Profile Footer */}
+        {/* Manager Profile Footer */}
         <div className="p-3.5 border-t border-base-300 bg-base-100">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center font-bold text-primary-content text-xs shadow-2xs">
-                TL
+                M
               </div>
               <div className="overflow-hidden">
                 <div className="text-xs font-semibold text-base-content truncate uppercase">
-                  Team Leader
+                  Manager
                 </div>
                 <div className="flex items-center gap-1 text-[11px] text-base-content/60">
-                  <span>Lead Supervisor</span>
+                  <span>Reporting Officer</span>
                 </div>
               </div>
             </div>
