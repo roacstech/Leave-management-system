@@ -203,69 +203,6 @@ export default function ManagerDashboardPage() {
         </div>
       )}
 
-      {/* Top Banner & Compact Stat Badges */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-base-100 p-5 rounded-3xl border border-base-300 shadow-xs">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 text-2xs font-extrabold uppercase tracking-wider rounded-md bg-primary text-primary-content">
-              Manager / Reporting Officer Portal
-            </span>
-            <span className="text-2xs text-base-content/60 font-medium">
-              Embassy of India • Washington D.C.
-            </span>
-          </div>
-          <h1 className="text-xl font-extrabold text-base-content tracking-tight mt-1">
-            Leave Management System
-          </h1>
-          <p className="text-xs text-base-content/70 mt-0.5">
-            Manage your personal leaves and review team member leave requests.
-          </p>
-        </div>
-
-        {/* Compact Summary Pills */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 self-start md:self-auto">
-          <div className="px-3.5 py-2 rounded-2xl bg-base-200/60 border border-base-300 flex items-center gap-2.5">
-            <Clock className="w-4 h-4 text-amber-500 shrink-0" />
-            <div>
-              <p className="text-2xs text-base-content/60 font-medium leading-none">Pending</p>
-              <p className="text-sm font-extrabold text-base-content mt-0.5 leading-none">
-                {stats.pendingApprovals}
-              </p>
-            </div>
-          </div>
-
-          <div className="px-3.5 py-2 rounded-2xl bg-base-200/60 border border-base-300 flex items-center gap-2.5">
-            <Users className="w-4 h-4 text-primary shrink-0" />
-            <div>
-              <p className="text-2xs text-base-content/60 font-medium leading-none">Team Size</p>
-              <p className="text-sm font-extrabold text-base-content mt-0.5 leading-none">
-                {stats.teamSize}
-              </p>
-            </div>
-          </div>
-
-          <div className="px-3.5 py-2 rounded-2xl bg-base-200/60 border border-base-300 flex items-center gap-2.5">
-            <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-            <div>
-              <p className="text-2xs text-base-content/60 font-medium leading-none">Approved</p>
-              <p className="text-sm font-extrabold text-base-content mt-0.5 leading-none">
-                {stats.approvedLeaves}
-              </p>
-            </div>
-          </div>
-
-          <div className="px-3.5 py-2 rounded-2xl bg-base-200/60 border border-base-300 flex items-center gap-2.5">
-            <Calendar className="w-4 h-4 text-teal-500 shrink-0" />
-            <div>
-              <p className="text-2xs text-base-content/60 font-medium leading-none">Present</p>
-              <p className="text-sm font-extrabold text-base-content mt-0.5 leading-none">
-                {stats.teamPresentToday}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* SECTION 1: "My Leave Portal" (Slide 7 - Official PDF Layout) */}
       <div className="space-y-3">
         <div className="flex items-center gap-2 px-1">

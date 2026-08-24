@@ -80,26 +80,6 @@ export default function EmployeeDashboardPage() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
-      {/* Top Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-base-100 p-5 rounded-3xl border border-base-300 shadow-xs">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 text-2xs font-extrabold uppercase tracking-wider rounded-md bg-primary/15 text-primary border border-primary/20">
-              Staff Portal
-            </span>
-            <span className="text-2xs text-base-content/60 font-medium">
-              Embassy of India • Washington D.C.
-            </span>
-          </div>
-          <h1 className="text-xl font-extrabold text-base-content tracking-tight mt-1">
-            Leave Management System
-          </h1>
-          <p className="text-xs text-base-content/70 mt-0.5">
-            View your balance summary, apply for leaves, and track application status.
-          </p>
-        </div>
-      </div>
-
       {/* Main Unified Portal Component (Slide 7) */}
       <UnifiedLeavePortal
         balances={balances}

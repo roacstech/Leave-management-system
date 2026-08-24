@@ -38,16 +38,7 @@ export default function QuickStatisticsSidebar({
     if (onToggleCollapse) onToggleCollapse();
   };
 
-  // Default fallback data matching PDF Slide 7 if empty
-  const displayBalances: LeaveBalanceItem[] = balances.length > 0
-    ? balances
-    : [
-        { name: "Casual Leave", code: "CL", availed: 7, balance: 5 },
-        { name: "Sick Day", code: "SL", availed: 9.5 },
-        { name: "Comp Off", code: "CO", availed: 0, balance: 0 },
-        { name: "Loss Of Pay", code: "LOP", availed: 0 },
-        { name: "Vacation Leave", code: "VL", availed: 0, balance: 32 },
-      ];
+  const displayBalances: LeaveBalanceItem[] = balances;
 
   const getLeaveIcon = (name: string) => {
     const lower = name.toLowerCase();

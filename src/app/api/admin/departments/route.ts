@@ -51,6 +51,13 @@ export async function GET(request: NextRequest) {
       prisma.team.findMany({
         where: whereClause,
         include: {
+          tl: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
           _count: {
             select: {
               users: true,
@@ -89,7 +96,7 @@ export async function POST(request: NextRequest) {
     await ensureDepartmentColumns();
 
     const body = await request.json();
-    const { name, description, isActive } = body;
+    const { name, description, isActive, tlId, managerId } = body;
 
     if (!name || !name.trim()) {
       return NextResponse.json(
@@ -112,13 +119,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const assignedManagerId = managerId ? Number(managerId) : tlId ? Number(tlId) : null;
+
     const department = await prisma.team.create({
       data: {
         name: cleanName,
         description: description ? description.trim() : null,
         isActive: isActive !== undefined ? Boolean(isActive) : true,
+        tlId: assignedManagerId,
       },
       include: {
+        tl: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
         _count: {
           select: {
             users: true,

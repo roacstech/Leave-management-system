@@ -61,12 +61,6 @@ export default function AdminSidebar({
       badge: null,
     },
     {
-      name: "Roles",
-      href: "/admin/roles",
-      icon: ShieldCheck,
-      badge: null,
-    },
-    {
       name: "Departments",
       href: "/admin/departments",
       icon: Network,

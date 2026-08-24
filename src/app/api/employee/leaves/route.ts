@@ -15,7 +15,7 @@ export const dynamic = "force-dynamic";
 export async function POST(request: NextRequest) {
   try {
     const session = await auth();
-    if (!session?.user || (session.user.role !== "EMPLOYEE" && session.user.role !== "TL")) {
+    if (!session?.user) {
       return NextResponse.json(
         { success: false, error: "Unauthorized access" },
         { status: 401 }
@@ -40,20 +40,19 @@ export async function POST(request: NextRequest) {
 
     if (userRole === "EMPLOYEE") {
       const tlResolution = await resolveEmployeeTeamLead(userId);
-      if (!tlResolution.success || !tlResolution.tl) {
-        return NextResponse.json(
-          {
-            success: false,
-            error: tlResolution.error || "No Team Lead is assigned to your team. Please contact Admin.",
-          },
-          { status: 400 }
-        );
+      if (tlResolution.success && tlResolution.tl) {
+        assignedTL = tlResolution.tl;
+        initialStatus = "PENDING_TL";
+      } else {
+        // Route directly to Admin if no TL is assigned
+        initialStatus = "PENDING_ADMIN";
       }
-      assignedTL = tlResolution.tl;
-      initialStatus = "PENDING_TL";
     } else if (userRole === "TL") {
-      // TL leave routes directly to Admin
+      // Manager/TL leave routes directly to Admin
       initialStatus = "PENDING_ADMIN";
+    } else {
+      // Admin / Executive leaves auto-approved or recorded
+      initialStatus = "APPROVED";
     }
 
     const start = new Date(startDate);
