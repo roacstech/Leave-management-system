@@ -178,6 +178,45 @@ export async function GET() {
       },
     });
 
+    // 8. Fetch upcoming holidays
+    const upcomingHolidays = await prisma.holiday.findMany({
+      where: {
+        date: { gte: startOfToday },
+      },
+      take: 4,
+      orderBy: { date: "asc" },
+    });
+
+    // 9. Fetch staff on leave today
+    const onLeaveStaff = await prisma.leaveRequest.findMany({
+      where: {
+        status: "APPROVED",
+        startDate: { lte: endOfToday },
+        endDate: { gte: startOfToday },
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+            team: {
+              select: { name: true },
+            },
+          },
+        },
+        leaveType: {
+          select: {
+            id: true,
+            name: true,
+            code: true,
+          },
+        },
+      },
+      take: 5,
+    });
+
     return NextResponse.json({
       success: true,
       timestamp: new Date().toISOString(),
@@ -206,6 +245,9 @@ export async function GET() {
         },
       },
       recentLeaveRequests,
+      recentLeaves: recentLeaveRequests,
+      upcomingHolidays,
+      onLeaveStaff,
       teams,
       staffMembers,
     });
