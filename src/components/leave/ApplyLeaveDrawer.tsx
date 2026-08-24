@@ -208,16 +208,16 @@ export default function ApplyLeaveDrawer({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-black/40 backdrop-blur-xs transition-opacity animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/40 backdrop-blur-2xs transition-opacity animate-in fade-in duration-300">
       <div
-        className="w-full max-w-xl bg-base-100 h-full shadow-2xl flex flex-col border-l border-base-300 transform transition-transform animate-in slide-in-from-right duration-300"
+        className="w-full max-w-xl bg-base-100 h-full shadow-2xl flex flex-col border-l border-base-300 transform transition-transform duration-300 ease-out animate-in slide-in-from-right"
         role="dialog"
         aria-modal="true"
       >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-base-300 bg-base-200/50">
           <div className="flex items-center gap-3">
-            <h2 className="text-lg font-bold text-base-content tracking-tight">Apply Leave</h2>
+            <h2 className="text-base font-bold text-base-content tracking-tight">Apply Leave</h2>
             <span className="px-2.5 py-0.5 text-xs font-bold rounded-md bg-primary/15 text-primary border border-primary/20">
               {year}
             </span>
@@ -225,7 +225,7 @@ export default function ApplyLeaveDrawer({
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-lg text-base-content/60 hover:text-base-content hover:bg-base-200 transition-colors"
+            className="p-1.5 rounded-xl text-base-content/60 hover:text-base-content hover:bg-base-200 active:scale-95 transition-all duration-150 cursor-pointer"
             aria-label="Close drawer"
           >
             <X className="w-5 h-5" />
@@ -233,20 +233,20 @@ export default function ApplyLeaveDrawer({
         </div>
 
         {/* Tabs (Apply Leave vs Apply Comp Off) */}
-        <div className="flex border-b border-base-300 px-6 pt-3 gap-4 bg-base-100">
+        <div className="flex border-b border-base-300 px-6 py-3 gap-2 bg-base-100">
           <button
             type="button"
             onClick={() => {
               setActiveTab("LEAVE");
               setErrorMessage(null);
             }}
-            className={`pb-3 font-semibold text-sm transition-all relative flex items-center gap-2 ${
+            className={`px-3.5 py-2 rounded-xl font-bold text-xs transition-all duration-150 flex items-center gap-2 cursor-pointer active:scale-95 ${
               activeTab === "LEAVE"
-                ? "text-primary border-b-2 border-primary"
-                : "text-base-content/60 hover:text-base-content"
+                ? "bg-primary text-primary-content shadow-xs"
+                : "text-base-content/70 hover:text-base-content hover:bg-base-200/80 border border-transparent hover:border-base-300"
             }`}
           >
-            <FileText className="w-4 h-4" />
+            <FileText className="w-3.5 h-3.5" />
             Apply Leave
           </button>
 
@@ -256,13 +256,13 @@ export default function ApplyLeaveDrawer({
               setActiveTab("COMP_OFF");
               setErrorMessage(null);
             }}
-            className={`pb-3 font-semibold text-sm transition-all relative flex items-center gap-2 ${
+            className={`px-3.5 py-2 rounded-xl font-bold text-xs transition-all duration-150 flex items-center gap-2 cursor-pointer active:scale-95 ${
               activeTab === "COMP_OFF"
-                ? "text-primary border-b-2 border-primary"
-                : "text-base-content/60 hover:text-base-content"
+                ? "bg-primary text-primary-content shadow-xs"
+                : "text-base-content/70 hover:text-base-content hover:bg-base-200/80 border border-transparent hover:border-base-300"
             }`}
           >
-            <Briefcase className="w-4 h-4" />
+            <Briefcase className="w-3.5 h-3.5" />
             Apply Comp Off
           </button>
         </div>
@@ -294,11 +294,11 @@ export default function ApplyLeaveDrawer({
                 <select
                   value={selectedLeaveTypeId}
                   onChange={(e) => setSelectedLeaveTypeId(Number(e.target.value))}
-                  className="select select-bordered w-full text-sm font-medium bg-base-100 focus:outline-primary"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-base-100 border border-base-300 text-xs font-medium text-base-content hover:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-150 cursor-pointer"
                   required
                 >
                   {availableTypes.map((type) => (
-                    <option key={type.id} value={type.id}>
+                    <option key={type.id} value={type.id} className="py-1">
                       {type.name} {type.balance !== undefined ? `(Balance: ${type.balance})` : type.availed !== undefined ? `(Availed: ${type.availed})` : ""}
                     </option>
                   ))}
@@ -313,7 +313,7 @@ export default function ApplyLeaveDrawer({
                 <select
                   value={leaveOption}
                   onChange={(e: any) => setLeaveOption(e.target.value)}
-                  className="select select-bordered w-full text-sm font-medium bg-base-100 focus:outline-primary"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-base-100 border border-base-300 text-xs font-medium text-base-content hover:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-150 cursor-pointer"
                 >
                   <option value="FULL_DAY">Full Day</option>
                   <option value="HALF_DAY_FIRST">Half Day - First Half</option>
@@ -334,7 +334,7 @@ export default function ApplyLeaveDrawer({
                       setFromDate(e.target.value);
                       if (!toDate) setToDate(e.target.value);
                     }}
-                    className="input input-bordered w-full text-sm bg-base-100 focus:outline-primary"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-base-100 border border-base-300 text-xs text-base-content hover:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-150"
                     required
                   />
                 </div>
@@ -348,16 +348,16 @@ export default function ApplyLeaveDrawer({
                     value={toDate}
                     min={fromDate}
                     onChange={(e) => setToDate(e.target.value)}
-                    className="input input-bordered w-full text-sm bg-base-100 focus:outline-primary"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-base-100 border border-base-300 text-xs text-base-content hover:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-150"
                     required
                   />
                 </div>
               </div>
 
               {/* Total Days */}
-              <div className="flex items-center justify-between p-3 rounded-xl bg-base-200/60 border border-base-300">
+              <div className="flex items-center justify-between p-3.5 rounded-xl bg-base-200/60 border border-base-300">
                 <span className="text-xs font-bold text-base-content">Total Day(s)</span>
-                <span className="text-sm font-extrabold text-primary px-3 py-0.5 rounded-md bg-primary/10">
+                <span className="text-xs font-extrabold text-primary px-3 py-1 rounded-lg bg-primary/10 border border-primary/20">
                   {totalDays} {totalDays === 1 ? "Day" : "Days"}
                 </span>
               </div>
@@ -368,7 +368,7 @@ export default function ApplyLeaveDrawer({
                   <label className="text-xs font-bold text-base-content">
                     Reason for Leave <span className="text-error">*</span>
                   </label>
-                  <span className="text-2xs text-base-content/60">
+                  <span className="text-2xs text-base-content/60 font-medium">
                     {reason.length} / 500 characters
                   </span>
                 </div>
@@ -378,7 +378,7 @@ export default function ApplyLeaveDrawer({
                   onChange={(e) => setReason(e.target.value)}
                   placeholder="State the reason for your leave request..."
                   rows={4}
-                  className="textarea textarea-bordered w-full text-sm bg-base-100 focus:outline-primary resize-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-base-100 border border-base-300 text-xs text-base-content hover:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none transition-all duration-150"
                   required
                 />
               </div>
@@ -394,7 +394,7 @@ export default function ApplyLeaveDrawer({
                   type="date"
                   value={workedDate}
                   onChange={(e) => setWorkedDate(e.target.value)}
-                  className="input input-bordered w-full text-sm bg-base-100 focus:outline-primary"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-base-100 border border-base-300 text-xs text-base-content hover:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-150"
                   required
                 />
               </div>
@@ -406,7 +406,7 @@ export default function ApplyLeaveDrawer({
                 <select
                   value={hoursWorked}
                   onChange={(e) => setHoursWorked(Number(e.target.value))}
-                  className="select select-bordered w-full text-sm font-medium bg-base-100 focus:outline-primary"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-base-100 border border-base-300 text-xs font-medium text-base-content hover:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-150 cursor-pointer"
                 >
                   <option value={4}>4 Hours (Half Day Credit)</option>
                   <option value={8}>8 Hours (Full Day Credit)</option>
@@ -424,7 +424,7 @@ export default function ApplyLeaveDrawer({
                   onChange={(e) => setCompOffReason(e.target.value)}
                   placeholder="Explain duties performed on the overtime date..."
                   rows={4}
-                  className="textarea textarea-bordered w-full text-sm bg-base-100 focus:outline-primary resize-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-base-100 border border-base-300 text-xs text-base-content hover:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none transition-all duration-150"
                   required
                 />
               </div>
@@ -437,7 +437,7 @@ export default function ApplyLeaveDrawer({
           <button
             type="button"
             onClick={handleClear}
-            className="btn btn-sm btn-ghost text-base-content/70 hover:text-base-content"
+            className="px-4 py-2 rounded-xl text-xs font-semibold text-base-content/70 hover:text-base-content hover:bg-base-300/60 active:scale-95 transition-all duration-150 cursor-pointer"
             disabled={submitting}
           >
             Clear
@@ -446,7 +446,7 @@ export default function ApplyLeaveDrawer({
             type="button"
             onClick={handleSubmit}
             disabled={submitting}
-            className="btn btn-sm btn-primary px-6 font-bold"
+            className="px-6 py-2 rounded-xl text-xs font-bold bg-primary hover:bg-primary/90 text-primary-content shadow-xs hover:shadow active:scale-95 transition-all duration-150 cursor-pointer disabled:opacity-50"
           >
             {submitting ? "Submitting..." : "Submit"}
           </button>

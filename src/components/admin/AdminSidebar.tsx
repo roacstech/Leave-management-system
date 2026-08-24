@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   Users,
+  CalendarCheck,
   CalendarCheck2,
   FileSpreadsheet,
   CalendarDays,
@@ -53,6 +54,12 @@ export default function AdminSidebar({
       href: "/admin/dashboard",
       icon: LayoutDashboard,
       badge: effectiveCount > 0 ? `${effectiveCount}` : null,
+    },
+    {
+      name: "My Leave",
+      href: "/admin/my-leaves",
+      icon: CalendarCheck,
+      badge: null,
     },
     {
       name: "Employees",
@@ -142,10 +149,10 @@ export default function AdminSidebar({
                 key={item.name}
                 href={item.href}
                 onClick={onCloseMobile}
-                className={`flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
+                className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-all duration-150 cursor-pointer active:scale-[0.98] ${
                   isActive
-                    ? "bg-primary text-primary-content shadow-xs"
-                    : "text-base-content/70 hover:text-base-content hover:bg-base-200"
+                    ? "bg-primary text-primary-content shadow-xs font-semibold"
+                    : "text-base-content/70 hover:text-base-content hover:bg-base-200/80"
                 }`}
               >
                 <div className="flex items-center gap-2.5">

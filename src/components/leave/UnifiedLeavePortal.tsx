@@ -115,28 +115,28 @@ export default function UnifiedLeavePortal({
     switch (status) {
       case "Approved":
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold rounded-full bg-emerald-500/15 text-emerald-600 border border-emerald-500/30 hover:bg-emerald-500/25 transition-colors cursor-pointer">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold rounded-full bg-emerald-500/15 text-emerald-600 border border-emerald-500/30 hover:bg-emerald-500/25 hover:border-emerald-500/50 hover:shadow-xs active:scale-95 transition-all duration-150 cursor-pointer">
             <CheckCircle2 className="w-3.5 h-3.5" />
             Approved
           </span>
         );
       case "Pending":
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold rounded-full bg-amber-500/15 text-amber-600 border border-amber-500/30 hover:bg-amber-500/25 transition-colors cursor-pointer">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold rounded-full bg-amber-500/15 text-amber-600 border border-amber-500/30 hover:bg-amber-500/25 hover:border-amber-500/50 hover:shadow-xs active:scale-95 transition-all duration-150 cursor-pointer">
             <Clock className="w-3.5 h-3.5 animate-pulse" />
             Pending
           </span>
         );
       case "Rejected":
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold rounded-full bg-rose-500/15 text-rose-600 border border-rose-500/30 hover:bg-rose-500/25 transition-colors cursor-pointer">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold rounded-full bg-rose-500/15 text-rose-600 border border-rose-500/30 hover:bg-rose-500/25 hover:border-rose-500/50 hover:shadow-xs active:scale-95 transition-all duration-150 cursor-pointer">
             <XCircle className="w-3.5 h-3.5" />
             Rejected
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold rounded-full bg-base-200 text-base-content/80 border border-base-300 cursor-pointer">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold rounded-full bg-base-200 text-base-content/80 border border-base-300 hover:bg-base-300 hover:shadow-xs active:scale-95 transition-all duration-150 cursor-pointer">
             {status}
           </span>
         );
@@ -160,7 +160,7 @@ export default function UnifiedLeavePortal({
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
               placeholder="Search by keyword"
-              className="input input-bordered input-sm w-full pl-9 bg-base-100 text-xs focus:outline-primary"
+              className="w-full pl-9 pr-3 py-2 rounded-xl bg-base-100 border border-base-300 text-xs text-base-content hover:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-150"
             />
           </div>
 
@@ -169,7 +169,7 @@ export default function UnifiedLeavePortal({
             <button
               type="button"
               onClick={handleResetFilter}
-              className="btn btn-sm btn-ghost btn-square text-base-content/70 hover:text-base-content"
+              className="p-2 rounded-xl text-base-content/60 hover:text-base-content hover:bg-base-200/80 active:scale-95 transition-all duration-150 cursor-pointer border border-transparent hover:border-base-300"
               title="Reset Filters"
             >
               <RotateCcw className="w-4 h-4" />
@@ -177,7 +177,7 @@ export default function UnifiedLeavePortal({
             <button
               type="button"
               onClick={() => window.print()}
-              className="btn btn-sm btn-ghost btn-square text-base-content/70 hover:text-base-content"
+              className="p-2 rounded-xl text-base-content/60 hover:text-base-content hover:bg-base-200/80 active:scale-95 transition-all duration-150 cursor-pointer border border-transparent hover:border-base-300"
               title="Print View"
             >
               <Printer className="w-4 h-4" />
@@ -185,7 +185,7 @@ export default function UnifiedLeavePortal({
             <button
               type="button"
               onClick={() => setIsApplyDrawerOpen(true)}
-              className="btn btn-sm btn-primary gap-2 font-bold px-4 shadow-sm"
+              className="px-4 py-2 rounded-xl font-bold text-xs bg-primary hover:bg-primary/90 text-primary-content shadow-xs hover:shadow active:scale-95 transition-all duration-150 flex items-center gap-2 cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               Apply Leave
@@ -204,7 +204,7 @@ export default function UnifiedLeavePortal({
               <select
                 value={selectedYear}
                 onChange={(e) => setSelectedYear(Number(e.target.value))}
-                className="select select-bordered select-xs w-full text-xs font-semibold bg-base-100"
+                className="w-full px-3 py-1.5 rounded-xl bg-base-100 border border-base-300 text-xs font-semibold text-base-content hover:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-150 cursor-pointer"
               >
                 <option value={currentYear}>{currentYear}</option>
                 <option value={currentYear - 1}>{currentYear - 1}</option>
@@ -220,7 +220,7 @@ export default function UnifiedLeavePortal({
               <select
                 value={selectedLeaveType}
                 onChange={(e) => setSelectedLeaveType(e.target.value)}
-                className="select select-bordered select-xs w-full text-xs font-semibold bg-base-100"
+                className="w-full px-3 py-1.5 rounded-xl bg-base-100 border border-base-300 text-xs font-semibold text-base-content hover:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-150 cursor-pointer"
               >
                 <option value="ALL">All Leaves</option>
                 <option value="Casual Leave">Casual Leave</option>
@@ -240,7 +240,7 @@ export default function UnifiedLeavePortal({
                 type="date"
                 value={fromDate}
                 onChange={(e) => setFromDate(e.target.value)}
-                className="input input-bordered input-xs w-full text-xs bg-base-100"
+                className="w-full px-3 py-1.5 rounded-xl bg-base-100 border border-base-300 text-xs text-base-content hover:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-150"
               />
             </div>
 
@@ -253,7 +253,7 @@ export default function UnifiedLeavePortal({
                 type="date"
                 value={toDate}
                 onChange={(e) => setToDate(e.target.value)}
-                className="input input-bordered input-xs w-full text-xs bg-base-100"
+                className="w-full px-3 py-1.5 rounded-xl bg-base-100 border border-base-300 text-xs text-base-content hover:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-150"
               />
             </div>
 
@@ -265,7 +265,7 @@ export default function UnifiedLeavePortal({
               <select
                 value={selectedStatus}
                 onChange={(e) => setSelectedStatus(e.target.value)}
-                className="select select-bordered select-xs w-full text-xs font-semibold bg-base-100"
+                className="w-full px-3 py-1.5 rounded-xl bg-base-100 border border-base-300 text-xs font-semibold text-base-content hover:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-150 cursor-pointer"
               >
                 <option value="ALL">All Status</option>
                 <option value="Approved">Approved</option>
@@ -280,14 +280,14 @@ export default function UnifiedLeavePortal({
             <button
               type="button"
               onClick={handleResetFilter}
-              className="btn btn-xs btn-outline border-base-300 text-base-content/80 font-bold px-3 hover:bg-base-200"
+              className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-base-200/80 hover:bg-base-300 text-base-content/80 hover:text-base-content active:scale-95 transition-all duration-150 cursor-pointer flex items-center gap-1.5"
             >
               <RotateCcw className="w-3 h-3" />
               RESET FILTER
             </button>
             <button
               type="button"
-              className="btn btn-xs btn-primary btn-outline font-bold px-3"
+              className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-primary hover:bg-primary/90 text-primary-content shadow-xs hover:shadow active:scale-95 transition-all duration-150 cursor-pointer flex items-center gap-1.5"
             >
               <Filter className="w-3 h-3" />
               APPLY FILTER
@@ -321,7 +321,7 @@ export default function UnifiedLeavePortal({
                   filteredList.map((item) => (
                     <tr
                       key={item.id}
-                      className="hover:bg-base-200/40 transition-colors"
+                      className="hover:bg-base-200/60 transition-colors duration-150"
                     >
                       <td className="py-3 pl-4 font-semibold text-base-content">
                         <div className="flex items-center gap-2">
@@ -345,6 +345,7 @@ export default function UnifiedLeavePortal({
                           type="button"
                           onClick={() => setSelectedTimelineRecord(item)}
                           title="Click to view approval timeline"
+                          className="cursor-pointer"
                         >
                           {getStatusBadge(item.status)}
                         </button>

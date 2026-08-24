@@ -165,13 +165,15 @@ export default function OrganizationRequestsTable({
               className="input input-bordered input-xs w-48 pl-8 bg-base-100 text-xs focus:outline-primary"
             />
           </div>
-
-          <div className="join border border-base-300 bg-base-100 rounded-lg p-0.5">
+          {/* Status Tabs */}
+          <div className="flex items-center gap-1 p-1 bg-base-200/80 rounded-2xl border border-base-300">
             <button
               type="button"
               onClick={() => setFilterTab("PENDING")}
-              className={`join-item btn btn-xs border-0 font-bold ${
-                filterTab === "PENDING" ? "btn-primary" : "btn-ghost text-base-content/70"
+              className={`px-3 py-1 rounded-xl text-xs font-bold transition-all duration-150 cursor-pointer active:scale-95 ${
+                filterTab === "PENDING"
+                  ? "bg-primary text-primary-content shadow-xs"
+                  : "text-base-content/70 hover:text-base-content hover:bg-base-300/50"
               }`}
             >
               Pending ({requests.filter((r) => r.status === "PENDING_ADMIN" || r.status === "PENDING_TL").length})
@@ -179,8 +181,10 @@ export default function OrganizationRequestsTable({
             <button
               type="button"
               onClick={() => setFilterTab("APPROVED")}
-              className={`join-item btn btn-xs border-0 font-bold ${
-                filterTab === "APPROVED" ? "btn-primary" : "btn-ghost text-base-content/70"
+              className={`px-3 py-1 rounded-xl text-xs font-bold transition-all duration-150 cursor-pointer active:scale-95 ${
+                filterTab === "APPROVED"
+                  ? "bg-primary text-primary-content shadow-xs"
+                  : "text-base-content/70 hover:text-base-content hover:bg-base-300/50"
               }`}
             >
               Approved
@@ -188,8 +192,10 @@ export default function OrganizationRequestsTable({
             <button
               type="button"
               onClick={() => setFilterTab("REJECTED")}
-              className={`join-item btn btn-xs border-0 font-bold ${
-                filterTab === "REJECTED" ? "btn-primary" : "btn-ghost text-base-content/70"
+              className={`px-3 py-1 rounded-xl text-xs font-bold transition-all duration-150 cursor-pointer active:scale-95 ${
+                filterTab === "REJECTED"
+                  ? "bg-primary text-primary-content shadow-xs"
+                  : "text-base-content/70 hover:text-base-content hover:bg-base-300/50"
               }`}
             >
               Rejected
@@ -197,8 +203,10 @@ export default function OrganizationRequestsTable({
             <button
               type="button"
               onClick={() => setFilterTab("ALL")}
-              className={`join-item btn btn-xs border-0 font-bold ${
-                filterTab === "ALL" ? "btn-primary" : "btn-ghost text-base-content/70"
+              className={`px-3 py-1 rounded-xl text-xs font-bold transition-all duration-150 cursor-pointer active:scale-95 ${
+                filterTab === "ALL"
+                  ? "bg-primary text-primary-content shadow-xs"
+                  : "text-base-content/70 hover:text-base-content hover:bg-base-300/50"
               }`}
             >
               All
@@ -234,7 +242,7 @@ export default function OrganizationRequestsTable({
                 const isItemLoading = actionLoadingId === item.id;
 
                 return (
-                  <tr key={item.id} className="hover:bg-base-200/40 transition-colors">
+                  <tr key={item.id} className="hover:bg-base-200/60 transition-colors duration-150">
                     {/* Staff Member */}
                     <td className="py-3 pl-4">
                       <div className="flex items-center gap-2.5">
@@ -245,7 +253,7 @@ export default function OrganizationRequestsTable({
                           <p className="font-bold text-base-content leading-tight">
                             {item.applicantName}
                           </p>
-                          <p className="text-2xs text-base-content/60">
+                          <p className="text-2xs text-base-content/60 font-medium">
                             {item.applicantRole} {item.teamName ? `• ${item.teamName}` : ""}
                           </p>
                         </div>
@@ -281,6 +289,7 @@ export default function OrganizationRequestsTable({
                         type="button"
                         onClick={() => setTimelineItem(item)}
                         title="View Approval Timeline"
+                        className="cursor-pointer"
                       >
                         {getStatusBadge(item.status)}
                       </button>
@@ -294,7 +303,7 @@ export default function OrganizationRequestsTable({
                             type="button"
                             onClick={() => handleApprove(item.id)}
                             disabled={isItemLoading}
-                            className="btn btn-xs btn-success gap-1 text-success-content font-bold shadow-xs"
+                            className="px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs hover:shadow active:scale-95 transition-all duration-150 cursor-pointer flex items-center gap-1 disabled:opacity-50"
                             title="Approve Leave"
                           >
                             <Check className="w-3 h-3" />
@@ -304,7 +313,7 @@ export default function OrganizationRequestsTable({
                             type="button"
                             onClick={() => setRejectingItem(item)}
                             disabled={isItemLoading}
-                            className="btn btn-xs btn-error btn-outline gap-1 font-bold"
+                            className="px-3 py-1.5 rounded-xl text-xs font-bold bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 active:scale-95 transition-all duration-150 cursor-pointer flex items-center gap-1 disabled:opacity-50"
                             title="Reject Leave"
                           >
                             <X className="w-3 h-3" />
@@ -315,7 +324,7 @@ export default function OrganizationRequestsTable({
                         <button
                           type="button"
                           onClick={() => setTimelineItem(item)}
-                          className="btn btn-xs btn-ghost text-primary text-2xs font-semibold"
+                          className="px-2.5 py-1 rounded-lg text-xs font-bold text-primary hover:bg-primary/10 active:scale-95 transition-all duration-150 cursor-pointer"
                         >
                           View Details
                         </button>
