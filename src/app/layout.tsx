@@ -29,7 +29,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem("lms-theme")||"light";document.documentElement.setAttribute("data-theme",t);}catch(e){}})()`,
+            __html: `(function(){try{var p=window.location.pathname;if(p==="/login"||p==="/"||p.startsWith("/login")){document.documentElement.setAttribute("data-theme","light");return;}var t=localStorage.getItem("lms-theme")||"light";document.documentElement.setAttribute("data-theme",t);}catch(e){}})()`,
           }}
         />
       </head>

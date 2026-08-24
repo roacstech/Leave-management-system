@@ -386,21 +386,21 @@ export default function EmployeeAttendancePage() {
       )}
 
       {/* 1. INTERACTIVE SELF-PUNCH HEADER */}
-      <div className="bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-2xl p-5 sm:p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-5">
+      <div className="bg-base-100 text-base-content border border-base-300 rounded-2xl p-5 sm:p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-5">
         <div>
           <div className="flex items-center gap-2 mb-1.5">
-            <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold uppercase tracking-wider">
+            <span className="px-2 py-0.5 rounded bg-primary/10 text-primary border border-primary/20 text-[10px] font-bold uppercase tracking-wider">
               Self Service Attendance & Overtime
             </span>
-            <span className="text-xs text-slate-300">
+            <span className="text-xs text-base-content/60">
               Shift: {settings.officeStartTime} - {settings.officeEndTime}
             </span>
           </div>
 
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-base-content">
             My Attendance & Timesheet
           </h1>
-          <p className="text-xs text-slate-300 mt-1 max-w-xl">
+          <p className="text-xs text-base-content/70 mt-1 max-w-xl">
             Punch your shift, track daily hours, and submit Compensatory Off (Comp-Off) or Overtime (OT) claims for extra shifts.
           </p>
 
@@ -418,7 +418,7 @@ export default function EmployeeAttendancePage() {
                 });
                 setClaimModalOpen(true);
               }}
-              className="px-3.5 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold text-xs shadow-xs transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer"
+              className="px-3.5 py-1.5 rounded-lg bg-primary hover:opacity-90 text-primary-content font-bold text-xs shadow-xs transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer"
             >
               <Award className="w-4 h-4" />
               <span>+ Claim Comp-Off / Overtime</span>
@@ -427,12 +427,12 @@ export default function EmployeeAttendancePage() {
         </div>
 
         {/* Live Punch Actions Card */}
-        <div className="bg-slate-800/90 border border-slate-700 p-4 rounded-xl flex flex-col justify-between min-w-[250px] shrink-0">
-          <div className="flex items-center justify-between border-b border-slate-700/60 pb-2.5 mb-2.5">
-            <div className="text-xs font-semibold text-slate-300">
+        <div className="bg-base-200/60 border border-base-300 p-4 rounded-xl flex flex-col justify-between min-w-[250px] shrink-0">
+          <div className="flex items-center justify-between border-b border-base-300 pb-2.5 mb-2.5">
+            <div className="text-xs font-semibold text-base-content">
               Today&apos;s Status
             </div>
-            <div className="text-[10px] font-mono text-emerald-400 font-bold">
+            <div className="text-[10px] font-mono text-primary font-bold">
               {formatDate(today)}
             </div>
           </div>
@@ -441,25 +441,25 @@ export default function EmployeeAttendancePage() {
             {todayStatus?.checkIn ? (
               <div className="space-y-1.5">
                 <div className="flex justify-between">
-                  <span className="text-slate-400">Check-In:</span>
-                  <span className="font-bold text-emerald-400">
+                  <span className="text-base-content/70">Check-In:</span>
+                  <span className="font-bold text-primary">
                     {formatTime(todayStatus.checkIn)}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-400">Check-Out:</span>
-                  <span className="font-bold text-slate-200">
+                  <span className="text-base-content/70">Check-Out:</span>
+                  <span className="font-bold text-base-content">
                     {todayStatus.checkOut ? formatTime(todayStatus.checkOut) : "In Progress..."}
                   </span>
                 </div>
 
                 {/* Login Hours Display */}
                 {liveHours && (
-                  <div className="bg-slate-900/80 rounded-lg p-2 border border-slate-700/60 flex items-center justify-between mt-1">
-                    <span className="text-[11px] text-slate-400 font-medium">Login Hours:</span>
+                  <div className="bg-base-100 rounded-lg p-2 border border-base-300 flex items-center justify-between mt-1">
+                    <span className="text-[11px] text-base-content/70 font-medium">Login Hours:</span>
                     <div className="flex items-center gap-1 font-mono">
-                      <Clock className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                      <span className="text-xs font-bold text-emerald-300 tracking-wider">
+                      <Clock className="w-3.5 h-3.5 text-primary shrink-0" />
+                      <span className="text-xs font-bold text-primary tracking-wider">
                         {liveHours.timerStr}
                       </span>
                     </div>
@@ -467,16 +467,16 @@ export default function EmployeeAttendancePage() {
                 )}
 
                 {todayStatus.workHours !== null && (
-                  <div className="flex justify-between pt-1 border-t border-slate-700/60">
-                    <span className="text-slate-400">Total Hours:</span>
-                    <span className="font-bold text-white">
+                  <div className="flex justify-between pt-1 border-t border-base-300">
+                    <span className="text-base-content/70">Total Hours:</span>
+                    <span className="font-bold text-base-content">
                       {todayStatus.workHours} hrs
                     </span>
                   </div>
                 )}
               </div>
             ) : (
-              <div className="text-slate-400 italic">
+              <div className="text-base-content/60 italic">
                 You have not checked in yet today.
               </div>
             )}
@@ -487,7 +487,7 @@ export default function EmployeeAttendancePage() {
               <button
                 onClick={() => handlePunch("CHECK_IN")}
                 disabled={punching}
-                className="w-full py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold text-xs shadow-xs transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 active:scale-95 cursor-pointer"
+                className="w-full py-2 rounded-lg bg-primary hover:opacity-90 text-primary-content font-bold text-xs shadow-xs transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 active:scale-95 cursor-pointer"
               >
                 <LogIn className="w-4 h-4" />
                 <span>{punching ? "Punching..." : "Check In Now"}</span>
@@ -496,13 +496,13 @@ export default function EmployeeAttendancePage() {
               <button
                 onClick={() => handlePunch("CHECK_OUT")}
                 disabled={punching}
-                className="w-full py-2 rounded-lg bg-rose-500 hover:bg-rose-600 text-white font-bold text-xs shadow-xs transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 active:scale-95 cursor-pointer"
+                className="w-full py-2 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30 font-bold text-xs shadow-xs transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 active:scale-95 cursor-pointer"
               >
                 <LogOut className="w-4 h-4" />
                 <span>{punching ? "Punching..." : "Check Out"}</span>
               </button>
             ) : (
-              <div className="w-full py-2 rounded-lg bg-slate-900 text-center text-xs font-semibold text-emerald-400 border border-slate-700 flex items-center justify-center gap-1.5">
+              <div className="w-full py-2 rounded-lg bg-base-100 text-center text-xs font-semibold text-primary border border-base-300 flex items-center justify-center gap-1.5">
                 <CheckCircle2 className="w-4 h-4" />
                 <span>Shift Complete</span>
               </div>

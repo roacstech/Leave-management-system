@@ -95,7 +95,7 @@ export default function CEOLayout({
 
             {/* Executive Profile Avatar */}
             <div className="flex items-center gap-2 pl-1">
-              <div className="w-8 h-8 rounded-full bg-slate-900 text-white font-bold text-xs flex items-center justify-center shadow-xs ring-2 ring-indigo-600/30">
+              <div className="w-8 h-8 rounded-full bg-primary text-primary-content font-bold text-xs flex items-center justify-center shadow-xs ring-2 ring-primary/30 uppercase">
                 C
               </div>
               <div className="hidden md:block text-left">

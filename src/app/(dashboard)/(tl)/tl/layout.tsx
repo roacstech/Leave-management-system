@@ -79,7 +79,7 @@ function TLHeader({
             onClick={() => setProfileMenuOpen(!profileMenuOpen)}
             className="flex items-center gap-2 pl-1 p-1 rounded-md hover:bg-slate-50 transition-colors cursor-pointer text-left"
           >
-            <div className="w-7 h-7 rounded-md bg-indigo-600 flex items-center justify-center text-white font-bold text-xs shadow-2xs">
+            <div className="w-7 h-7 rounded-md bg-primary flex items-center justify-center text-primary-content font-bold text-xs shadow-2xs uppercase">
               TL
             </div>
 
