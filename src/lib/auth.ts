@@ -19,6 +19,8 @@ cleanEnv("NEXTAUTH_URL");
 cleanEnv("DATABASE_URL");
 cleanEnv("DB_PASSWORD");
 
+process.env.AUTH_TRUST_HOST = "true";
+
 // NextAuth v5 basePath fix: if AUTH_URL is set without /api/auth, remove it so NextAuth preserves /api/auth basePath
 if (process.env.AUTH_URL && !process.env.AUTH_URL.includes("/api/auth")) {
   delete process.env.AUTH_URL;

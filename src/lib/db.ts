@@ -38,8 +38,8 @@ function getDatabaseConfig() {
     database,
     allowPublicKeyRetrieval: true,
     connectionLimit: 10,
-    connectTimeout: 10000,
-    acquireTimeout: 10000,
+    connectTimeout: 30000,
+    acquireTimeout: 30000,
   };
 }
 
