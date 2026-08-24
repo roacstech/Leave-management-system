@@ -30,6 +30,25 @@ import {
   TrendingUp,
   BarChart2,
 } from "lucide-react";
+import ThemedSelect from "@/components/ui/ThemedSelect";
+
+const ATTENDANCE_STATUS_OPTIONS = [
+  { value: "PRESENT", label: "Present" },
+  { value: "LATE", label: "Late" },
+  { value: "HALF_DAY", label: "Half Day" },
+  { value: "ABSENT", label: "Absent" },
+  { value: "ON_LEAVE", label: "On Leave" },
+];
+
+const EDIT_ATTENDANCE_STATUS_OPTIONS = [
+  { value: "PRESENT", label: "Present" },
+  { value: "LATE", label: "Late" },
+  { value: "HALF_DAY", label: "Half Day" },
+  { value: "ABSENT", label: "Absent" },
+  { value: "ON_LEAVE", label: "On Leave" },
+  { value: "HOLIDAY", label: "Holiday" },
+  { value: "WEEK_OFF", label: "Week Off" },
+];
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -635,12 +654,12 @@ export default function AttendanceAdminPage() {
 
           <div className="flex items-center gap-2.5 flex-wrap">
             {/* View switcher */}
-            <div className="flex items-center gap-0.5 p-0.5 bg-slate-100 rounded-lg border border-slate-200">
+            <div className="flex items-center gap-1 p-1 bg-base-200 rounded-xl border border-base-300">
               {(["daily", "monthly"] as const).map((v) => (
                 <button
                   key={v}
                   onClick={() => setView(v)}
-                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${view === v ? "bg-white text-slate-900 shadow-xs font-semibold" : "text-slate-500 hover:text-slate-800"}`}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer ${view === v ? "bg-primary text-primary-content shadow-xs" : "text-base-content/70 hover:text-base-content hover:bg-base-300/50"}`}
                 >
                   {v === "daily" ? "Daily View" : "Monthly View"}
                 </button>
@@ -693,16 +712,16 @@ export default function AttendanceAdminPage() {
               {/* Department */}
               <div className="flex flex-col gap-1">
                 <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Department</label>
-                <select
+                <ThemedSelect
                   value={departmentId}
-                  onChange={(e) => setDepartmentId(e.target.value)}
-                  className="px-3 py-2 rounded-lg border border-slate-200 text-xs text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-slate-300 min-w-[150px]"
-                >
-                  <option value="">All Departments</option>
-                  {teams.map((t) => (
-                    <option key={t.id} value={t.id}>{t.name}</option>
-                  ))}
-                </select>
+                  onChange={(val) => setDepartmentId(val)}
+                  options={[
+                    { value: "", label: "All Departments" },
+                    ...teams.map((t) => ({ value: String(t.id), label: t.name })),
+                  ]}
+                  size="sm"
+                  className="min-w-[150px]"
+                />
               </div>
 
               {/* Search */}
@@ -747,10 +766,10 @@ export default function AttendanceAdminPage() {
                 <button
                   key={tab.key}
                   onClick={() => setStatusTab(tab.key)}
-                  className={`flex items-center gap-1.5 px-4 py-3 text-xs font-medium whitespace-nowrap transition-all border-b-2 ${statusTab === tab.key ? "border-slate-900 text-slate-900 font-semibold" : "border-transparent text-slate-500 hover:text-slate-800"}`}
+                  className={`flex items-center gap-1.5 px-4 py-3 text-xs font-medium whitespace-nowrap transition-colors border-b-2 cursor-pointer ${statusTab === tab.key ? "border-primary text-primary" : "border-transparent text-base-content/70 hover:text-base-content"}`}
                 >
                   {tab.label}
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${statusTab === tab.key ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-600"}`}>
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${statusTab === tab.key ? "bg-primary text-primary-content" : "bg-base-200 text-base-content border border-base-300"}`}>
                     {tabCounts[tab.key] ?? 0}
                   </span>
                 </button>
@@ -916,24 +935,35 @@ export default function AttendanceAdminPage() {
           {/* Monthly Filters */}
           <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-xs">
             <div className="flex flex-col sm:flex-row flex-wrap gap-3 items-end">
-              <div className="flex flex-col gap-1">
+              <div className="flex flex-col gap-1 min-w-[120px]">
                 <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Month</label>
-                <select value={monthlyMonth} onChange={e => setMonthlyMonth(parseInt(e.target.value))} className="px-3 py-2 rounded-lg border border-slate-200 text-xs text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-slate-300">
-                  {MONTH_NAMES.map((m, i) => <option key={i} value={i + 1}>{m}</option>)}
-                </select>
+                <ThemedSelect
+                  value={String(monthlyMonth)}
+                  onChange={(val) => setMonthlyMonth(parseInt(val))}
+                  options={MONTH_NAMES.map((m, i) => ({ value: String(i + 1), label: m }))}
+                  size="sm"
+                />
               </div>
-              <div className="flex flex-col gap-1">
+              <div className="flex flex-col gap-1 min-w-[90px]">
                 <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Year</label>
-                <select value={monthlyYear} onChange={e => setMonthlyYear(parseInt(e.target.value))} className="px-3 py-2 rounded-lg border border-slate-200 text-xs text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-slate-300">
-                  {[2024, 2025, 2026, 2027].map(y => <option key={y} value={y}>{y}</option>)}
-                </select>
+                <ThemedSelect
+                  value={String(monthlyYear)}
+                  onChange={(val) => setMonthlyYear(parseInt(val))}
+                  options={[2024, 2025, 2026, 2027].map((y) => ({ value: String(y), label: String(y) }))}
+                  size="sm"
+                />
               </div>
-              <div className="flex flex-col gap-1">
+              <div className="flex flex-col gap-1 min-w-[160px]">
                 <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Department</label>
-                <select value={monthlyDept} onChange={e => setMonthlyDept(e.target.value)} className="px-3 py-2 rounded-lg border border-slate-200 text-xs text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-slate-300 min-w-[150px]">
-                  <option value="">All Departments</option>
-                  {teams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-                </select>
+                <ThemedSelect
+                  value={monthlyDept}
+                  onChange={(val) => setMonthlyDept(val)}
+                  options={[
+                    { value: "", label: "All Departments" },
+                    ...teams.map((t) => ({ value: String(t.id), label: t.name })),
+                  ]}
+                  size="sm"
+                />
               </div>
               <div className="flex flex-col gap-1 flex-1 min-w-[180px]">
                 <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Search Employee</label>
@@ -1142,13 +1172,11 @@ export default function AttendanceAdminPage() {
                   <input type="date" value={addForm.date} onChange={e => setAddForm(f => ({ ...f, date: e.target.value }))} className={inputCls} />
                 </Field>
                 <Field label="Status" required>
-                  <select value={addForm.status} onChange={e => setAddForm(f => ({ ...f, status: e.target.value }))} className={inputCls}>
-                    <option value="PRESENT">Present</option>
-                    <option value="LATE">Late</option>
-                    <option value="HALF_DAY">Half Day</option>
-                    <option value="ABSENT">Absent</option>
-                    <option value="ON_LEAVE">On Leave</option>
-                  </select>
+                  <ThemedSelect
+                    value={addForm.status}
+                    onChange={(val) => setAddForm((f) => ({ ...f, status: val }))}
+                    options={ATTENDANCE_STATUS_OPTIONS}
+                  />
                 </Field>
               </div>
 
@@ -1223,15 +1251,11 @@ export default function AttendanceAdminPage() {
               </div>
 
               <Field label="Status">
-                <select value={editForm.status} onChange={e => setEditForm(f => ({ ...f, status: e.target.value }))} className={inputCls}>
-                  <option value="PRESENT">Present</option>
-                  <option value="LATE">Late</option>
-                  <option value="HALF_DAY">Half Day</option>
-                  <option value="ABSENT">Absent</option>
-                  <option value="ON_LEAVE">On Leave</option>
-                  <option value="HOLIDAY">Holiday</option>
-                  <option value="WEEK_OFF">Week Off</option>
-                </select>
+                <ThemedSelect
+                  value={editForm.status}
+                  onChange={(val) => setEditForm((f) => ({ ...f, status: val }))}
+                  options={EDIT_ATTENDANCE_STATUS_OPTIONS}
+                />
               </Field>
 
               <Field label="Remarks">

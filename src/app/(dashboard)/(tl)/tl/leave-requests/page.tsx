@@ -23,6 +23,7 @@ import {
   FileSpreadsheet,
 } from "lucide-react";
 import { useSettings } from "@/contexts/SettingsContext";
+import ThemedSelect from "@/components/ui/ThemedSelect";
 
 interface LeaveBalance {
   id: number;
@@ -358,7 +359,7 @@ export default function TLLeaveRequestsPage() {
 
           <div className="flex flex-wrap items-center gap-2">
             {/* Status Filter Tabs */}
-            <div className="flex items-center gap-0.5 p-0.5 bg-slate-100 rounded-lg text-xs">
+            <div className="flex items-center gap-0.5 p-0.5 bg-slate-100 rounded-lg text-xs font-medium">
               {(["ALL", "PENDING_TL", "APPROVED", "REJECTED", "PENDING_ADMIN"] as const).map((st) => (
                 <button
                   key={st}
@@ -366,9 +367,9 @@ export default function TLLeaveRequestsPage() {
                     setStatusFilter(st);
                     setPage(1);
                   }}
-                  className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
+                  className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer ${
                     statusFilter === st
-                      ? "bg-white text-slate-900 font-semibold shadow-2xs"
+                      ? "bg-white text-slate-900 shadow-2xs"
                       : "text-slate-500 hover:text-slate-800"
                   }`}
                 >
@@ -386,21 +387,22 @@ export default function TLLeaveRequestsPage() {
             </div>
 
             {/* Leave Type Dropdown Filter */}
-            <select
+            <ThemedSelect
               value={leaveTypeFilter}
-              onChange={(e) => {
-                setLeaveTypeFilter(e.target.value);
+              onChange={(val) => {
+                setLeaveTypeFilter(val);
                 setPage(1);
               }}
-              className="px-2.5 py-1 rounded-lg bg-slate-100 border border-slate-200 text-xs text-slate-700 font-medium focus:outline-none focus:border-slate-400"
-            >
-              <option value="ALL">All Leave Types</option>
-              {leaveTypes.map((lt) => (
-                <option key={lt.id} value={lt.id.toString()}>
-                  {lt.name} ({lt.code})
-                </option>
-              ))}
-            </select>
+              options={[
+                { value: "ALL", label: "All Leave Types" },
+                ...leaveTypes.map((lt) => ({
+                  value: lt.id.toString(),
+                  label: `${lt.name} (${lt.code})`,
+                })),
+              ]}
+              size="xs"
+              className="min-w-[150px]"
+            />
           </div>
         </div>
       </div>

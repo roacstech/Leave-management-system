@@ -52,7 +52,7 @@ function EmployeeHeader({
   };
 
   return (
-    <header className="sticky top-0 z-30 h-14 bg-white border-b border-slate-200 px-4 sm:px-6 flex items-center justify-between">
+    <header className="sticky top-0 z-30 h-14 shrink-0 bg-white border-b border-slate-200 px-4 sm:px-6 flex items-center justify-between">
       <div className="flex items-center gap-3">
         <button
           type="button"
@@ -93,7 +93,7 @@ function EmployeeHeader({
             onClick={() => setProfileMenuOpen(!profileMenuOpen)}
             className="flex items-center gap-2 pl-1 p-1 rounded-md hover:bg-slate-50 transition-colors cursor-pointer text-left"
           >
-            <div className="w-7 h-7 rounded-md bg-emerald-600 flex items-center justify-center text-white font-bold text-xs shadow-2xs uppercase">
+            <div className="w-7 h-7 rounded-md bg-primary flex items-center justify-center text-primary-content font-bold text-xs shadow-2xs uppercase">
               {userInitials}
             </div>
 
@@ -113,13 +113,13 @@ function EmployeeHeader({
                 className="fixed inset-0 z-40" 
                 onClick={() => setProfileMenuOpen(false)} 
               />
-              <div className="absolute right-0 mt-2 w-48 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-50">
+              <div className="absolute right-0 mt-2 w-48 bg-base-100 border border-base-300 rounded-xl shadow-xl p-1 z-50 animate-in fade-in zoom-in-95 duration-100">
                 <button
                   onClick={handleLogout}
-                  className="flex items-center w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors font-medium cursor-pointer"
+                  className="flex items-center w-full text-left px-3.5 py-2 text-xs text-base-content hover:bg-primary/10 hover:text-primary transition-colors font-semibold cursor-pointer rounded-lg gap-2"
                 >
-                  <LogOut className="w-4 h-4 mr-2" />
-                  Sign Out
+                  <LogOut className="w-4 h-4 text-primary" />
+                  <span>Sign Out</span>
                 </button>
               </div>
             </>
@@ -162,7 +162,7 @@ export default function EmployeeLayout({
           />
 
           {/* Main Body */}
-          <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
+          <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto min-h-[calc(100vh-3.5rem)] min-w-0">
             {children}
           </main>
         </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { FormEvent, useState } from "react";
+import React, { FormEvent, useState, useEffect } from "react";
 import {
   Shield,
   Lock,
@@ -66,8 +66,14 @@ export default function LoginPage() {
     }
   }
 
+  useEffect(() => {
+    // Reset login page to clean default brand theme
+    document.documentElement.setAttribute("data-theme", "light");
+  }, []);
+
   return (
     <main 
+      data-theme="light"
       className="min-h-screen flex flex-col justify-between py-10 px-4 sm:px-6 lg:px-8 bg-cover bg-center bg-no-repeat"
       style={{ backgroundImage: 'url("/login-bg.png")' }}
     >

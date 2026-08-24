@@ -22,6 +22,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { useSettings } from "@/contexts/SettingsContext";
+import ThemedSelect from "@/components/ui/ThemedSelect";
 
 interface LeaveRequestItem {
   id: number;
@@ -310,40 +311,43 @@ export default function EmployeeMyLeavesPage() {
 
           <div className="flex flex-wrap items-center gap-2">
             {/* Leave Type Filter */}
-            <select
+            <ThemedSelect
               value={leaveTypeFilter}
-              onChange={(e) => {
-                setLeaveTypeFilter(e.target.value);
+              onChange={(val) => {
+                setLeaveTypeFilter(val);
                 setPage(1);
               }}
-              className="px-2.5 py-1.5 rounded-lg bg-slate-100 border border-slate-200 text-xs text-slate-700 font-medium focus:outline-none cursor-pointer"
-            >
-              <option value="ALL">All Leave Types</option>
-              {leaveTypes.map((lt) => (
-                <option key={lt.id} value={lt.id.toString()}>
-                  {lt.name} ({lt.code})
-                </option>
-              ))}
-            </select>
+              options={[
+                { value: "ALL", label: "All Leave Types" },
+                ...leaveTypes.map((lt) => ({
+                  value: lt.id.toString(),
+                  label: `${lt.name} (${lt.code})`,
+                })),
+              ]}
+              size="xs"
+              className="min-w-[150px]"
+            />
 
             {/* Year Filter */}
-            <select
+            <ThemedSelect
               value={yearFilter}
-              onChange={(e) => {
-                setYearFilter(e.target.value);
+              onChange={(val) => {
+                setYearFilter(val);
                 setPage(1);
               }}
-              className="px-2.5 py-1.5 rounded-lg bg-slate-100 border border-slate-200 text-xs text-slate-700 font-medium focus:outline-none cursor-pointer"
-            >
-              <option value="ALL">All Years</option>
-              <option value="2026">2026</option>
-              <option value="2025">2025</option>
-            </select>
+              options={[
+                { value: "ALL", label: "All Years" },
+                { value: "2026", label: "2026" },
+                { value: "2025", label: "2025" },
+              ]}
+              size="xs"
+              className="min-w-[110px]"
+            />
           </div>
         </div>
 
         {/* Status Filter Tabs */}
-        <div className="pt-2 border-t border-slate-100 flex flex-wrap items-center gap-1">
+        <div className="pt-2 border-t border-slate-100 flex flex-wrap items-center gap-1 text-xs font-medium">
           {(["ALL", "PENDING_TL", "PENDING_ADMIN", "APPROVED", "REJECTED", "CANCELLED"] as const).map(
             (st) => (
               <button
@@ -352,9 +356,9 @@ export default function EmployeeMyLeavesPage() {
                   setStatusFilter(st);
                   setPage(1);
                 }}
-                className={`px-3 py-1 rounded-md text-xs transition-all cursor-pointer ${
+                className={`px-3 py-1 rounded-md transition-colors cursor-pointer ${
                   statusFilter === st
-                    ? "bg-slate-900 text-white font-semibold shadow-2xs"
+                    ? "bg-slate-900 text-white shadow-2xs"
                     : "text-slate-500 hover:text-slate-900 bg-slate-100/70 hover:bg-slate-100"
                 }`}
               >

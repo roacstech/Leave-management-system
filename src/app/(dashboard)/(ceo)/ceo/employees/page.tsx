@@ -19,6 +19,13 @@ import {
   Layers,
 } from "lucide-react";
 import { useSettings } from "@/contexts/SettingsContext";
+import ThemedSelect from "@/components/ui/ThemedSelect";
+
+const STATUS_FILTER_OPTIONS = [
+  { value: "ALL", label: "All Statuses" },
+  { value: "ACTIVE", label: "Active Staff Only" },
+  { value: "INACTIVE", label: "Inactive / Archived" },
+];
 
 interface EmployeeItem {
   id: number;
@@ -128,47 +135,35 @@ export default function CEOEmployeesPage() {
 
         {/* Team Filter */}
         <div>
-          <select
+          <ThemedSelect
             value={teamFilter}
-            onChange={(e) => setTeamFilter(e.target.value)}
-            className="w-full py-2 px-3 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-indigo-500"
-          >
-            <option value="ALL">All Teams & Units</option>
-            {teams.map((t) => (
-              <option key={t.id} value={t.id.toString()}>
-                {t.name}
-              </option>
-            ))}
-          </select>
+            onChange={(val) => setTeamFilter(val)}
+            options={[
+              { value: "ALL", label: "All Teams & Units" },
+              ...teams.map((t) => ({ value: t.id.toString(), label: t.name })),
+            ]}
+          />
         </div>
 
         {/* Role Filter */}
         <div>
-          <select
+          <ThemedSelect
             value={roleFilter}
-            onChange={(e) => setRoleFilter(e.target.value)}
-            className="w-full py-2 px-3 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-indigo-500"
-          >
-            <option value="ALL">All Roles</option>
-            {roles.map((r) => (
-              <option key={r.id} value={r.id.toString()}>
-                {r.name}
-              </option>
-            ))}
-          </select>
+            onChange={(val) => setRoleFilter(val)}
+            options={[
+              { value: "ALL", label: "All Roles" },
+              ...roles.map((r) => ({ value: r.id.toString(), label: r.name })),
+            ]}
+          />
         </div>
 
         {/* Status Filter */}
         <div>
-          <select
+          <ThemedSelect
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="w-full py-2 px-3 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-indigo-500"
-          >
-            <option value="ALL">All Statuses</option>
-            <option value="ACTIVE">Active Staff Only</option>
-            <option value="INACTIVE">Inactive / Archived</option>
-          </select>
+            onChange={(val) => setStatusFilter(val)}
+            options={STATUS_FILTER_OPTIONS}
+          />
         </div>
       </div>
 

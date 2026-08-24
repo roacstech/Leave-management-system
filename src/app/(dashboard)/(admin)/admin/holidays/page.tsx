@@ -212,12 +212,12 @@ export default function HolidaysPage() {
           </div>
 
           {/* Filters */}
-          <div className="flex items-center gap-0.5 p-0.5 bg-slate-100 rounded-lg text-xs">
+          <div className="flex items-center gap-0.5 p-0.5 bg-slate-100 rounded-lg text-xs font-medium">
             <button
               onClick={() => setFilterStatus("ALL")}
-              className={`px-2.5 py-1 rounded-md transition-all ${
+              className={`px-2.5 py-1 rounded-md transition-colors ${
                 filterStatus === "ALL"
-                  ? "bg-white text-slate-900 font-semibold shadow-2xs"
+                  ? "bg-white text-slate-900 shadow-2xs"
                   : "text-slate-500 hover:text-slate-800"
               }`}
             >
@@ -225,9 +225,9 @@ export default function HolidaysPage() {
             </button>
             <button
               onClick={() => setFilterStatus("UPCOMING")}
-              className={`px-2.5 py-1 rounded-md transition-all ${
+              className={`px-2.5 py-1 rounded-md transition-colors ${
                 filterStatus === "UPCOMING"
-                  ? "bg-white text-slate-900 font-semibold shadow-2xs"
+                  ? "bg-white text-slate-900 shadow-2xs"
                   : "text-slate-500 hover:text-slate-800"
               }`}
             >
@@ -235,9 +235,9 @@ export default function HolidaysPage() {
             </button>
             <button
               onClick={() => setFilterStatus("PAST")}
-              className={`px-2.5 py-1 rounded-md transition-all ${
+              className={`px-2.5 py-1 rounded-md transition-colors ${
                 filterStatus === "PAST"
-                  ? "bg-white text-slate-900 font-semibold shadow-2xs"
+                  ? "bg-white text-slate-900 shadow-2xs"
                   : "text-slate-500 hover:text-slate-800"
               }`}
             >

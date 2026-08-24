@@ -13,6 +13,7 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
+import ThemedSelect from "@/components/ui/ThemedSelect";
 
 interface Team {
   id: number;
@@ -421,33 +422,33 @@ export default function EmployeesPage() {
           {/* Filter Tabs */}
           <div className="flex flex-wrap items-center gap-2">
             {/* Status filter */}
-            <div className="flex items-center gap-0.5 p-0.5 bg-slate-100 rounded-lg text-xs">
+            <div className="flex items-center gap-1 p-1 bg-base-200 border border-base-300 rounded-xl text-xs font-medium">
               <button
                 onClick={() => handleStatusChange("ALL")}
-                className={`px-2.5 py-1 rounded-md transition-all ${
+                className={`px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
                   filterStatus === "ALL"
-                    ? "bg-white text-slate-900 font-semibold shadow-2xs"
-                    : "text-slate-500 hover:text-slate-800"
+                    ? "bg-primary text-primary-content shadow-2xs"
+                    : "text-base-content/70 hover:text-base-content hover:bg-base-300/50"
                 }`}
               >
                 All ({paginationInfo.activeCount + paginationInfo.inactiveCount})
               </button>
               <button
                 onClick={() => handleStatusChange("ACTIVE")}
-                className={`px-2.5 py-1 rounded-md transition-all ${
+                className={`px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
                   filterStatus === "ACTIVE"
-                    ? "bg-white text-slate-900 font-semibold shadow-2xs"
-                    : "text-slate-500 hover:text-slate-800"
+                    ? "bg-primary text-primary-content shadow-2xs"
+                    : "text-base-content/70 hover:text-base-content hover:bg-base-300/50"
                 }`}
               >
                 Active ({paginationInfo.activeCount})
               </button>
               <button
                 onClick={() => handleStatusChange("INACTIVE")}
-                className={`px-2.5 py-1 rounded-md transition-all ${
+                className={`px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
                   filterStatus === "INACTIVE"
-                    ? "bg-white text-slate-900 font-semibold shadow-2xs"
-                    : "text-slate-500 hover:text-slate-800"
+                    ? "bg-primary text-primary-content shadow-2xs"
+                    : "text-base-content/70 hover:text-base-content hover:bg-base-300/50"
                 }`}
               >
                 Inactive ({paginationInfo.inactiveCount})
@@ -455,15 +456,15 @@ export default function EmployeesPage() {
             </div>
 
             {/* Role filter */}
-            <div className="flex items-center gap-0.5 p-0.5 bg-slate-100 rounded-lg text-xs">
+            <div className="flex items-center gap-1 p-1 bg-base-200 border border-base-300 rounded-xl text-xs font-medium">
               {["ALL", "EMPLOYEE", "TL"].map((role) => (
                 <button
                   key={role}
                   onClick={() => handleRoleChange(role)}
-                  className={`px-2.5 py-1 rounded-md transition-all ${
+                  className={`px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
                     filterRole === role
-                      ? "bg-white text-slate-900 font-semibold shadow-2xs"
-                      : "text-slate-500 hover:text-slate-800"
+                      ? "bg-primary text-primary-content shadow-2xs"
+                      : "text-base-content/70 hover:text-base-content hover:bg-base-300/50"
                   }`}
                 >
                   {role === "ALL" ? "All Roles" : role}
@@ -755,93 +756,85 @@ export default function EmployeesPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-slate-700 mb-1">
+                  <label className="block text-xs font-medium text-base-content mb-1">
                     Role <span className="text-rose-500">*</span>
                   </label>
-                  <select
+                  <ThemedSelect
                     value={formData.role}
-                    onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                    className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-slate-400"
-                  >
-                    <option value="EMPLOYEE">EMPLOYEE</option>
-                    <option value="TL">Team Lead (TL)</option>
-                    <option value="ADMIN">ADMIN</option>
-                  </select>
+                    onChange={(val) => setFormData({ ...formData, role: val })}
+                    options={[
+                      { value: "EMPLOYEE", label: "EMPLOYEE" },
+                      { value: "TL", label: "Team Lead (TL)" },
+                      { value: "ADMIN", label: "ADMIN" },
+                    ]}
+                  />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-slate-700 mb-1">
+                  <label className="block text-xs font-medium text-base-content mb-1">
                     Department / Team
                   </label>
-                  <select
+                  <ThemedSelect
                     value={formData.teamId}
-                    onChange={(e) => setFormData({ ...formData, teamId: e.target.value })}
-                    className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-slate-400"
-                  >
-                    <option value="">-- No Department --</option>
-                    {teams.map((t) => (
-                      <option key={t.id} value={t.id}>
-                        {t.name}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(val) => setFormData({ ...formData, teamId: val })}
+                    options={[
+                      { value: "", label: "-- No Department --" },
+                      ...teams.map((t) => ({ value: String(t.id), label: t.name })),
+                    ]}
+                  />
                 </div>
               </div>
 
               {/* Conditional Reporting TL field: ONLY for EMPLOYEE role */}
               {formData.role === "EMPLOYEE" && (
                 <div>
-                  <label className="block text-xs font-medium text-slate-700 mb-1">
+                  <label className="block text-xs font-medium text-base-content mb-1">
                     Assign Reporting TL <span className="text-rose-500">*</span>
                   </label>
-                  <select
-                    required
+                  <ThemedSelect
                     value={formData.reportingToId}
-                    onChange={(e) =>
-                      setFormData({ ...formData, reportingToId: e.target.value })
+                    onChange={(val) =>
+                      setFormData({ ...formData, reportingToId: val })
                     }
-                    className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-slate-400"
-                  >
-                    <option value="">-- Select Team Leader (TL) --</option>
-                    {teamLeads.map((tl) => (
-                      <option key={tl.id} value={tl.id}>
-                        {tl.name} ({tl.email})
-                      </option>
-                    ))}
-                  </select>
-                  <p className="text-[10px] text-slate-400 mt-1">
+                    placeholder="-- Select Team Leader (TL) --"
+                    options={[
+                      { value: "", label: "-- Select Team Leader (TL) --" },
+                      ...teamLeads.map((tl) => ({ value: String(tl.id), label: `${tl.name} (${tl.email})` })),
+                    ]}
+                  />
+                  <p className="text-[10px] text-base-content/50 mt-1">
                     Employee will report to this specific TL for leaves & attendance.
                   </p>
                 </div>
               )}
 
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">
+                <label className="block text-xs font-medium text-base-content mb-1">
                   Status
                 </label>
-                <select
+                <ThemedSelect
                   value={formData.isActive ? "true" : "false"}
-                  onChange={(e) => setFormData({ ...formData, isActive: e.target.value === "true" })}
-                  className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-slate-400"
-                >
-                  <option value="true">Active</option>
-                  <option value="false">Inactive</option>
-                </select>
+                  onChange={(val) => setFormData({ ...formData, isActive: val === "true" })}
+                  options={[
+                    { value: "true", label: "Active" },
+                    { value: "false", label: "Inactive" },
+                  ]}
+                />
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-base-300">
               <button
                 type="button"
                 onClick={() => setCreateModalOpen(false)}
-                className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium"
+                className="px-3 py-1.5 rounded-lg bg-base-200 hover:bg-base-300 text-base-content text-xs font-medium cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={submitting}
-                className="px-3.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-medium disabled:opacity-50"
+                className="px-3.5 py-1.5 rounded-lg bg-primary hover:opacity-90 text-primary-content text-xs font-medium disabled:opacity-50 cursor-pointer"
               >
                 {submitting ? "Saving..." : "Create Employee"}
               </button>
@@ -926,93 +919,85 @@ export default function EmployeesPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-slate-700 mb-1">
+                  <label className="block text-xs font-medium text-base-content mb-1">
                     Role
                   </label>
-                  <select
+                  <ThemedSelect
                     value={formData.role}
-                    onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                    className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-slate-400"
-                  >
-                    <option value="EMPLOYEE">EMPLOYEE</option>
-                    <option value="TL">Team Lead (TL)</option>
-                    <option value="ADMIN">ADMIN</option>
-                  </select>
+                    onChange={(val) => setFormData({ ...formData, role: val })}
+                    options={[
+                      { value: "EMPLOYEE", label: "EMPLOYEE" },
+                      { value: "TL", label: "Team Lead (TL)" },
+                      { value: "ADMIN", label: "ADMIN" },
+                    ]}
+                  />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-slate-700 mb-1">
+                  <label className="block text-xs font-medium text-base-content mb-1">
                     Department / Team
                   </label>
-                  <select
+                  <ThemedSelect
                     value={formData.teamId}
-                    onChange={(e) => setFormData({ ...formData, teamId: e.target.value })}
-                    className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-slate-400"
-                  >
-                    <option value="">-- No Department --</option>
-                    {teams.map((t) => (
-                      <option key={t.id} value={t.id}>
-                        {t.name}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(val) => setFormData({ ...formData, teamId: val })}
+                    options={[
+                      { value: "", label: "-- No Department --" },
+                      ...teams.map((t) => ({ value: String(t.id), label: t.name })),
+                    ]}
+                  />
                 </div>
               </div>
 
               {/* Conditional Reporting TL field: ONLY for EMPLOYEE role */}
               {formData.role === "EMPLOYEE" && (
                 <div>
-                  <label className="block text-xs font-medium text-slate-700 mb-1">
+                  <label className="block text-xs font-medium text-base-content mb-1">
                     Assign Reporting TL <span className="text-rose-500">*</span>
                   </label>
-                  <select
-                    required
+                  <ThemedSelect
                     value={formData.reportingToId}
-                    onChange={(e) =>
-                      setFormData({ ...formData, reportingToId: e.target.value })
+                    onChange={(val) =>
+                      setFormData({ ...formData, reportingToId: val })
                     }
-                    className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-slate-400"
-                  >
-                    <option value="">-- Select Team Leader (TL) --</option>
-                    {teamLeads.map((tl) => (
-                      <option key={tl.id} value={tl.id}>
-                        {tl.name} ({tl.email})
-                      </option>
-                    ))}
-                  </select>
-                  <p className="text-[10px] text-slate-400 mt-1">
+                    placeholder="-- Select Team Leader (TL) --"
+                    options={[
+                      { value: "", label: "-- Select Team Leader (TL) --" },
+                      ...teamLeads.map((tl) => ({ value: String(tl.id), label: `${tl.name} (${tl.email})` })),
+                    ]}
+                  />
+                  <p className="text-[10px] text-base-content/50 mt-1">
                     Employee will report to this specific TL for leaves & attendance.
                   </p>
                 </div>
               )}
 
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">
+                <label className="block text-xs font-medium text-base-content mb-1">
                   Active Status
                 </label>
-                <select
+                <ThemedSelect
                   value={formData.isActive ? "true" : "false"}
-                  onChange={(e) => setFormData({ ...formData, isActive: e.target.value === "true" })}
-                  className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-slate-400"
-                >
-                  <option value="true">Active</option>
-                  <option value="false">Inactive</option>
-                </select>
+                  onChange={(val) => setFormData({ ...formData, isActive: val === "true" })}
+                  options={[
+                    { value: "true", label: "Active" },
+                    { value: "false", label: "Inactive" },
+                  ]}
+                />
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-base-300">
               <button
                 type="button"
                 onClick={() => setEditModalOpen(false)}
-                className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium"
+                className="px-3 py-1.5 rounded-lg bg-base-200 hover:bg-base-300 text-base-content text-xs font-medium cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={submitting}
-                className="px-3.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-medium disabled:opacity-50"
+                className="px-3.5 py-1.5 rounded-lg bg-primary hover:opacity-90 text-primary-content text-xs font-medium disabled:opacity-50 cursor-pointer"
               >
                 {submitting ? "Saving..." : "Save Changes"}
               </button>

@@ -21,6 +21,7 @@ import {
   FileText,
 } from "lucide-react";
 import { useSettings } from "@/contexts/SettingsContext";
+import ThemedSelect from "@/components/ui/ThemedSelect";
 
 interface LeaveHistoryItem {
   id: number;
@@ -293,38 +294,37 @@ export default function TLLeaveHistoryPage() {
           </div>
 
           {/* Member Dropdown */}
-          <select
+          <ThemedSelect
             value={employeeFilter}
-            onChange={(e) => {
-              setEmployeeFilter(e.target.value);
+            onChange={(val) => {
+              setEmployeeFilter(val);
               setPage(1);
             }}
-            className="px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-700 font-medium focus:outline-none focus:border-slate-400 cursor-pointer"
-          >
-            <option value="ALL">All Team Members</option>
-            {teamMembers.map((m) => (
-              <option key={m.id} value={m.id.toString()}>
-                {m.name}
-              </option>
-            ))}
-          </select>
+            options={[
+              { value: "ALL", label: "All Team Members" },
+              ...teamMembers.map((m) => ({ value: m.id.toString(), label: m.name })),
+            ]}
+            size="xs"
+            className="min-w-[150px]"
+          />
 
           {/* Leave Type Dropdown */}
-          <select
+          <ThemedSelect
             value={leaveTypeFilter}
-            onChange={(e) => {
-              setLeaveTypeFilter(e.target.value);
+            onChange={(val) => {
+              setLeaveTypeFilter(val);
               setPage(1);
             }}
-            className="px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-700 font-medium focus:outline-none focus:border-slate-400 cursor-pointer"
-          >
-            <option value="ALL">All Leave Types</option>
-            {leaveTypes.map((lt) => (
-              <option key={lt.id} value={lt.id.toString()}>
-                {lt.name} ({lt.code})
-              </option>
-            ))}
-          </select>
+            options={[
+              { value: "ALL", label: "All Leave Types" },
+              ...leaveTypes.map((lt) => ({
+                value: lt.id.toString(),
+                label: `${lt.name} (${lt.code})`,
+              })),
+            ]}
+            size="xs"
+            className="min-w-[150px]"
+          />
         </div>
 
         {/* Secondary Filter Row: Status and Year Tabs */}
@@ -352,19 +352,21 @@ export default function TLLeaveHistoryPage() {
           {/* Year Filter */}
           <div className="flex items-center gap-1.5">
             <span className="text-slate-400 font-medium">Year:</span>
-            <select
+            <ThemedSelect
               value={yearFilter}
-              onChange={(e) => {
-                setYearFilter(e.target.value);
+              onChange={(val) => {
+                setYearFilter(val);
                 setPage(1);
               }}
-              className="px-2 py-1 rounded-lg bg-slate-100 border border-slate-200 text-xs text-slate-700 font-semibold focus:outline-none cursor-pointer"
-            >
-              <option value="ALL">All Years</option>
-              <option value="2026">2026</option>
-              <option value="2025">2025</option>
-              <option value="2024">2024</option>
-            </select>
+              options={[
+                { value: "ALL", label: "All Years" },
+                { value: "2026", label: "2026" },
+                { value: "2025", label: "2025" },
+                { value: "2024", label: "2024" },
+              ]}
+              size="xs"
+              className="min-w-[100px]"
+            />
           </div>
         </div>
       </div>

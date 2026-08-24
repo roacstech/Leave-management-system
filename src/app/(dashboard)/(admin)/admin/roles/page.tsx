@@ -15,6 +15,20 @@ import {
   ShieldAlert,
   Users,
 } from "lucide-react";
+import ThemedSelect from "@/components/ui/ThemedSelect";
+
+const ACCESS_LEVEL_OPTIONS = [
+  { value: "STANDARD", label: "Standard Staff" },
+  { value: "LEAD", label: "Team Lead" },
+  { value: "MANAGEMENT", label: "Management" },
+  { value: "ADMIN", label: "Administrator" },
+  { value: "EXECUTIVE", label: "Executive" },
+];
+
+const STATUS_OPTIONS = [
+  { value: "true", label: "Active" },
+  { value: "false", label: "Inactive" },
+];
 
 interface RoleItem {
   id: number;
@@ -339,12 +353,12 @@ export default function RolesManagementPage() {
           </div>
 
           {/* Status Filter Tabs */}
-          <div className="flex items-center gap-0.5 p-0.5 bg-slate-100 rounded-lg text-xs">
+          <div className="flex items-center gap-0.5 p-0.5 bg-slate-100 rounded-lg text-xs font-medium">
             <button
               onClick={() => handleStatusFilterChange("ALL")}
-              className={`px-2.5 py-1 rounded-md transition-all ${
+              className={`px-2.5 py-1 rounded-md transition-colors ${
                 filterStatus === "ALL"
-                  ? "bg-white text-slate-900 font-semibold shadow-2xs"
+                  ? "bg-white text-slate-900 shadow-2xs"
                   : "text-slate-500 hover:text-slate-800"
               }`}
             >
@@ -352,9 +366,9 @@ export default function RolesManagementPage() {
             </button>
             <button
               onClick={() => handleStatusFilterChange("ACTIVE")}
-              className={`px-2.5 py-1 rounded-md transition-all ${
+              className={`px-2.5 py-1 rounded-md transition-colors ${
                 filterStatus === "ACTIVE"
-                  ? "bg-white text-slate-900 font-semibold shadow-2xs"
+                  ? "bg-white text-slate-900 shadow-2xs"
                   : "text-slate-500 hover:text-slate-800"
               }`}
             >
@@ -362,9 +376,9 @@ export default function RolesManagementPage() {
             </button>
             <button
               onClick={() => handleStatusFilterChange("INACTIVE")}
-              className={`px-2.5 py-1 rounded-md transition-all ${
+              className={`px-2.5 py-1 rounded-md transition-colors ${
                 filterStatus === "INACTIVE"
-                  ? "bg-white text-slate-900 font-semibold shadow-2xs"
+                  ? "bg-white text-slate-900 shadow-2xs"
                   : "text-slate-500 hover:text-slate-800"
               }`}
             >
@@ -444,12 +458,12 @@ export default function RolesManagementPage() {
                       {/* 4. Access Level */}
                       <td className="py-3 px-3">
                         <span
-                          className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold ${
+                          className={`inline-block px-2 py-0.5 rounded text-[10px] ${
                             r.accessLevel === "ADMIN" || r.accessLevel === "EXECUTIVE"
-                              ? "bg-slate-900 text-white"
+                              ? "bg-primary text-primary-content font-bold shadow-2xs"
                               : r.accessLevel === "LEAD" || r.accessLevel === "MANAGEMENT"
-                              ? "bg-slate-200 text-slate-800"
-                              : "bg-slate-100 text-slate-600"
+                              ? "bg-primary/15 text-primary border border-primary/30 font-bold"
+                              : "bg-base-200 text-base-content/80 border border-base-300 font-medium"
                           }`}
                         >
                           {r.accessLevel}
@@ -651,17 +665,11 @@ export default function RolesManagementPage() {
                   <label className="block text-xs font-medium text-slate-700 mb-1">
                     Access Level
                   </label>
-                  <select
+                  <ThemedSelect
                     value={formData.accessLevel}
-                    onChange={(e) => setFormData({ ...formData, accessLevel: e.target.value })}
-                    className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-slate-400"
-                  >
-                    <option value="STANDARD">Standard Staff</option>
-                    <option value="LEAD">Team Lead</option>
-                    <option value="MANAGEMENT">Management</option>
-                    <option value="ADMIN">Administrator</option>
-                    <option value="EXECUTIVE">Executive</option>
-                  </select>
+                    onChange={(val) => setFormData({ ...formData, accessLevel: val })}
+                    options={ACCESS_LEVEL_OPTIONS}
+                  />
                 </div>
               </div>
 
@@ -682,14 +690,11 @@ export default function RolesManagementPage() {
                 <label className="block text-xs font-medium text-slate-700 mb-1">
                   Status
                 </label>
-                <select
+                <ThemedSelect
                   value={formData.isActive ? "true" : "false"}
-                  onChange={(e) => setFormData({ ...formData, isActive: e.target.value === "true" })}
-                  className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-slate-400"
-                >
-                  <option value="true">Active</option>
-                  <option value="false">Inactive</option>
-                </select>
+                  onChange={(val) => setFormData({ ...formData, isActive: val === "true" })}
+                  options={STATUS_OPTIONS}
+                />
               </div>
             </div>
 
@@ -769,17 +774,11 @@ export default function RolesManagementPage() {
                   <label className="block text-xs font-medium text-slate-700 mb-1">
                     Access Level
                   </label>
-                  <select
+                  <ThemedSelect
                     value={formData.accessLevel}
-                    onChange={(e) => setFormData({ ...formData, accessLevel: e.target.value })}
-                    className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-slate-400"
-                  >
-                    <option value="STANDARD">Standard Staff</option>
-                    <option value="LEAD">Team Lead</option>
-                    <option value="MANAGEMENT">Management</option>
-                    <option value="ADMIN">Administrator</option>
-                    <option value="EXECUTIVE">Executive</option>
-                  </select>
+                    onChange={(val) => setFormData({ ...formData, accessLevel: val })}
+                    options={ACCESS_LEVEL_OPTIONS}
+                  />
                 </div>
               </div>
 
@@ -799,14 +798,11 @@ export default function RolesManagementPage() {
                 <label className="block text-xs font-medium text-slate-700 mb-1">
                   Status
                 </label>
-                <select
+                <ThemedSelect
                   value={formData.isActive ? "true" : "false"}
-                  onChange={(e) => setFormData({ ...formData, isActive: e.target.value === "true" })}
-                  className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-slate-400"
-                >
-                  <option value="true">Active</option>
-                  <option value="false">Inactive</option>
-                </select>
+                  onChange={(val) => setFormData({ ...formData, isActive: val === "true" })}
+                  options={STATUS_OPTIONS}
+                />
               </div>
             </div>
 

@@ -7,7 +7,6 @@ import {
   Check,
   CheckCheck,
   Calendar,
-  AlertCircle,
   CheckCircle2,
   XCircle,
   ArrowUpRight,
@@ -15,12 +14,11 @@ import {
   Info,
   Clock,
   Search,
-  Filter,
   ChevronLeft,
   ChevronRight,
-  Loader2,
   RefreshCw,
 } from "lucide-react";
+import ThemedSelect from "@/components/ui/ThemedSelect";
 
 interface NotificationItem {
   id: number;
@@ -52,18 +50,18 @@ function timeAgo(dateString: string): string {
 function getNotificationIcon(type: NotificationItem["type"]) {
   switch (type) {
     case "LEAVE_REQUEST":
-      return <Calendar className="w-5 h-5 text-amber-600" />;
+      return <Calendar className="w-5 h-5 text-amber-500" />;
     case "LEAVE_APPROVED":
-      return <CheckCircle2 className="w-5 h-5 text-emerald-600" />;
+      return <CheckCircle2 className="w-5 h-5 text-emerald-500" />;
     case "LEAVE_REJECTED":
-      return <XCircle className="w-5 h-5 text-rose-600" />;
+      return <XCircle className="w-5 h-5 text-rose-500" />;
     case "LEAVE_ESCALATED":
-      return <ArrowUpRight className="w-5 h-5 text-purple-600" />;
+      return <ArrowUpRight className="w-5 h-5 text-purple-500" />;
     case "LEAVE_CANCELLED":
-      return <UserX className="w-5 h-5 text-slate-500" />;
+      return <UserX className="w-5 h-5 text-base-content/60" />;
     case "SYSTEM":
     default:
-      return <Info className="w-5 h-5 text-blue-600" />;
+      return <Info className="w-5 h-5 text-primary" />;
   }
 }
 
@@ -72,33 +70,33 @@ function getBadgeDetails(type: NotificationItem["type"]) {
     case "LEAVE_REQUEST":
       return {
         label: "Leave Request",
-        badgeClass: "bg-amber-50 text-amber-700 border-amber-200",
+        badgeClass: "bg-amber-500/10 text-amber-600 border-amber-500/20",
       };
     case "LEAVE_APPROVED":
       return {
         label: "Approved",
-        badgeClass: "bg-emerald-50 text-emerald-700 border-emerald-200",
+        badgeClass: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
       };
     case "LEAVE_REJECTED":
       return {
         label: "Rejected",
-        badgeClass: "bg-rose-50 text-rose-700 border-rose-200",
+        badgeClass: "bg-rose-500/10 text-rose-600 border-rose-500/20",
       };
     case "LEAVE_ESCALATED":
       return {
         label: "Escalated",
-        badgeClass: "bg-purple-50 text-purple-700 border-purple-200",
+        badgeClass: "bg-purple-500/10 text-purple-600 border-purple-500/20",
       };
     case "LEAVE_CANCELLED":
       return {
         label: "Cancelled",
-        badgeClass: "bg-slate-100 text-slate-700 border-slate-200",
+        badgeClass: "bg-base-200 text-base-content/70 border-base-300",
       };
     case "SYSTEM":
     default:
       return {
         label: "System",
-        badgeClass: "bg-blue-50 text-blue-700 border-blue-200",
+        badgeClass: "bg-primary/10 text-primary border-primary/20",
       };
   }
 }
@@ -211,21 +209,21 @@ export function NotificationsCenter() {
   return (
     <div className="space-y-6 max-w-5xl mx-auto p-4 sm:p-6 lg:p-8">
       {/* Header Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-base-100 text-base-content rounded-2xl p-6 border border-base-300 shadow-xs">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center shadow-xs">
+          <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary border border-primary/20 flex items-center justify-center shadow-xs">
             <Bell className="w-6 h-6" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-xl font-bold text-slate-900 tracking-tight">Notification Center</h1>
+              <h1 className="text-xl font-bold text-base-content tracking-tight">Notification Center</h1>
               {unreadCount > 0 && (
-                <span className="px-2.5 py-0.5 text-xs font-semibold bg-rose-50 text-rose-600 border border-rose-200 rounded-full">
+                <span className="px-2.5 py-0.5 text-xs font-semibold bg-rose-500/10 text-rose-600 border border-rose-500/20 rounded-full">
                   {unreadCount} Unread
                 </span>
               )}
             </div>
-            <p className="text-sm text-slate-500 mt-0.5">
+            <p className="text-sm text-base-content/70 mt-0.5">
               Stay updated with your leave applications, team escalations, and approval decisions.
             </p>
           </div>
@@ -235,14 +233,14 @@ export function NotificationsCenter() {
           <button
             onClick={fetchNotifications}
             title="Refresh"
-            className="p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg border border-slate-200 transition-all cursor-pointer"
+            className="p-2 text-base-content/70 hover:text-base-content hover:bg-base-200 rounded-lg border border-base-300 transition-all cursor-pointer"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
           </button>
           {unreadCount > 0 && (
             <button
               onClick={handleMarkAllAsRead}
-              className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all shadow-xs cursor-pointer"
+              className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold bg-primary hover:opacity-90 text-primary-content rounded-lg transition-all shadow-xs cursor-pointer"
             >
               <CheckCheck className="w-4 h-4" />
               <span>Mark All as Read</span>
@@ -252,9 +250,9 @@ export function NotificationsCenter() {
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="bg-white rounded-xl p-4 border border-slate-200/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3">
+      <div className="bg-base-100 rounded-xl p-4 border border-base-300 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3">
         {/* Read State Tabs */}
-        <div className="flex items-center gap-1.5 p-1 bg-slate-100/80 rounded-lg">
+        <div className="flex items-center gap-1.5 p-1 bg-base-200 rounded-lg border border-base-300/60">
           {(["ALL", "UNREAD", "READ"] as const).map((mode) => (
             <button
               key={mode}
@@ -264,8 +262,8 @@ export function NotificationsCenter() {
               }}
               className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all cursor-pointer capitalize ${
                 readFilter === mode
-                  ? "bg-white text-slate-900 shadow-2xs font-semibold"
-                  : "text-slate-600 hover:text-slate-900"
+                  ? "bg-primary text-primary-content shadow-2xs font-semibold"
+                  : "text-base-content/70 hover:text-base-content hover:bg-base-300/50"
               }`}
             >
               {mode === "ALL" ? "All" : mode === "UNREAD" ? "Unread" : "Read"}
@@ -276,53 +274,49 @@ export function NotificationsCenter() {
         {/* Type Select & Search */}
         <div className="flex items-center gap-2.5 flex-1 max-w-md">
           <div className="relative flex-1">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-base-content/40 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search notifications..."
-              className="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+              className="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl border border-base-300 bg-base-100 text-base-content placeholder:text-base-content/40 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
             />
           </div>
 
-          <select
-            value={typeFilter}
-            onChange={(e) => {
-              setTypeFilter(e.target.value);
-              setPage(1);
-            }}
-            aria-label="Filter notifications by type"
-            className="px-3 py-1.5 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer"
-          >
-            <option value="ALL">All Types</option>
-            <option value="LEAVE_REQUEST">Leave Requests</option>
-            <option value="LEAVE_APPROVED">Approvals</option>
-            <option value="LEAVE_REJECTED">Rejections</option>
-            <option value="LEAVE_ESCALATED">Escalations</option>
-            <option value="LEAVE_CANCELLED">Cancellations</option>
-          </select>
+          <div className="w-44 shrink-0">
+            <ThemedSelect
+              value={typeFilter}
+              onChange={(val) => {
+                setTypeFilter(val);
+                setPage(1);
+              }}
+              options={[
+                { value: "ALL", label: "All Types" },
+                { value: "LEAVE_REQUEST", label: "Leave Requests" },
+                { value: "LEAVE_APPROVED", label: "Approvals" },
+                { value: "LEAVE_REJECTED", label: "Rejections" },
+                { value: "LEAVE_ESCALATED", label: "Escalations" },
+                { value: "LEAVE_CANCELLED", label: "Cancellations" },
+                { value: "SYSTEM", label: "System Alerts" },
+              ]}
+            />
+          </div>
         </div>
       </div>
 
-      {/* Notifications List */}
-      <div className="bg-white rounded-xl border border-slate-200/80 shadow-xs divide-y divide-slate-100 overflow-hidden">
-        {loading ? (
-          <div className="flex flex-col items-center justify-center py-20 text-slate-400 gap-3">
-            <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-            <span className="text-sm font-medium text-slate-500">Loading your notifications...</span>
+      {/* Notifications List Container */}
+      <div className="bg-base-100 rounded-2xl border border-base-300 shadow-xs divide-y divide-base-300 overflow-hidden">
+        {loading && notifications.length === 0 ? (
+          <div className="p-12 text-center text-base-content/60">
+            <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-primary" />
+            <p className="text-xs">Loading notifications...</p>
           </div>
         ) : filteredNotifications.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 px-4 text-center">
-            <div className="p-4 rounded-2xl bg-slate-100 border border-slate-200/60 mb-3">
-              <Bell className="w-8 h-8 text-slate-400" />
-            </div>
-            <h3 className="text-sm font-bold text-slate-800">No notifications found</h3>
-            <p className="text-xs text-slate-500 mt-1 max-w-sm">
-              {readFilter === "UNREAD"
-                ? "You have no unread notifications right now."
-                : "When leave requests are submitted, approved, or escalated, they will appear here."}
-            </p>
+          <div className="p-12 text-center text-base-content/50">
+            <Bell className="w-8 h-8 mx-auto mb-2 text-base-content/30" />
+            <p className="text-sm font-semibold text-base-content/70">No notifications found</p>
+            <p className="text-xs text-base-content/50 mt-1">You are all caught up with your updates.</p>
           </div>
         ) : (
           filteredNotifications.map((notif) => {
@@ -331,12 +325,12 @@ export function NotificationsCenter() {
               <div
                 key={notif.id}
                 onClick={() => handleItemClick(notif)}
-                className={`group flex items-start gap-4 p-4 sm:p-5 transition-colors cursor-pointer hover:bg-slate-50/80 ${
-                  !notif.isRead ? "bg-blue-50/20" : ""
+                className={`group flex items-start gap-4 p-4 sm:p-5 transition-colors cursor-pointer hover:bg-base-200/60 ${
+                  !notif.isRead ? "bg-primary/5" : ""
                 }`}
               >
                 {/* Icon Circle */}
-                <div className="flex-shrink-0 mt-0.5 p-2 rounded-xl bg-slate-50 border border-slate-100 shadow-2xs">
+                <div className="flex-shrink-0 mt-0.5 p-2 rounded-xl bg-base-200 border border-base-300 shadow-2xs">
                   {getNotificationIcon(notif.type)}
                 </div>
 
@@ -350,21 +344,21 @@ export function NotificationsCenter() {
                     </span>
                     <h3
                       className={`text-sm ${
-                        !notif.isRead ? "font-bold text-slate-900" : "font-semibold text-slate-700"
+                        !notif.isRead ? "font-bold text-base-content" : "font-semibold text-base-content/80"
                       }`}
                     >
                       {notif.title}
                     </h3>
                     {!notif.isRead && (
-                      <span className="w-2 h-2 rounded-full bg-blue-600 inline-block" title="Unread" />
+                      <span className="w-2 h-2 rounded-full bg-primary inline-block shrink-0" title="Unread" />
                     )}
                   </div>
 
-                  <p className="text-xs text-slate-600 leading-relaxed max-w-3xl">{notif.message}</p>
+                  <p className="text-xs text-base-content/80 leading-relaxed max-w-3xl">{notif.message}</p>
 
-                  <div className="flex items-center gap-4 mt-2 text-[11px] text-slate-400">
+                  <div className="flex items-center gap-4 mt-2 text-[11px] text-base-content/50">
                     <span className="flex items-center gap-1">
-                      <Clock className="w-3 h-3 text-slate-400" />
+                      <Clock className="w-3 h-3 text-base-content/40" />
                       {timeAgo(notif.createdAt)}
                     </span>
                   </div>
@@ -380,7 +374,7 @@ export function NotificationsCenter() {
                         handleMarkAsRead(notif.id);
                       }}
                       title="Mark as read"
-                      className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 border border-transparent hover:border-blue-100 transition-all cursor-pointer"
+                      className="p-1.5 rounded-lg text-base-content/50 hover:text-primary hover:bg-primary/10 border border-transparent hover:border-primary/20 transition-all cursor-pointer"
                     >
                       <Check className="w-4 h-4" />
                     </button>
@@ -394,26 +388,26 @@ export function NotificationsCenter() {
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between px-4 py-3 bg-white rounded-xl border border-slate-200 shadow-xs text-xs text-slate-600">
+        <div className="flex items-center justify-between px-4 py-3 bg-base-100 rounded-xl border border-base-300 shadow-xs text-xs text-base-content/70">
           <div>
-            Showing <span className="font-semibold text-slate-900">{notifications.length}</span> of{" "}
-            <span className="font-semibold text-slate-900">{totalItems}</span> notifications
+            Showing <span className="font-semibold text-base-content">{notifications.length}</span> of{" "}
+            <span className="font-semibold text-base-content">{totalItems}</span> notifications
           </div>
           <div className="flex items-center gap-2">
             <button
               disabled={page <= 1}
               onClick={() => setPage((p) => Math.max(1, p - 1))}
-              className="p-1.5 rounded-md border border-slate-200 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+              className="p-1.5 rounded-md border border-base-300 hover:bg-base-200 text-base-content disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <span className="font-medium text-slate-900">
+            <span className="font-medium text-base-content">
               Page {page} of {totalPages}
             </span>
             <button
               disabled={page >= totalPages}
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              className="p-1.5 rounded-md border border-slate-200 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+              className="p-1.5 rounded-md border border-base-300 hover:bg-base-200 text-base-content disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
             >
               <ChevronRight className="w-4 h-4" />
             </button>

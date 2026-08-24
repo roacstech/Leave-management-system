@@ -19,6 +19,16 @@ import {
   UserCheck,
 } from "lucide-react";
 import { useSettings } from "@/contexts/SettingsContext";
+import ThemedSelect from "@/components/ui/ThemedSelect";
+
+const LEAVE_STATUS_OPTIONS = [
+  { value: "ALL", label: "All Leave Statuses" },
+  { value: "PENDING_ADMIN", label: "Pending Admin / Executive" },
+  { value: "PENDING_TL", label: "Pending TL" },
+  { value: "APPROVED", label: "Approved" },
+  { value: "REJECTED", label: "Rejected" },
+  { value: "CANCELLED", label: "Cancelled" },
+];
 
 interface LeaveItem {
   id: number;
@@ -200,10 +210,10 @@ export default function CEOLeaveManagementPage() {
         </div>
 
         {/* Section Tabs */}
-        <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-xl self-start md:self-auto text-xs">
+        <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-xl self-start md:self-auto text-xs font-medium">
           <button
             onClick={() => setActiveTab("QUEUE")}
-            className={`px-3.5 py-2 rounded-lg font-bold transition-all flex items-center gap-1.5 ${
+            className={`px-3.5 py-2 rounded-lg transition-colors flex items-center gap-1.5 ${
               activeTab === "QUEUE"
                 ? "bg-white text-slate-900 shadow-2xs border border-slate-200"
                 : "text-slate-500 hover:text-slate-800"
@@ -219,7 +229,7 @@ export default function CEOLeaveManagementPage() {
 
           <button
             onClick={() => setActiveTab("ALL")}
-            className={`px-3.5 py-2 rounded-lg font-bold transition-all ${
+            className={`px-3.5 py-2 rounded-lg transition-colors ${
               activeTab === "ALL"
                 ? "bg-white text-slate-900 shadow-2xs border border-slate-200"
                 : "text-slate-500 hover:text-slate-800"
@@ -246,34 +256,23 @@ export default function CEOLeaveManagementPage() {
 
         {/* Team Filter */}
         <div>
-          <select
+          <ThemedSelect
             value={teamFilter}
-            onChange={(e) => setTeamFilter(e.target.value)}
-            className="w-full py-2 px-3 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-indigo-500"
-          >
-            <option value="ALL">All Departments & Teams</option>
-            {teams.map((t) => (
-              <option key={t.id} value={t.id.toString()}>
-                {t.name}
-              </option>
-            ))}
-          </select>
+            onChange={(val) => setTeamFilter(val)}
+            options={[
+              { value: "ALL", label: "All Departments & Teams" },
+              ...teams.map((t) => ({ value: t.id.toString(), label: t.name })),
+            ]}
+          />
         </div>
 
         {/* Status Filter (if viewing all) */}
         <div>
-          <select
+          <ThemedSelect
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="w-full py-2 px-3 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-indigo-500"
-          >
-            <option value="ALL">All Leave Statuses</option>
-            <option value="PENDING_ADMIN">Pending Admin / Executive</option>
-            <option value="PENDING_TL">Pending TL</option>
-            <option value="APPROVED">Approved</option>
-            <option value="REJECTED">Rejected</option>
-            <option value="CANCELLED">Cancelled</option>
-          </select>
+            onChange={(val) => setStatusFilter(val)}
+            options={LEAVE_STATUS_OPTIONS}
+          />
         </div>
       </div>
 

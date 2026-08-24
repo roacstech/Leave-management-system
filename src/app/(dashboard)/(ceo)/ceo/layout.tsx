@@ -57,7 +57,7 @@ export default function CEOLayout({
       {/* Main Container */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top Executive Header */}
-        <header className="h-16 bg-white border-b border-slate-200 sticky top-0 z-30 px-4 sm:px-6 flex items-center justify-between shadow-2xs">
+        <header className="h-16 shrink-0 bg-white border-b border-slate-200 sticky top-0 z-30 px-4 sm:px-6 flex items-center justify-between shadow-2xs">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setMobileMenuOpen(true)}
@@ -95,7 +95,7 @@ export default function CEOLayout({
 
             {/* Executive Profile Avatar */}
             <div className="flex items-center gap-2 pl-1">
-              <div className="w-8 h-8 rounded-full bg-slate-900 text-white font-bold text-xs flex items-center justify-center shadow-xs ring-2 ring-indigo-600/30">
+              <div className="w-8 h-8 rounded-full bg-primary text-primary-content font-bold text-xs flex items-center justify-center shadow-xs ring-2 ring-primary/30 uppercase">
                 C
               </div>
               <div className="hidden md:block text-left">
@@ -109,7 +109,7 @@ export default function CEOLayout({
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto min-h-[calc(100vh-4rem)] min-w-0">
           {children}
         </main>
       </div>

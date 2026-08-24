@@ -25,6 +25,15 @@ import {
   ThumbsDown,
 } from "lucide-react";
 import { useSettings } from "@/contexts/SettingsContext";
+import ThemedSelect from "@/components/ui/ThemedSelect";
+
+const ATTENDANCE_STATUS_OPTIONS = [
+  { value: "PRESENT", label: "PRESENT (On Time)" },
+  { value: "LATE", label: "LATE" },
+  { value: "HALF_DAY", label: "HALF_DAY" },
+  { value: "ABSENT", label: "ABSENT" },
+  { value: "ON_LEAVE", label: "ON_LEAVE" },
+];
 
 interface AttendanceRecord {
   userId: number;
@@ -383,10 +392,10 @@ export default function TLTeamAttendancePage() {
         </div>
 
         {/* Section Tabs */}
-        <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-xl self-start md:self-auto text-xs">
+        <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-xl self-start md:self-auto text-xs font-medium">
           <button
             onClick={() => setActiveTab("ATTENDANCE")}
-            className={`px-3.5 py-1.5 rounded-lg font-bold transition-all ${
+            className={`px-3.5 py-1.5 rounded-lg transition-colors ${
               activeTab === "ATTENDANCE"
                 ? "bg-white text-slate-900 shadow-2xs border border-slate-200"
                 : "text-slate-500 hover:text-slate-800"
@@ -397,7 +406,7 @@ export default function TLTeamAttendancePage() {
 
           <button
             onClick={() => setActiveTab("OVERTIME")}
-            className={`px-3.5 py-1.5 rounded-lg font-bold transition-all flex items-center gap-1.5 ${
+            className={`px-3.5 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 ${
               activeTab === "OVERTIME"
                 ? "bg-white text-slate-900 shadow-2xs border border-slate-200"
                 : "text-slate-500 hover:text-slate-800"
@@ -945,17 +954,11 @@ export default function TLTeamAttendancePage() {
                 <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                   Attendance Status
                 </label>
-                <select
+                <ThemedSelect
                   value={editModal.status}
-                  onChange={(e) => setEditModal({ ...editModal, status: e.target.value })}
-                  className="w-full rounded-xl border border-slate-200 p-2.5 text-xs text-slate-900 bg-white outline-none focus:border-slate-400"
-                >
-                  <option value="PRESENT">PRESENT (On Time)</option>
-                  <option value="LATE">LATE</option>
-                  <option value="HALF_DAY">HALF_DAY</option>
-                  <option value="ABSENT">ABSENT</option>
-                  <option value="ON_LEAVE">ON_LEAVE</option>
-                </select>
+                  onChange={(val) => setEditModal({ ...editModal, status: val })}
+                  options={ATTENDANCE_STATUS_OPTIONS}
+                />
               </div>
 
               <div className="grid grid-cols-2 gap-3">

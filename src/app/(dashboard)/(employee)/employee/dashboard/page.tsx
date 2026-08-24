@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { useSettings } from "@/contexts/SettingsContext";
 import DatePicker from "@/components/ui/DatePicker";
+import ThemedSelect from "@/components/ui/ThemedSelect";
 
 interface LeaveBalance {
   id: number;
@@ -865,19 +866,19 @@ export default function EmployeeDashboardPage() {
 
       {/* 5. QUICK APPLY LEAVE MODAL */}
       {applyModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
-          <div className="w-full max-w-lg bg-white rounded-2xl border border-slate-200 shadow-2xl animate-in fade-in zoom-in-95">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
+          <div className="w-full max-w-lg bg-base-100 text-base-content rounded-2xl border border-base-300 shadow-2xl animate-in fade-in zoom-in-95">
             {/* Header */}
-            <div className="p-5 border-b border-slate-100 flex items-center justify-between rounded-t-2xl">
+            <div className="p-5 border-b border-base-300 flex items-center justify-between rounded-t-2xl">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-[#1e293b] text-white flex items-center justify-center font-bold text-xs">
+                <div className="w-8 h-8 rounded-xl bg-primary text-primary-content flex items-center justify-center font-bold text-xs">
                   <PlusCircle className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-sm text-[#1a2333]">
+                  <h3 className="font-bold text-sm text-base-content">
                     Apply for Leave
                   </h3>
-                  <p className="text-[11px] text-slate-500">
+                  <p className="text-[11px] text-base-content/60">
                     Fast Leave Application
                   </p>
                 </div>
@@ -885,7 +886,7 @@ export default function EmployeeDashboardPage() {
 
               <button
                 onClick={() => setApplyModalOpen(false)}
-                className="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg cursor-pointer"
+                className="text-base-content/60 hover:text-base-content p-1.5 rounded-lg cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -895,23 +896,22 @@ export default function EmployeeDashboardPage() {
             <form onSubmit={handleApplyLeave} className="p-5 space-y-4 text-xs rounded-b-2xl">
               {/* Leave Type Select */}
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                <label className="block text-xs font-semibold text-base-content mb-1.5">
                   Leave Type <span className="text-rose-500">*</span>
                 </label>
-                <select
+                <ThemedSelect
                   value={applyForm.leaveTypeId}
-                  onChange={(e) =>
-                    setApplyForm({ ...applyForm, leaveTypeId: e.target.value })
+                  onChange={(val) =>
+                    setApplyForm({ ...applyForm, leaveTypeId: val })
                   }
-                  className="w-full rounded-xl border border-slate-200 p-2.5 text-xs text-slate-900 bg-white outline-none focus:border-[#1e293b] cursor-pointer"
-                  required
-                >
-                  {data?.leaveBalances.map((bal) => (
-                    <option key={bal.id} value={bal.leaveType.id.toString()}>
-                      {bal.leaveType.name} ({bal.leaveType.code}) — {bal.remaining} Days Remaining
-                    </option>
-                  ))}
-                </select>
+                  options={
+                    data?.leaveBalances.map((bal) => ({
+                      value: bal.leaveType.id.toString(),
+                      label: `${bal.leaveType.name} (${bal.leaveType.code}) — ${bal.remaining} Days Remaining`,
+                    })) || []
+                  }
+                  placeholder="Select Leave Type"
+                />
               </div>
 
               {/* Date Inputs */}
@@ -953,11 +953,11 @@ export default function EmployeeDashboardPage() {
                   onChange={(e) =>
                     setApplyForm({ ...applyForm, isHalfDay: e.target.checked })
                   }
-                  className="rounded text-[#1e293b] focus:ring-[#1e293b] cursor-pointer"
+                  className="rounded text-primary focus:ring-primary cursor-pointer"
                 />
                 <label
                   htmlFor="halfDayCheck"
-                  className="text-xs text-slate-700 font-medium cursor-pointer"
+                  className="text-xs text-base-content/80 font-medium cursor-pointer"
                 >
                   Apply as Half-Day Leave (0.5 day)
                 </label>
@@ -965,7 +965,7 @@ export default function EmployeeDashboardPage() {
 
               {/* Reason */}
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                <label className="block text-xs font-semibold text-base-content mb-1.5">
                   Reason / Notes
                 </label>
                 <textarea
@@ -975,27 +975,27 @@ export default function EmployeeDashboardPage() {
                     setApplyForm({ ...applyForm, reason: e.target.value })
                   }
                   placeholder="Provide a reason for taking time off..."
-                  className="w-full rounded-xl border border-slate-200 p-2.5 text-xs text-slate-900 outline-none focus:border-[#1e293b] bg-white resize-none"
+                  className="w-full rounded-xl border border-base-300 p-2.5 text-xs text-base-content outline-none focus:border-primary bg-base-100 resize-none placeholder:text-base-content/40"
                 />
               </div>
 
               {/* Quota preview banner */}
               {selectedBalance && (
-                <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between text-xs">
-                  <span className="text-slate-500">Available Quota:</span>
-                  <span className="font-bold text-[#1a2333]">
+                <div className="p-3 bg-base-200 border border-base-300 rounded-xl flex items-center justify-between text-xs">
+                  <span className="text-base-content/70">Available Quota:</span>
+                  <span className="font-bold text-base-content">
                     {selectedBalance.remaining} Days Remaining
                   </span>
                 </div>
               )}
 
               {/* Modal Footer */}
-              <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
+              <div className="pt-3 border-t border-base-300 flex items-center justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setApplyModalOpen(false)}
                   disabled={submitting}
-                  className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-all cursor-pointer"
+                  className="px-4 py-2 rounded-xl border border-base-300 text-xs font-medium text-base-content hover:bg-base-200 transition-all cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -1003,7 +1003,7 @@ export default function EmployeeDashboardPage() {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="px-4 py-2 rounded-xl bg-[#1e293b] hover:bg-[#28354c] text-white text-xs font-semibold shadow-xs transition-all flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                  className="px-4 py-2 rounded-xl bg-primary hover:opacity-90 text-primary-content text-xs font-semibold shadow-xs transition-all flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
                 >
                   {submitting ? (
                     <span>Submitting...</span>
