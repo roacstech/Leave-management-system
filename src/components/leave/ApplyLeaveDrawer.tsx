@@ -11,6 +11,7 @@ import {
   AlertCircle,
   Briefcase,
 } from "lucide-react";
+import ThemedSelect from "@/components/ui/ThemedSelect";
 
 export interface LeaveTypeOption {
   id: number;
@@ -291,18 +292,15 @@ export default function ApplyLeaveDrawer({
                 <label className="block text-xs font-bold text-base-content">
                   Leave Type <span className="text-error">*</span>
                 </label>
-                <select
-                  value={selectedLeaveTypeId}
-                  onChange={(e) => setSelectedLeaveTypeId(Number(e.target.value))}
-                  className="select select-bordered w-full text-xs font-medium bg-base-100"
-                  required
-                >
-                  {availableTypes.map((type) => (
-                    <option key={type.id} value={type.id}>
-                      {type.name} {type.balance !== undefined ? `(Balance: ${type.balance})` : type.availed !== undefined ? `(Availed: ${type.availed})` : ""}
-                    </option>
-                  ))}
-                </select>
+                <ThemedSelect
+                  value={String(selectedLeaveTypeId)}
+                  onChange={(val) => setSelectedLeaveTypeId(Number(val))}
+                  options={availableTypes.map((type) => ({
+                    value: String(type.id),
+                    label: `${type.name} ${type.balance !== undefined ? `(Balance: ${type.balance})` : type.availed !== undefined ? `(Availed: ${type.availed})` : ""}`,
+                  }))}
+                  size="sm"
+                />
               </div>
 
               {/* Leave Option */}
@@ -310,15 +308,16 @@ export default function ApplyLeaveDrawer({
                 <label className="block text-xs font-bold text-base-content">
                   Leave Option <span className="text-error">*</span>
                 </label>
-                <select
+                <ThemedSelect
                   value={leaveOption}
-                  onChange={(e: any) => setLeaveOption(e.target.value)}
-                  className="select select-bordered w-full text-xs font-medium bg-base-100"
-                >
-                  <option value="FULL_DAY">Full Day</option>
-                  <option value="HALF_DAY_FIRST">Half Day - First Half</option>
-                  <option value="HALF_DAY_SECOND">Half Day - Second Half</option>
-                </select>
+                  onChange={(val: any) => setLeaveOption(val)}
+                  options={[
+                    { value: "FULL_DAY", label: "Full Day" },
+                    { value: "HALF_DAY_FIRST", label: "Half Day - First Half" },
+                    { value: "HALF_DAY_SECOND", label: "Half Day - Second Half" },
+                  ]}
+                  size="sm"
+                />
               </div>
 
               {/* Dates Row */}
@@ -334,7 +333,7 @@ export default function ApplyLeaveDrawer({
                       setFromDate(e.target.value);
                       if (!toDate) setToDate(e.target.value);
                     }}
-                    className="input input-bordered w-full text-xs bg-base-100"
+                    className="input input-bordered input-sm w-full text-xs bg-base-100"
                     required
                   />
                 </div>
@@ -348,7 +347,7 @@ export default function ApplyLeaveDrawer({
                     value={toDate}
                     min={fromDate}
                     onChange={(e) => setToDate(e.target.value)}
-                    className="input input-bordered w-full text-xs bg-base-100"
+                    className="input input-bordered input-sm w-full text-xs bg-base-100"
                     required
                   />
                 </div>
@@ -394,7 +393,7 @@ export default function ApplyLeaveDrawer({
                   type="date"
                   value={workedDate}
                   onChange={(e) => setWorkedDate(e.target.value)}
-                  className="input input-bordered w-full text-xs bg-base-100"
+                  className="input input-bordered input-sm w-full text-xs bg-base-100"
                   required
                 />
               </div>
@@ -403,15 +402,16 @@ export default function ApplyLeaveDrawer({
                 <label className="block text-xs font-bold text-base-content">
                   Hours Worked <span className="text-error">*</span>
                 </label>
-                <select
-                  value={hoursWorked}
-                  onChange={(e) => setHoursWorked(Number(e.target.value))}
-                  className="select select-bordered w-full text-xs font-medium bg-base-100"
-                >
-                  <option value={4}>4 Hours (Half Day Credit)</option>
-                  <option value={8}>8 Hours (Full Day Credit)</option>
-                  <option value={12}>12 Hours (1.5 Day Credit)</option>
-                </select>
+                <ThemedSelect
+                  value={String(hoursWorked)}
+                  onChange={(val) => setHoursWorked(Number(val))}
+                  options={[
+                    { value: "4", label: "4 Hours (Half Day Credit)" },
+                    { value: "8", label: "8 Hours (Full Day Credit)" },
+                    { value: "12", label: "12 Hours (1.5 Day Credit)" },
+                  ]}
+                  size="sm"
+                />
               </div>
 
               <div className="space-y-1.5">

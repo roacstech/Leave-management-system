@@ -116,8 +116,8 @@ export default function ThemedSelect({
                   onClick={() => handleSelect(opt.value)}
                   className={`w-full flex items-center justify-between px-3.5 py-2 text-xs cursor-pointer transition-colors ${
                     isSelected
-                      ? "bg-primary text-primary-content font-medium shadow-2xs"
-                      : "text-base-content hover:bg-primary/10 hover:text-primary"
+                      ? "bg-primary text-primary-content font-semibold shadow-2xs"
+                      : "text-base-content hover:bg-base-200 hover:text-base-content"
                   }`}
                 >
                   <span className="truncate">{opt.label}</span>

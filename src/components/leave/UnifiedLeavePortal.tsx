@@ -23,6 +23,7 @@ import {
 import QuickStatisticsSidebar, { LeaveBalanceItem } from "./QuickStatisticsSidebar";
 import ApplyLeaveDrawer, { LeaveTypeOption } from "./ApplyLeaveDrawer";
 import LeaveTimelineModal from "./LeaveTimelineModal";
+import ThemedSelect from "@/components/ui/ThemedSelect";
 
 export interface LeaveRecord {
   id: number;
@@ -201,15 +202,16 @@ export default function UnifiedLeavePortal({
               <label className="text-2xs font-bold text-base-content/70 uppercase tracking-wider">
                 Year
               </label>
-              <select
-                value={selectedYear}
-                onChange={(e) => setSelectedYear(Number(e.target.value))}
-                className="select select-bordered select-xs w-full text-xs font-semibold bg-base-100"
-              >
-                <option value={currentYear}>{currentYear}</option>
-                <option value={currentYear - 1}>{currentYear - 1}</option>
-                <option value={currentYear + 1}>{currentYear + 1}</option>
-              </select>
+              <ThemedSelect
+                value={String(selectedYear)}
+                onChange={(val) => setSelectedYear(Number(val))}
+                options={[
+                  { value: String(currentYear), label: String(currentYear) },
+                  { value: String(currentYear - 1), label: String(currentYear - 1) },
+                  { value: String(currentYear + 1), label: String(currentYear + 1) },
+                ]}
+                size="xs"
+              />
             </div>
 
             {/* Leave Type */}
@@ -217,18 +219,19 @@ export default function UnifiedLeavePortal({
               <label className="text-2xs font-bold text-base-content/70 uppercase tracking-wider">
                 Leave Type
               </label>
-              <select
+              <ThemedSelect
                 value={selectedLeaveType}
-                onChange={(e) => setSelectedLeaveType(e.target.value)}
-                className="select select-bordered select-xs w-full text-xs font-semibold bg-base-100"
-              >
-                <option value="ALL">All Leaves</option>
-                <option value="Casual Leave">Casual Leave</option>
-                <option value="Sick Day">Sick Day</option>
-                <option value="Comp Off">Comp Off</option>
-                <option value="Loss Of Pay">Loss Of Pay</option>
-                <option value="Vacation Leave">Vacation Leave</option>
-              </select>
+                onChange={(val) => setSelectedLeaveType(val)}
+                options={[
+                  { value: "ALL", label: "All Leaves" },
+                  { value: "Casual Leave", label: "Casual Leave" },
+                  { value: "Sick Day", label: "Sick Day" },
+                  { value: "Comp Off", label: "Comp Off" },
+                  { value: "Loss Of Pay", label: "Loss Of Pay" },
+                  { value: "Vacation Leave", label: "Vacation Leave" },
+                ]}
+                size="xs"
+              />
             </div>
 
             {/* From Date */}
@@ -262,16 +265,17 @@ export default function UnifiedLeavePortal({
               <label className="text-2xs font-bold text-base-content/70 uppercase tracking-wider">
                 Status
               </label>
-              <select
+              <ThemedSelect
                 value={selectedStatus}
-                onChange={(e) => setSelectedStatus(e.target.value)}
-                className="select select-bordered select-xs w-full text-xs font-semibold bg-base-100"
-              >
-                <option value="ALL">All Status</option>
-                <option value="Approved">Approved</option>
-                <option value="Pending">Pending</option>
-                <option value="Rejected">Rejected</option>
-              </select>
+                onChange={(val) => setSelectedStatus(val)}
+                options={[
+                  { value: "ALL", label: "All Status" },
+                  { value: "Approved", label: "Approved" },
+                  { value: "Pending", label: "Pending" },
+                  { value: "Rejected", label: "Rejected" },
+                ]}
+                size="xs"
+              />
             </div>
           </div>
 
