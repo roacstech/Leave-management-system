@@ -286,7 +286,7 @@ export default function DepartmentsPage() {
             setFormData({ name: "", description: "", isActive: true });
             setCreateModalOpen(true);
           }}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-all shadow-xs shrink-0 cursor-pointer"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-xs shrink-0 cursor-pointer"
         >
           <Plus className="w-4 h-4" />
           <span>+ Create Department</span>
@@ -361,14 +361,14 @@ export default function DepartmentsPage() {
           </div>
 
           {/* Status Tabs */}
-          <div className="flex items-center gap-1 p-1 bg-white border border-slate-200 rounded-xl w-full sm:w-auto justify-center text-xs font-medium">
+          <div className="flex items-center gap-1 p-1 bg-slate-100 border border-slate-200 rounded-xl w-full sm:w-auto justify-center text-xs font-medium">
             <button
               type="button"
               onClick={() => setFilterStatus("ALL")}
-              className={`px-3 py-1 rounded-lg transition-colors ${
+              className={`px-3 py-1 rounded-lg transition-all font-semibold cursor-pointer ${
                 filterStatus === "ALL"
-                  ? "bg-slate-900 text-white shadow-2xs"
-                  : "text-slate-500 hover:text-slate-900"
+                  ? "bg-indigo-600 text-white shadow-xs"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60"
               }`}
             >
               All ({stats.total})
@@ -376,10 +376,10 @@ export default function DepartmentsPage() {
             <button
               type="button"
               onClick={() => setFilterStatus("ACTIVE")}
-              className={`px-3 py-1 rounded-lg transition-colors ${
+              className={`px-3 py-1 rounded-lg transition-all font-semibold cursor-pointer ${
                 filterStatus === "ACTIVE"
-                  ? "bg-emerald-600 text-white shadow-2xs"
-                  : "text-slate-500 hover:text-slate-900"
+                  ? "bg-indigo-600 text-white shadow-xs"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60"
               }`}
             >
               Active ({stats.activeCount})
@@ -387,10 +387,10 @@ export default function DepartmentsPage() {
             <button
               type="button"
               onClick={() => setFilterStatus("INACTIVE")}
-              className={`px-3 py-1 rounded-lg transition-colors ${
+              className={`px-3 py-1 rounded-lg transition-all font-semibold cursor-pointer ${
                 filterStatus === "INACTIVE"
-                  ? "bg-slate-700 text-white shadow-2xs"
-                  : "text-slate-500 hover:text-slate-900"
+                  ? "bg-indigo-600 text-white shadow-xs"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60"
               }`}
             >
               Inactive ({stats.inactiveCount})
@@ -616,7 +616,7 @@ export default function DepartmentsPage() {
               <button
                 type="submit"
                 disabled={submitting}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold disabled:opacity-50 shadow-xs"
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold disabled:opacity-50 shadow-xs cursor-pointer"
               >
                 {submitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                 <span>Create Department</span>
@@ -698,7 +698,7 @@ export default function DepartmentsPage() {
               <button
                 type="submit"
                 disabled={submitting}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold disabled:opacity-50 shadow-xs"
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold disabled:opacity-50 shadow-xs cursor-pointer"
               >
                 {submitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                 <span>Save Changes</span>

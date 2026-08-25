@@ -705,7 +705,7 @@ export default function AdminSettingsPage() {
                     <button
                       type="submit"
                       disabled={saving}
-                      className="flex items-center gap-2 px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all shadow-xs disabled:opacity-50"
+                      className="flex items-center gap-2 px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs disabled:opacity-50 cursor-pointer"
                     >
                       {saving ? (
                         <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -924,7 +924,7 @@ export default function AdminSettingsPage() {
                     <button
                       type="submit"
                       disabled={saving}
-                      className="flex items-center gap-2 px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all shadow-xs disabled:opacity-50"
+                      className="flex items-center gap-2 px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs disabled:opacity-50 cursor-pointer"
                     >
                       {saving ? (
                         <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -938,7 +938,7 @@ export default function AdminSettingsPage() {
                   <button
                     type="button"
                     onClick={() => setIsEditing(true)}
-                    className="flex items-center gap-2 px-4 py-2 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-bold transition-all shadow-2xs"
+                    className="flex items-center gap-2 px-4 py-2 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-bold transition-all shadow-2xs cursor-pointer"
                   >
                     <Edit3 className="w-3.5 h-3.5 text-slate-500" />
                     Edit Settings
@@ -1052,7 +1052,7 @@ export default function AdminSettingsPage() {
                     <button
                       type="submit"
                       disabled={saving}
-                      className="flex items-center gap-2 px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all shadow-xs disabled:opacity-50"
+                      className="flex items-center gap-2 px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs disabled:opacity-50 cursor-pointer"
                     >
                       {saving ? (
                         <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -1300,7 +1300,7 @@ export default function AdminSettingsPage() {
                     type="button"
                     disabled={testEmailLoading}
                     onClick={handleSendTestEmail}
-                    className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-all shadow-xs disabled:opacity-50 cursor-pointer"
+                    className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-xs disabled:opacity-50 cursor-pointer"
                   >
                     {testEmailLoading ? (
                       <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -1328,7 +1328,7 @@ export default function AdminSettingsPage() {
                     <button
                       type="submit"
                       disabled={saving}
-                      className="flex items-center gap-2 px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all shadow-xs disabled:opacity-50"
+                      className="flex items-center gap-2 px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs disabled:opacity-50"
                     >
                       {saving ? (
                         <Loader2 className="w-3.5 h-3.5 animate-spin" />

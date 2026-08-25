@@ -219,11 +219,9 @@ export default function ApplyLeaveDrawer({
       >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-gray-200 bg-white">
-          <div className="flex items-center gap-3">
+          <div>
             <h2 className="text-base font-bold text-gray-900 tracking-tight">Apply Leave</h2>
-            <span className="px-2.5 py-0.5 text-xs font-semibold rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200">
-              {year}
-            </span>
+            <p className="text-xs text-gray-500 mt-0.5">Submit a new leave or compensatory off application</p>
           </div>
           <button
             type="button"
@@ -271,17 +269,17 @@ export default function ApplyLeaveDrawer({
         </div>
 
         {/* Body Form */}
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-5">
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {/* Notifications */}
           {errorMessage && (
-            <div className="flex items-center gap-2 p-3.5 text-xs font-semibold rounded-xl bg-rose-50 text-rose-700 border border-rose-200">
+            <div className="flex items-center gap-2 p-3 text-xs font-semibold rounded-xl bg-rose-50 text-rose-700 border border-rose-200">
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{errorMessage}</span>
             </div>
           )}
 
           {successMessage && (
-            <div className="flex items-center gap-2 p-3.5 text-xs font-semibold rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200">
+            <div className="flex items-center gap-2 p-3 text-xs font-semibold rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200">
               <CheckCircle2 className="w-4 h-4 shrink-0" />
               <span>{successMessage}</span>
             </div>
@@ -289,42 +287,43 @@ export default function ApplyLeaveDrawer({
 
           {activeTab === "LEAVE" ? (
             <>
-              {/* Leave Type */}
-              <div className="space-y-1.5">
-                <label className="block text-xs font-semibold text-gray-700">
-                  Leave Type <span className="text-rose-500">*</span>
-                </label>
-                <ThemedSelect
-                  value={String(selectedLeaveTypeId)}
-                  onChange={(val) => setSelectedLeaveTypeId(Number(val))}
-                  options={availableTypes.map((type) => ({
-                    value: String(type.id),
-                    label: `${type.name} ${type.balance !== undefined ? `(Balance: ${type.balance})` : type.availed !== undefined ? `(Availed: ${type.availed})` : ""}`,
-                  }))}
-                  size="md"
-                />
-              </div>
-
-              {/* Leave Option */}
-              <div className="space-y-1.5">
-                <label className="block text-xs font-semibold text-gray-700">
-                  Leave Option <span className="text-rose-500">*</span>
-                </label>
-                <ThemedSelect
-                  value={leaveOption}
-                  onChange={(val: any) => setLeaveOption(val)}
-                  options={[
-                    { value: "FULL_DAY", label: "Full Day" },
-                    { value: "HALF_DAY_FIRST", label: "Half Day - First Half" },
-                    { value: "HALF_DAY_SECOND", label: "Half Day - Second Half" },
-                  ]}
-                  size="md"
-                />
-              </div>
-
-              {/* Dates Row */}
+              {/* Row 1: Leave Type (Left) + Leave Option (Right) */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
+                <div className="space-y-1">
+                  <label className="block text-xs font-semibold text-gray-700">
+                    Leave Type <span className="text-rose-500">*</span>
+                  </label>
+                  <ThemedSelect
+                    value={String(selectedLeaveTypeId)}
+                    onChange={(val) => setSelectedLeaveTypeId(Number(val))}
+                    options={availableTypes.map((type) => ({
+                      value: String(type.id),
+                      label: `${type.name} ${type.balance !== undefined ? `(Balance: ${type.balance})` : type.availed !== undefined ? `(Availed: ${type.availed})` : ""}`,
+                    }))}
+                    size="md"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="block text-xs font-semibold text-gray-700">
+                    Leave Option <span className="text-rose-500">*</span>
+                  </label>
+                  <ThemedSelect
+                    value={leaveOption}
+                    onChange={(val: any) => setLeaveOption(val)}
+                    options={[
+                      { value: "FULL_DAY", label: "Full Day" },
+                      { value: "HALF_DAY_FIRST", label: "Half Day - First Half" },
+                      { value: "HALF_DAY_SECOND", label: "Half Day - Second Half" },
+                    ]}
+                    size="md"
+                  />
+                </div>
+              </div>
+
+              {/* Row 2: Dates Row */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1">
                   <label className="block text-xs font-semibold text-gray-700">
                     From Date <span className="text-rose-500">*</span>
                   </label>
@@ -339,7 +338,7 @@ export default function ApplyLeaveDrawer({
                   />
                 </div>
 
-                <div className="space-y-1.5">
+                <div className="space-y-1">
                   <label className="block text-xs font-semibold text-gray-700">
                     To Date <span className="text-rose-500">*</span>
                   </label>
@@ -354,7 +353,7 @@ export default function ApplyLeaveDrawer({
               </div>
 
               {/* Total Days */}
-              <div className="flex items-center justify-between p-4 rounded-xl bg-gray-50 border border-gray-200">
+              <div className="flex items-center justify-between p-3 rounded-xl bg-gray-50 border border-gray-200">
                 <span className="text-xs font-semibold text-gray-700">Total Day(s)</span>
                 <span className="text-xs font-bold text-indigo-600 px-3 py-1 rounded-lg bg-indigo-50 border border-indigo-200">
                   {totalDays} {totalDays === 1 ? "Day" : "Days"}
@@ -362,7 +361,7 @@ export default function ApplyLeaveDrawer({
               </div>
 
               {/* Reason for Leave */}
-              <div className="space-y-1.5">
+              <div className="space-y-1">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-semibold text-gray-700">
                     Reason for Leave <span className="text-rose-500">*</span>
@@ -376,7 +375,7 @@ export default function ApplyLeaveDrawer({
                   maxLength={500}
                   onChange={(e) => setReason(e.target.value)}
                   placeholder="State the reason for your leave request..."
-                  rows={4}
+                  rows={3}
                   className="w-full p-3 rounded-xl bg-gray-50 border border-gray-200 text-xs text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 resize-none"
                   required
                 />
@@ -385,35 +384,37 @@ export default function ApplyLeaveDrawer({
           ) : (
             <>
               {/* Comp-Off Form */}
-              <div className="space-y-1.5">
-                <label className="block text-xs font-semibold text-gray-700">
-                  Date Worked (Overtime / Weekend) <span className="text-rose-500">*</span>
-                </label>
-                <DatePicker
-                  value={workedDate}
-                  onChange={setWorkedDate}
-                  size="sm"
-                  placeholder="Select worked date"
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="block text-xs font-semibold text-gray-700">
+                    Date Worked <span className="text-rose-500">*</span>
+                  </label>
+                  <DatePicker
+                    value={workedDate}
+                    onChange={setWorkedDate}
+                    size="sm"
+                    placeholder="Select worked date"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="block text-xs font-semibold text-gray-700">
+                    Hours Worked <span className="text-rose-500">*</span>
+                  </label>
+                  <ThemedSelect
+                    value={String(hoursWorked)}
+                    onChange={(val) => setHoursWorked(Number(val))}
+                    options={[
+                      { value: "4", label: "4 Hours (Half Day Credit)" },
+                      { value: "8", label: "8 Hours (Full Day Credit)" },
+                      { value: "12", label: "12 Hours (1.5 Day Credit)" },
+                    ]}
+                    size="md"
+                  />
+                </div>
               </div>
 
-              <div className="space-y-1.5">
-                <label className="block text-xs font-semibold text-gray-700">
-                  Hours Worked <span className="text-rose-500">*</span>
-                </label>
-                <ThemedSelect
-                  value={String(hoursWorked)}
-                  onChange={(val) => setHoursWorked(Number(val))}
-                  options={[
-                    { value: "4", label: "4 Hours (Half Day Credit)" },
-                    { value: "8", label: "8 Hours (Full Day Credit)" },
-                    { value: "12", label: "12 Hours (1.5 Day Credit)" },
-                  ]}
-                  size="md"
-                />
-              </div>
-
-              <div className="space-y-1.5">
+              <div className="space-y-1">
                 <label className="block text-xs font-semibold text-gray-700">
                   Reason / Task Details <span className="text-rose-500">*</span>
                 </label>
@@ -422,7 +423,7 @@ export default function ApplyLeaveDrawer({
                   maxLength={500}
                   onChange={(e) => setCompOffReason(e.target.value)}
                   placeholder="Explain duties performed on the overtime date..."
-                  rows={4}
+                  rows={3}
                   className="w-full p-3 rounded-xl bg-gray-50 border border-gray-200 text-xs text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 resize-none"
                   required
                 />

@@ -669,7 +669,7 @@ export default function AttendanceAdminPage() {
             {/* Add button */}
             <button
               onClick={() => setAddModalOpen(true)}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition-all active:scale-95 shadow-xs"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all active:scale-95 shadow-xs cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
               Add Attendance
@@ -1196,8 +1196,8 @@ export default function AttendanceAdminPage() {
 
             {/* Footer */}
             <div className="px-5 py-3.5 border-t border-slate-100 flex items-center justify-end gap-2 bg-slate-50/50">
-              <button onClick={() => setAddModalOpen(false)} className="px-4 py-2 rounded-lg bg-white border border-slate-200 text-slate-700 text-xs font-medium hover:bg-slate-50 transition-all">Cancel</button>
-              <button onClick={submitAdd} disabled={addLoading} className="px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold disabled:opacity-50 transition-all active:scale-95">
+              <button onClick={() => setAddModalOpen(false)} className="px-4 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 text-xs font-medium hover:bg-slate-50 transition-all cursor-pointer">Cancel</button>
+              <button onClick={submitAdd} disabled={addLoading} className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold disabled:opacity-50 transition-all active:scale-95 shadow-xs cursor-pointer">
                 {addLoading ? "Saving..." : "Save Attendance"}
               </button>
             </div>
@@ -1211,7 +1211,7 @@ export default function AttendanceAdminPage() {
           <div className="w-full max-w-lg bg-white border border-slate-200 rounded-2xl shadow-xl overflow-hidden">
             <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white">
                   <Edit2 className="w-4 h-4 text-white" />
                 </div>
                 <div>
@@ -1219,7 +1219,7 @@ export default function AttendanceAdminPage() {
                   <p className="text-[11px] text-slate-500">{selectedRecord.user.name} · {new Date(selectedRecord.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</p>
                 </div>
               </div>
-              <button onClick={() => setEditModalOpen(false)} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-50 transition-all">
+              <button onClick={() => setEditModalOpen(false)} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-50 transition-all cursor-pointer">
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -1269,8 +1269,8 @@ export default function AttendanceAdminPage() {
             </div>
 
             <div className="px-5 py-3.5 border-t border-slate-100 flex items-center justify-end gap-2 bg-slate-50/50">
-              <button onClick={() => setEditModalOpen(false)} className="px-4 py-2 rounded-lg bg-white border border-slate-200 text-slate-700 text-xs font-medium hover:bg-slate-50 transition-all">Cancel</button>
-              <button onClick={submitEdit} disabled={editLoading} className="px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold disabled:opacity-50 transition-all active:scale-95">
+              <button onClick={() => setEditModalOpen(false)} className="px-4 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 text-xs font-medium hover:bg-slate-50 transition-all cursor-pointer">Cancel</button>
+              <button onClick={submitEdit} disabled={editLoading} className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold disabled:opacity-50 transition-all active:scale-95 shadow-xs cursor-pointer">
                 {editLoading ? "Saving..." : "Save Changes"}
               </button>
             </div>
@@ -1294,7 +1294,7 @@ export default function AttendanceAdminPage() {
                   <div className="text-[11px] text-slate-500 font-mono">EMP{String(detailRecord.user.id).padStart(3, "0")}</div>
                 </div>
               </div>
-              <button onClick={() => setDetailDrawerOpen(false)} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-50 transition-all">
+              <button onClick={() => setDetailDrawerOpen(false)} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-50 transition-all cursor-pointer">
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -1378,7 +1378,7 @@ export default function AttendanceAdminPage() {
                 <div className="pt-2">
                   <button
                     onClick={() => { setDetailDrawerOpen(false); if (selectedRecord) openEdit(selectedRecord); }}
-                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition-all active:scale-95"
+                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all active:scale-95 shadow-xs cursor-pointer"
                   >
                     <Edit2 className="w-3.5 h-3.5" /> Edit This Record
                   </button>

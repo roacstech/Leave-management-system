@@ -319,13 +319,13 @@ export default function AdminDashboardPage() {
           {/* Card 1: Total Workforce */}
           <Link
             href="/admin/employees"
-            className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-2xs hover:border-slate-300 hover:shadow-xs transition-all group flex flex-col justify-between"
+            className="bg-white border border-slate-200/90 border-l-4 border-l-indigo-600 rounded-2xl p-5 shadow-2xs hover:border-indigo-400 hover:shadow-xs transition-all group flex flex-col justify-between"
           >
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-500 group-hover:text-slate-900 transition-colors">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-500 group-hover:text-indigo-600 transition-colors">
                 Total Workforce
               </span>
-              <div className="w-8 h-8 rounded-xl bg-slate-50 border border-slate-100 text-slate-500 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-600 flex items-center justify-center">
                 <Users className="w-4 h-4" />
               </div>
             </div>
@@ -432,28 +432,22 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* 2. MIDDLE SECTION: INTERACTIVE MONTHLY LEAVE TRENDS (Left 60%) + LEAVE POLICY UTILIZATION (Right 40%) */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 items-stretch">
-        {/* Left 3 Cols: INTERACTIVE MONTHLY LEAVE ANALYTICS & TRENDS */}
-        <div className="lg:col-span-3 bg-white border border-slate-200/90 rounded-2xl p-5 shadow-2xs space-y-4 flex flex-col justify-between">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
+        {/* Left 7 Cols: INTERACTIVE MONTHLY LEAVE ANALYTICS & TRENDS */}
+        <div className="lg:col-span-7 bg-white border border-slate-200/90 rounded-2xl p-5 shadow-2xs space-y-4 flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <div>
-                <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4 text-slate-400" />
-                  <span>Monthly Leave Analytics & Trends</span>
-                </h2>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Click any month bar to dynamically inspect that month&apos;s details.
-                </p>
-              </div>
-
-              <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
-                Past 6 Months
-              </span>
+            <div className="pb-3 border-b border-slate-100">
+              <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <TrendingUp className="w-4 h-4 text-indigo-600" />
+                <span>Monthly Leave Analytics & Trends</span>
+              </h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Click any month bar to dynamically inspect that month&apos;s details.
+              </p>
             </div>
 
             {/* Interactive SaaS Bar Chart with Gridlines & Dynamic Monthly Rolling Window */}
-            <div className="pt-2">
+            <div className="pt-3">
               {(() => {
                 // Dynamically compute the rolling 6-month fallback if API data is loading
                 let trends: MonthlyTrend[] = monthlyTrends;
@@ -488,21 +482,21 @@ export default function AdminDashboardPage() {
                 const activeMonth = trends[activeIdx] || trends[trends.length - 1];
 
                 return (
-                  <div className="space-y-3">
-                    {/* Clean Professional Bar Chart Canvas with Guide Lines */}
-                    <div className="bg-slate-50/60 px-4 pt-4 pb-2 rounded-xl border border-slate-100 relative">
+                  <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-stretch">
+                    {/* Left 7 cols: Snug Bar Chart Canvas with Increased Bar Height */}
+                    <div className="md:col-span-7 bg-slate-50/80 p-4 rounded-xl border border-slate-100 relative flex flex-col justify-between min-h-[195px]">
                       {/* Horizontal Grid Guidelines */}
-                      <div className="absolute inset-x-4 top-6 bottom-10 flex flex-col justify-between pointer-events-none opacity-40">
+                      <div className="absolute inset-x-4 top-5 bottom-8 flex flex-col justify-between pointer-events-none opacity-40">
                         <div className="border-b border-dashed border-slate-300 w-full" />
                         <div className="border-b border-dashed border-slate-300 w-full" />
                         <div className="border-b border-dashed border-slate-300 w-full" />
                       </div>
 
                       {/* Rising Bars Columns Grounded to Bottom */}
-                      <div className="h-40 flex items-end justify-between gap-3 sm:gap-5 px-2 relative z-10">
+                      <div className="h-44 flex items-end justify-between gap-1.5 sm:gap-2 px-1 relative z-10">
                         {trends.map((t, idx) => {
                           const isSelected = idx === activeIdx;
-                          const heightPct = Math.max(Math.round((t.total / maxCount) * 100), 12);
+                          const heightPct = Math.max(Math.round((t.total / maxCount) * 100), 14);
                           const pct = t.percentage ?? Math.round((t.total / totalPeriod) * 100);
 
                           return (
@@ -514,30 +508,30 @@ export default function AdminDashboardPage() {
                             >
                               {/* Percentage Tag on Top of Bar */}
                               <span
-                                className={`text-xs font-bold mb-1.5 transition-all ${
+                                className={`text-[11px] font-bold mb-1 transition-all ${
                                   isSelected
                                     ? "text-indigo-600 font-black scale-110"
-                                    : "text-slate-500 group-hover:text-indigo-600 font-semibold"
+                                    : "text-slate-400 group-hover:text-indigo-600 font-semibold"
                                 }`}
                               >
                                 {pct}%
                               </span>
 
-                              {/* Solid Rising Bar - Direct to Bottom */}
-                              <div className="w-full max-w-[38px] sm:max-w-[46px] h-28 flex items-end justify-center">
+                              {/* Solid Rising Bar */}
+                              <div className="w-full max-w-[32px] sm:max-w-[38px] h-32 flex items-end justify-center">
                                 <div
-                                  className={`w-full rounded-t-md transition-all duration-300 ${
+                                  className={`w-full rounded-t-lg transition-all duration-300 ${
                                     isSelected
-                                      ? "bg-indigo-600 shadow-sm"
-                                      : "bg-slate-300 hover:bg-slate-400"
+                                      ? "bg-indigo-600 shadow-xs"
+                                      : "bg-slate-300/90 hover:bg-slate-400"
                                   }`}
                                   style={{ height: `${heightPct}%` }}
                                 />
                               </div>
 
-                              {/* Month Label (Directly below bar, zero extra gap, no bottom line) */}
+                              {/* Month Label */}
                               <span
-                                className={`text-xs block mt-1.5 tracking-tight transition-colors ${
+                                className={`text-[11px] block mt-1.5 tracking-tight transition-colors ${
                                   isSelected ? "text-indigo-600 font-black" : "text-slate-600 font-bold group-hover:text-slate-900"
                                 }`}
                               >
@@ -549,45 +543,48 @@ export default function AdminDashboardPage() {
                       </div>
                     </div>
 
-                    {/* Dynamic Header for Selected Month */}
-                    <div className="flex items-center justify-between text-xs px-1">
-                      <div className="flex items-center gap-1.5">
-                        <span className="w-2 h-2 rounded-full bg-indigo-600 animate-pulse" />
-                        <span className="text-slate-500 font-medium">Inspecting Month:</span>
-                        <strong className="text-slate-900 font-bold">
+                    {/* Right 5 cols: Simple Clean Vertical Metric List (one below one, no cards) */}
+                    <div className="md:col-span-5 flex flex-col justify-center py-2 px-3 space-y-3">
+                      {/* Active Month Header */}
+                      <div className="flex items-center gap-2 pb-2.5 border-b border-slate-100">
+                        <span className="w-2.5 h-2.5 rounded-full bg-indigo-600" />
+                        <span className="text-sm font-bold text-slate-900">
                           {activeMonth.fullMonth || activeMonth.month} {activeMonth.year}
-                        </strong>
-                      </div>
-                    </div>
-
-                    {/* 4 Dynamic Metric Chips for Clicked Month (Clean % only) */}
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
-                      <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-center">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Month Volume</span>
-                        <span className="text-xs font-black text-slate-900 mt-0.5 block">
-                          {activeMonth.total} Requests
                         </span>
                       </div>
 
-                      <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-center">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Approved</span>
-                        <span className="text-xs font-black text-emerald-600 mt-0.5 block">
-                          {activeMonth.approved} Approved
-                        </span>
-                      </div>
+                      {/* Clean list rows: one below one */}
+                      <div className="space-y-3 py-1">
+                        <div className="flex items-center justify-between text-xs py-1 border-b border-slate-50">
+                          <span className="text-slate-500 font-medium">Month Volume</span>
+                          <span className="font-bold text-slate-900">{activeMonth.total} Requests</span>
+                        </div>
 
-                      <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-center">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">In Review</span>
-                        <span className="text-xs font-black text-amber-600 mt-0.5 block">
-                          {activeMonth.pending} Pending
-                        </span>
-                      </div>
+                        <div className="flex items-center justify-between text-xs py-1 border-b border-slate-50">
+                          <span className="text-slate-500 font-medium flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                            Approved
+                          </span>
+                          <span className="font-bold text-emerald-600">{activeMonth.approved} Approved</span>
+                        </div>
 
-                      <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-center">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Leave Percentage</span>
-                        <span className="text-xs font-black text-indigo-600 mt-0.5 block">
-                          {activeMonth.percentage ?? Math.round((activeMonth.total / totalPeriod) * 100)}%
-                        </span>
+                        <div className="flex items-center justify-between text-xs py-1 border-b border-slate-50">
+                          <span className="text-slate-500 font-medium flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                            In Review
+                          </span>
+                          <span className="font-bold text-amber-600">{activeMonth.pending} Pending</span>
+                        </div>
+
+                        <div className="flex items-center justify-between text-xs py-1">
+                          <span className="text-slate-500 font-medium flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-indigo-600" />
+                            Leave Rate
+                          </span>
+                          <span className="font-bold text-indigo-600">
+                            {activeMonth.percentage ?? Math.round((activeMonth.total / totalPeriod) * 100)}%
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -597,26 +594,26 @@ export default function AdminDashboardPage() {
           </div>
         </div>
 
-        {/* Right 2 Cols: LEAVE POLICY UTILIZATION MULTI-SEGMENT DONUT (EXPANDED & ZERO GAP) */}
-        <div className="lg:col-span-2 bg-white border border-slate-200/90 rounded-2xl p-5 shadow-2xs flex flex-col justify-between space-y-4">
+        {/* Right 5 Cols: LEAVE POLICY UTILIZATION (Clean Donut + Legend, Zero Redundant Bars) */}
+        <div className="lg:col-span-5 bg-white border border-slate-200/90 rounded-2xl p-5 shadow-2xs flex flex-col justify-between space-y-4">
           <div>
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div>
                 <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                  <PieChart className="w-4 h-4 text-slate-400" />
+                  <PieChart className="w-4 h-4 text-indigo-600" />
                   <span>Leave Policy Utilization</span>
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Approved claims distributed by policy.
+                  Approved claims distributed by leave policy.
                 </p>
               </div>
-              <Link href="/admin/leave-types" className="text-xs font-semibold text-indigo-600 hover:underline">
-                Policies
+              <Link href="/admin/leave-types" className="text-xs font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-0.5">
+                Policies <ArrowRight className="w-3 h-3" />
               </Link>
             </div>
 
             {leaveTypeStats.length === 0 || stats.approvedLeaves === 0 ? (
-              <div className="py-8 text-center text-slate-400">
+              <div className="py-12 text-center text-slate-400">
                 <PieChart className="w-8 h-8 mx-auto mb-2 text-slate-300" />
                 <p className="text-xs font-bold text-slate-700">No approved leave data</p>
                 <p className="text-[11px] text-slate-400 mt-0.5">Approved leave records will appear here.</p>
@@ -624,10 +621,10 @@ export default function AdminDashboardPage() {
             ) : (
               (() => {
                 const totalApproved = stats.approvedLeaves || 1;
-                const radius = 42;
+                const radius = 40;
                 const circumference = 2 * Math.PI * radius;
                 const colorPalette = [
-                  { bg: "#6366f1", label: "text-indigo-600", dot: "bg-indigo-500" },
+                  { bg: "#4f46e5", label: "text-indigo-600", dot: "bg-indigo-600" },
                   { bg: "#10b981", label: "text-emerald-600", dot: "bg-emerald-500" },
                   { bg: "#f43f5e", label: "text-rose-600", dot: "bg-rose-500" },
                   { bg: "#f59e0b", label: "text-amber-600", dot: "bg-amber-500" },
@@ -638,100 +635,79 @@ export default function AdminDashboardPage() {
                 let accumulatedOffset = 0;
 
                 return (
-                  <div className="pt-2 space-y-3.5">
-                    {/* Enlarged Donut Chart + Legend */}
-                    <div className="flex items-center gap-4 bg-slate-50/70 p-3.5 rounded-xl border border-slate-100">
-                      {/* SVG Multi-Segment Donut Chart */}
-                      <div className="relative w-28 h-28 shrink-0 flex items-center justify-center">
-                        <svg className="w-full h-full -rotate-90" viewBox="0 0 104 104">
-                          {/* Background Base Ring */}
-                          <circle
-                            cx="52"
-                            cy="52"
-                            r={radius}
-                            stroke="#e2e8f0"
-                            strokeWidth="10"
-                            fill="transparent"
-                          />
-                          {/* Dynamic Colored Segments */}
-                          {leaveTypeStats.map((lt, idx) => {
-                            const count = lt._count?.leaveRequests || 0;
-                            if (count === 0) return null;
-
-                            const share = count / totalApproved;
-                            const strokeDasharray = `${share * circumference} ${circumference}`;
-                            const strokeDashoffset = -accumulatedOffset;
-                            accumulatedOffset += share * circumference;
-                            const color = colorPalette[idx % colorPalette.length].bg;
-
-                            return (
-                              <circle
-                                key={lt.id}
-                                cx="52"
-                                cy="52"
-                                r={radius}
-                                stroke={color}
-                                strokeWidth="10"
-                                strokeDasharray={strokeDasharray}
-                                strokeDashoffset={strokeDashoffset}
-                                fill="transparent"
-                                className="transition-all duration-500"
-                              />
-                            );
-                          })}
-                        </svg>
-
-                        {/* Center Total Count */}
-                        <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                          <span className="text-lg font-black text-slate-900 leading-tight">
-                            {stats.approvedLeaves}
-                          </span>
-                          <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">
-                            Approved
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Breakdown Legend */}
-                      <div className="flex-1 space-y-1.5 text-xs">
-                        {leaveTypeStats.slice(0, 4).map((lt, idx) => {
+                  <div className="pt-3 flex flex-col sm:flex-row items-center gap-5">
+                    {/* SVG Multi-Segment Donut Chart */}
+                    <div className="relative w-28 h-28 shrink-0 flex items-center justify-center">
+                      <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
+                        {/* Background Base Ring */}
+                        <circle
+                          cx="50"
+                          cy="50"
+                          r={radius}
+                          stroke="#e2e8f0"
+                          strokeWidth="10"
+                          fill="transparent"
+                        />
+                        {/* Dynamic Colored Segments */}
+                        {leaveTypeStats.map((lt, idx) => {
                           const count = lt._count?.leaveRequests || 0;
-                          const pct = Math.round((count / totalApproved) * 100);
-                          const palette = colorPalette[idx % colorPalette.length];
+                          if (count === 0) return null;
+
+                          const share = count / totalApproved;
+                          const strokeDasharray = `${share * circumference} ${circumference}`;
+                          const strokeDashoffset = -accumulatedOffset;
+                          accumulatedOffset += share * circumference;
+                          const color = colorPalette[idx % colorPalette.length].bg;
 
                           return (
-                            <div key={lt.id} className="flex items-center justify-between">
-                              <span className="text-slate-700 flex items-center gap-1.5 text-[11px] font-medium truncate max-w-[100px]" title={lt.name}>
-                                <span className={`w-2 h-2 rounded-full ${palette.dot} shrink-0`} />
-                                <span className="truncate">{lt.name}</span>
-                              </span>
-                              <span className="text-[11px] font-bold text-slate-900">
-                                {count} <span className="text-slate-400 font-normal">({pct}%)</span>
-                              </span>
-                            </div>
+                            <circle
+                              key={lt.id}
+                              cx="50"
+                              cy="50"
+                              r={radius}
+                              stroke={color}
+                              strokeWidth="10"
+                              strokeDasharray={strokeDasharray}
+                              strokeDashoffset={strokeDashoffset}
+                              fill="transparent"
+                              className="transition-all duration-500"
+                            />
                           );
                         })}
+                      </svg>
+
+                      {/* Center Total Count */}
+                      <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                        <span className="text-lg font-black text-slate-900 leading-tight">
+                          {stats.approvedLeaves}
+                        </span>
+                        <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">
+                          Approved
+                        </span>
                       </div>
                     </div>
 
-                    {/* Detailed Progress Bars for Each Policy to Fill Height Harmoniously */}
-                    <div className="space-y-2 pt-1">
-                      {leaveTypeStats.slice(0, 3).map((lt, idx) => {
+                    {/* Breakdown Policy Legend Cards */}
+                    <div className="flex-1 w-full space-y-1.5">
+                      {leaveTypeStats.slice(0, 4).map((lt, idx) => {
                         const count = lt._count?.leaveRequests || 0;
                         const pct = Math.round((count / totalApproved) * 100);
                         const palette = colorPalette[idx % colorPalette.length];
 
                         return (
-                          <div key={lt.id} className="space-y-1">
-                            <div className="flex items-center justify-between text-[11px]">
-                              <span className="font-semibold text-slate-700">{lt.name}</span>
-                              <span className="text-slate-500 font-medium">{count} of {totalApproved} claims ({pct}%)</span>
+                          <div
+                            key={lt.id}
+                            className="flex items-center justify-between p-2 rounded-xl bg-slate-50/70 border border-slate-100 hover:bg-slate-100/60 transition-colors"
+                          >
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span className={`w-2.5 h-2.5 rounded-full ${palette.dot} shrink-0`} />
+                              <span className="text-xs font-semibold text-slate-800 truncate" title={lt.name}>
+                                {lt.name}
+                              </span>
                             </div>
-                            <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                              <div
-                                className="h-full rounded-full transition-all duration-500"
-                                style={{ width: `${Math.max(pct, count > 0 ? 5 : 0)}%`, backgroundColor: palette.bg }}
-                              />
+                            <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                              <span className="text-xs font-black text-slate-900">{count}</span>
+                              <span className="text-[10px] font-semibold text-slate-400">({pct}%)</span>
                             </div>
                           </div>
                         );
@@ -744,9 +720,9 @@ export default function AdminDashboardPage() {
           </div>
 
           {/* Summary Status Box */}
-          <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between text-xs mt-auto">
-            <span className="text-slate-500">Total Approved Claims:</span>
-            <strong className="text-slate-900 font-bold">{stats.approvedLeaves} Requests</strong>
+          <div className="p-3 bg-slate-50/80 rounded-xl border border-slate-100 flex items-center justify-between text-xs mt-auto">
+            <span className="text-slate-500 font-medium">Total Approved Claims:</span>
+            <strong className="text-slate-900 font-black">{stats.approvedLeaves} Requests</strong>
           </div>
         </div>
       </div>
@@ -758,7 +734,7 @@ export default function AdminDashboardPage() {
           <div>
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                <CalendarIcon className="w-4 h-4 text-slate-400" />
+                <CalendarIcon className="w-4 h-4 text-indigo-600" />
                 <span>{monthName}</span>
               </h3>
 
@@ -946,7 +922,7 @@ export default function AdminDashboardPage() {
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div>
                 <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                  <Briefcase className="w-4 h-4 text-slate-400" />
+                  <Briefcase className="w-4 h-4 text-indigo-600" />
                   <span>Department Distribution</span>
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5">
@@ -967,7 +943,7 @@ export default function AdminDashboardPage() {
               const radius = 34;
               const circumference = 2 * Math.PI * radius;
               const deptPalette = [
-                { bg: "#6366f1", dot: "bg-indigo-500" },
+                { bg: "#4f46e5", dot: "bg-indigo-600" },
                 { bg: "#10b981", dot: "bg-emerald-500" },
                 { bg: "#f59e0b", dot: "bg-amber-500" },
                 { bg: "#8b5cf6", dot: "bg-purple-500" },
@@ -1089,7 +1065,7 @@ export default function AdminDashboardPage() {
         <div className="flex items-center justify-between pb-3 border-b border-slate-100">
           <div>
             <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-              <CalendarDays className="w-4 h-4 text-slate-400" />
+              <CalendarDays className="w-4 h-4 text-indigo-600" />
               <span>Upcoming Public Holidays & Official Observances</span>
             </h3>
             <p className="text-xs text-slate-500 mt-0.5">

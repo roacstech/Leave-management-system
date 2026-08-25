@@ -691,7 +691,7 @@ export default function EmployeesPage() {
                 resetForm();
                 setCreateModalOpen(true);
               }}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold shadow-xs transition-all active:scale-95 cursor-pointer"
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-xs transition-all active:scale-95 cursor-pointer"
             >
               <UserPlus className="w-4 h-4" />
               <span>Create New Employee</span>
@@ -722,30 +722,30 @@ export default function EmployeesPage() {
             <div className="flex items-center gap-1 p-1 bg-slate-100 border border-slate-200 rounded-xl text-xs font-medium">
               <button
                 onClick={() => handleStatusChange("ALL")}
-                className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer font-medium ${
+                className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer font-semibold ${
                   filterStatus === "ALL"
-                    ? "bg-white text-slate-900 shadow-2xs font-semibold"
-                    : "text-slate-500 hover:text-slate-800"
+                    ? "bg-indigo-600 text-white shadow-xs"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60"
                 }`}
               >
                 All ({paginationInfo.activeCount + paginationInfo.inactiveCount})
               </button>
               <button
                 onClick={() => handleStatusChange("ACTIVE")}
-                className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer font-medium ${
+                className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer font-semibold ${
                   filterStatus === "ACTIVE"
-                    ? "bg-white text-slate-900 shadow-2xs font-semibold"
-                    : "text-slate-500 hover:text-slate-800"
+                    ? "bg-indigo-600 text-white shadow-xs"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60"
                 }`}
               >
                 Active ({paginationInfo.activeCount})
               </button>
               <button
                 onClick={() => handleStatusChange("INACTIVE")}
-                className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer font-medium ${
+                className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer font-semibold ${
                   filterStatus === "INACTIVE"
-                    ? "bg-white text-slate-900 shadow-2xs font-semibold"
-                    : "text-slate-500 hover:text-slate-800"
+                    ? "bg-indigo-600 text-white shadow-xs"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60"
                 }`}
               >
                 Inactive ({paginationInfo.inactiveCount})
@@ -759,13 +759,12 @@ export default function EmployeesPage() {
                 onChange={(val) => handleRoleChange(val)}
                 options={[
                   { value: "ALL", label: "All Roles" },
-                  ...rolesList.map((role) => ({
-                    value: role.code,
-                    label: role.name,
+                  ...rolesList.map((r) => ({
+                    value: r.code,
+                    label: r.name,
                   })),
                 ]}
-                placeholder="Filter by Role"
-                size="sm"
+                size="xs"
               />
             </div>
           </div>
@@ -786,8 +785,8 @@ export default function EmployeesPage() {
                 <th className="py-3 px-4 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 text-xs">
-              {loading ? (
+            <tbody className={`divide-y divide-slate-100 text-xs transition-opacity duration-150 ${loading ? "opacity-60 pointer-events-none" : "opacity-100"}`}>
+              {loading && employees.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="py-12 text-center text-slate-400">
                     <Loader2 className="w-5 h-5 animate-spin mx-auto mb-1 text-slate-400" />
@@ -969,7 +968,7 @@ export default function EmployeesPage() {
                   disabled={loading}
                   className={`w-7 h-7 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                     currentPage === pageNum
-                      ? "bg-slate-900 text-white shadow-2xs"
+                      ? "bg-indigo-600 text-white shadow-xs"
                       : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50"
                   }`}
                 >
@@ -995,25 +994,21 @@ export default function EmployeesPage() {
       {/* ========================================================================= */}
       {createModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-150">
-          <div className="w-full max-w-xl bg-white border border-slate-200/80 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+          <div className="w-full max-w-2xl bg-white border border-slate-200/90 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh] animate-in zoom-in-95 duration-150">
             {/* Modal Header */}
             <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-slate-900 text-white flex items-center justify-center shadow-xs">
+                <div className="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-xs">
                   <UserPlus className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900">
-                    Create New Employee
-                  </h3>
+                  <h3 className="text-sm font-bold text-slate-900">Create New Employee</h3>
                   <p className="text-[11px] text-slate-500">
-                    Add new organization member and assign role & department.
+                    Add employee profile, credentials, organization role, and department.
                   </p>
                 </div>
               </div>
-
               <button
-                type="button"
                 onClick={() => setCreateModalOpen(false)}
                 className="text-slate-400 hover:text-slate-700 p-1.5 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
               >
@@ -1021,91 +1016,107 @@ export default function EmployeesPage() {
               </button>
             </div>
 
-            {/* Modal Form Body */}
+            {/* Modal Body */}
             <form onSubmit={handleCreateEmployee} className="flex-1 overflow-y-auto p-6 space-y-4">
-              {/* SECTION 1: Personal & Account Information */}
-              <div className="space-y-3">
-                <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                  <UserIcon className="w-3.5 h-3.5 text-slate-400" />
-                  <span>Account Credentials</span>
+              {/* Basic Details: Full Name & Email */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="block text-xs font-semibold text-slate-700">
+                    Full Name <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Sarah Jenkins"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-indigo-600 shadow-2xs"
+                  />
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Full Name <span className="text-rose-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="e.g. Jane Doe"
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="w-full px-3.5 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:bg-white focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400 transition-all"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Email Address <span className="text-rose-500">*</span>
-                    </label>
-                    <input
-                      type="email"
-                      required
-                      placeholder="e.g. jane.doe@company.com"
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className="w-full px-3.5 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:bg-white focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400 transition-all"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Password <span className="text-rose-500">*</span>
-                    </label>
-                    <input
-                      type="password"
-                      required
-                      placeholder="Create password"
-                      value={formData.password}
-                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                      className="w-full px-3.5 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:bg-white focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400 transition-all"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Confirm Password <span className="text-rose-500">*</span>
-                    </label>
-                    <input
-                      type="password"
-                      required
-                      placeholder="Repeat password"
-                      value={formData.confirmPassword}
-                      onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                      className="w-full px-3.5 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:bg-white focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400 transition-all"
-                    />
-                  </div>
+                <div className="space-y-1">
+                  <label className="block text-xs font-semibold text-slate-700">
+                    Work Email <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    placeholder="sarah.jenkins@company.com"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-indigo-600 shadow-2xs"
+                  />
                 </div>
               </div>
 
-              {/* Clean Section Divider */}
-              <div className="h-px bg-slate-100 my-1" />
-
-              {/* SECTION 2: Role & Department Assignment */}
-              <div className="space-y-3">
-                <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                  <Briefcase className="w-3.5 h-3.5 text-slate-400" />
-                  <span>Organization & Hierarchy</span>
+              {/* Password & Confirm Password */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="block text-xs font-semibold text-slate-700">
+                    Initial Password <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    placeholder="Minimum 6 characters"
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-indigo-600 shadow-2xs"
+                  />
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {/* Role Selector */}
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Role <span className="text-rose-500">*</span>
+
+                <div className="space-y-1">
+                  <label className="block text-xs font-semibold text-slate-700">
+                    Confirm Password <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    placeholder="Re-type password"
+                    value={formData.confirmPassword}
+                    onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-indigo-600 shadow-2xs"
+                  />
+                </div>
+              </div>
+
+              {/* Role & Department */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Role selection */}
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-semibold text-slate-700">
+                      System Role <span className="text-rose-500">*</span>
                     </label>
+                    <button
+                      type="button"
+                      onClick={() => setIsAddingRole(!isAddingRole)}
+                      className="text-[11px] font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-0.5 cursor-pointer"
+                    >
+                      <Plus className="w-3 h-3" />
+                      <span>{isAddingRole ? "Cancel" : "Add Role"}</span>
+                    </button>
+                  </div>
+
+                  {isAddingRole ? (
+                    <div className="flex items-center gap-1.5 mt-1 animate-in fade-in">
+                      <input
+                        type="text"
+                        placeholder="New Role (e.g. HR Manager)"
+                        value={newRoleName}
+                        onChange={(e) => setNewRoleName(e.target.value)}
+                        className="flex-1 px-3 py-1.5 rounded-xl bg-white border border-indigo-300 text-xs text-slate-900 focus:outline-none focus:border-indigo-600"
+                      />
+                      <button
+                        type="button"
+                        disabled={creatingRole}
+                        onClick={handleQuickCreateRole}
+                        className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold disabled:opacity-50 cursor-pointer shadow-2xs"
+                      >
+                        {creatingRole ? "..." : "Save"}
+                      </button>
+                    </div>
+                  ) : (
                     <ThemedSelect
                       value={formData.role}
                       onChange={(val) => setFormData({ ...formData, role: val })}
@@ -1113,85 +1124,107 @@ export default function EmployeesPage() {
                         value: r.code,
                         label: r.name,
                       }))}
+                      size="md"
                     />
-                  </div>
+                  )}
+                </div>
 
-                  {/* Department Selector */}
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                {/* Department Selection */}
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-semibold text-slate-700">
                       Department / Team
                     </label>
+                    <button
+                      type="button"
+                      onClick={() => setIsAddingDept(!isAddingDept)}
+                      className="text-[11px] font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-0.5 cursor-pointer"
+                    >
+                      <Plus className="w-3 h-3" />
+                      <span>{isAddingDept ? "Cancel" : "Add Dept"}</span>
+                    </button>
+                  </div>
+
+                  {isAddingDept ? (
+                    <div className="flex items-center gap-1.5 mt-1 animate-in fade-in">
+                      <input
+                        type="text"
+                        placeholder="New Dept (e.g. Marketing)"
+                        value={newDeptName}
+                        onChange={(e) => setNewDeptName(e.target.value)}
+                        className="flex-1 px-3 py-1.5 rounded-xl bg-white border border-indigo-300 text-xs text-slate-900 focus:outline-none focus:border-indigo-600"
+                      />
+                      <button
+                        type="button"
+                        disabled={creatingDept}
+                        onClick={handleQuickCreateDepartment}
+                        className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold disabled:opacity-50 cursor-pointer shadow-2xs"
+                      >
+                        {creatingDept ? "..." : "Save"}
+                      </button>
+                    </div>
+                  ) : (
                     <ThemedSelect
                       value={formData.teamId}
                       onChange={(val) => setFormData({ ...formData, teamId: val })}
                       options={[
-                        { value: "", label: "-- No Department --" },
-                        ...teams.map((t) => ({ value: String(t.id), label: t.name })),
-                      ]}
-                    />
-                  </div>
-                </div>
-
-                {/* Conditional Reporting Manager */}
-                {isFormEmployeeRole && (
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Assign Reporting Manager <span className="text-rose-500">*</span>
-                    </label>
-                    <ThemedSelect
-                      value={formData.reportingToId}
-                      onChange={(val) => setFormData({ ...formData, reportingToId: val })}
-                      placeholder="-- Select Reporting Manager --"
-                      options={[
-                        { value: "", label: "-- Select Reporting Manager --" },
-                        ...teamLeads.map((tl) => ({
-                          value: String(tl.id),
-                          label: `${tl.name} (${tl.email})`,
+                        { value: "", label: "No Department (Unassigned)" },
+                        ...teams.map((t) => ({
+                          value: String(t.id),
+                          label: t.name,
                         })),
                       ]}
+                      size="md"
                     />
-                    <p className="text-[11px] text-slate-400 mt-1">
-                      Employee will report directly to this Manager for leaves and attendance approvals.
-                    </p>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
 
-              {/* Clean Section Divider */}
-              <div className="h-px bg-slate-100 my-1" />
-
-              {/* SECTION 3: Account Status */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                  Account Status
-                </label>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setFormData({ ...formData, isActive: true })}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-colors cursor-pointer ${
-                      formData.isActive
-                        ? "bg-emerald-50 text-emerald-700 border-emerald-300 shadow-2xs"
-                        : "bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100"
-                    }`}
-                  >
-                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                    <span>Active Staff</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setFormData({ ...formData, isActive: false })}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-colors cursor-pointer ${
-                      !formData.isActive
-                        ? "bg-slate-900 text-white border-slate-800 shadow-2xs"
-                        : "bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100"
-                    }`}
-                  >
-                    <span className="w-2 h-2 rounded-full bg-slate-400" />
-                    <span>Inactive</span>
-                  </button>
+              {/* Reporting Manager (If Employee Role) */}
+              {isFormEmployeeRole && (
+                <div className="space-y-1 p-3.5 rounded-xl bg-indigo-50/50 border border-indigo-100 animate-in fade-in">
+                  <label className="block text-xs font-semibold text-slate-800">
+                    Reporting Manager (Team Lead / Admin) <span className="text-rose-500">*</span>
+                  </label>
+                  <p className="text-[11px] text-slate-500 mb-1.5">
+                    Leave requests submitted by this employee will be routed to this manager.
+                  </p>
+                  <ThemedSelect
+                    value={formData.reportingToId}
+                    onChange={(val) => setFormData({ ...formData, reportingToId: val })}
+                    options={[
+                      { value: "", label: "Select Reporting Manager..." },
+                      ...teamLeads.map((tl) => ({
+                        value: String(tl.id),
+                        label: `${tl.name} (${tl.email})`,
+                      })),
+                    ]}
+                    size="md"
+                  />
                 </div>
+              )}
+
+              {/* Status Switch */}
+              <div className="flex items-center justify-between p-3.5 rounded-xl bg-slate-50 border border-slate-200/80">
+                <div>
+                  <span className="text-xs font-bold text-slate-800">Account Status</span>
+                  <p className="text-[11px] text-slate-500">
+                    Active employees can log in and submit leave requests.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, isActive: !formData.isActive })}
+                  className={`w-11 h-6 flex items-center rounded-full p-1 cursor-pointer transition-colors ${
+                    formData.isActive ? "bg-indigo-600" : "bg-slate-300"
+                  }`}
+                >
+                  <div
+                    className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${
+                      formData.isActive ? "translate-x-5" : "translate-x-0"
+                    }`}
+                  />
+                </button>
               </div>
 
               {/* Modal Footer Actions */}
@@ -1206,7 +1239,7 @@ export default function EmployeesPage() {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="flex items-center gap-1.5 px-5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold disabled:opacity-50 shadow-xs cursor-pointer transition-all active:scale-95"
+                  className="flex items-center gap-1.5 px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold disabled:opacity-50 shadow-xs cursor-pointer transition-all active:scale-95"
                 >
                   {submitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                   <span>Create Employee</span>
@@ -1222,11 +1255,11 @@ export default function EmployeesPage() {
       {/* ========================================================================= */}
       {editModalOpen && selectedEmployee && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-150">
-          <div className="w-full max-w-xl bg-white border border-slate-200/80 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+          <div className="w-full max-w-2xl bg-white border border-slate-200/90 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh] animate-in zoom-in-95 duration-150">
             {/* Modal Header */}
             <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-slate-900 text-white flex items-center justify-center shadow-xs">
+                <div className="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-xs">
                   <Edit2 className="w-4 h-4" />
                 </div>
                 <div>
@@ -1234,13 +1267,11 @@ export default function EmployeesPage() {
                     Edit Employee: {selectedEmployee.name}
                   </h3>
                   <p className="text-[11px] text-slate-500">
-                    Update profile credentials, role assignment, and reporting structure.
+                    Update profile info, department, role, reporting manager, or password.
                   </p>
                 </div>
               </div>
-
               <button
-                type="button"
                 onClick={() => setEditModalOpen(false)}
                 className="text-slate-400 hover:text-slate-700 p-1.5 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
               >
@@ -1248,87 +1279,103 @@ export default function EmployeesPage() {
               </button>
             </div>
 
-            {/* Modal Form Body */}
+            {/* Modal Body */}
             <form onSubmit={handleEditEmployee} className="flex-1 overflow-y-auto p-6 space-y-4">
-              {/* SECTION 1: Personal Information */}
-              <div className="space-y-3">
-                <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                  <UserIcon className="w-3.5 h-3.5 text-slate-400" />
-                  <span>Account Credentials</span>
+              {/* Basic Details: Full Name & Email */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="block text-xs font-semibold text-slate-700">
+                    Full Name <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-indigo-600 shadow-2xs"
+                  />
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Full Name <span className="text-rose-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="w-full px-3.5 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:bg-white focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400 transition-all"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Email Address <span className="text-rose-500">*</span>
-                    </label>
-                    <input
-                      type="email"
-                      required
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className="w-full px-3.5 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:bg-white focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400 transition-all"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      New Password <span className="text-[10px] text-slate-400 font-normal">(Optional)</span>
-                    </label>
-                    <input
-                      type="password"
-                      placeholder="Leave blank to keep current"
-                      value={formData.password}
-                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                      className="w-full px-3.5 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:bg-white focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400 transition-all"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Confirm Password
-                    </label>
-                    <input
-                      type="password"
-                      placeholder="Repeat new password"
-                      value={formData.confirmPassword}
-                      onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                      className="w-full px-3.5 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:bg-white focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400 transition-all"
-                    />
-                  </div>
+                <div className="space-y-1">
+                  <label className="block text-xs font-semibold text-slate-700">
+                    Work Email <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-indigo-600 shadow-2xs"
+                  />
                 </div>
               </div>
 
-              {/* Clean Section Divider */}
-              <div className="h-px bg-slate-100 my-1" />
-
-              {/* SECTION 2: Role & Department Assignment */}
-              <div className="space-y-3">
-                <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                  <Briefcase className="w-3.5 h-3.5 text-slate-400" />
-                  <span>Organization & Hierarchy</span>
+              {/* Password & Confirm Password (Optional on edit) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="block text-xs font-semibold text-slate-700">
+                    Change Password <span className="text-slate-400 font-normal">(Leave blank to keep current)</span>
+                  </label>
+                  <input
+                    type="password"
+                    placeholder="New password"
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-indigo-600 shadow-2xs"
+                  />
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {/* Role Selector */}
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Role <span className="text-rose-500">*</span>
+
+                <div className="space-y-1">
+                  <label className="block text-xs font-semibold text-slate-700">
+                    Confirm New Password
+                  </label>
+                  <input
+                    type="password"
+                    placeholder="Re-type new password"
+                    value={formData.confirmPassword}
+                    onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-indigo-600 shadow-2xs"
+                  />
+                </div>
+              </div>
+
+              {/* Role & Department */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Role selection */}
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-semibold text-slate-700">
+                      System Role <span className="text-rose-500">*</span>
                     </label>
+                    <button
+                      type="button"
+                      onClick={() => setIsAddingRole(!isAddingRole)}
+                      className="text-[11px] font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-0.5 cursor-pointer"
+                    >
+                      <Plus className="w-3 h-3" />
+                      <span>{isAddingRole ? "Cancel" : "Add Role"}</span>
+                    </button>
+                  </div>
+
+                  {isAddingRole ? (
+                    <div className="flex items-center gap-1.5 mt-1 animate-in fade-in">
+                      <input
+                        type="text"
+                        placeholder="New Role (e.g. HR Manager)"
+                        value={newRoleName}
+                        onChange={(e) => setNewRoleName(e.target.value)}
+                        className="flex-1 px-3 py-1.5 rounded-xl bg-white border border-indigo-300 text-xs text-slate-900 focus:outline-none focus:border-indigo-600"
+                      />
+                      <button
+                        type="button"
+                        disabled={creatingRole}
+                        onClick={handleQuickCreateRole}
+                        className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold disabled:opacity-50 cursor-pointer shadow-2xs"
+                      >
+                        {creatingRole ? "..." : "Save"}
+                      </button>
+                    </div>
+                  ) : (
                     <ThemedSelect
                       value={formData.role}
                       onChange={(val) => setFormData({ ...formData, role: val })}
@@ -1336,85 +1383,107 @@ export default function EmployeesPage() {
                         value: r.code,
                         label: r.name,
                       }))}
+                      size="md"
                     />
-                  </div>
+                  )}
+                </div>
 
-                  {/* Department Selector */}
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                {/* Department Selection */}
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-semibold text-slate-700">
                       Department / Team
                     </label>
+                    <button
+                      type="button"
+                      onClick={() => setIsAddingDept(!isAddingDept)}
+                      className="text-[11px] font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-0.5 cursor-pointer"
+                    >
+                      <Plus className="w-3 h-3" />
+                      <span>{isAddingDept ? "Cancel" : "Add Dept"}</span>
+                    </button>
+                  </div>
+
+                  {isAddingDept ? (
+                    <div className="flex items-center gap-1.5 mt-1 animate-in fade-in">
+                      <input
+                        type="text"
+                        placeholder="New Dept (e.g. Marketing)"
+                        value={newDeptName}
+                        onChange={(e) => setNewDeptName(e.target.value)}
+                        className="flex-1 px-3 py-1.5 rounded-xl bg-white border border-indigo-300 text-xs text-slate-900 focus:outline-none focus:border-indigo-600"
+                      />
+                      <button
+                        type="button"
+                        disabled={creatingDept}
+                        onClick={handleQuickCreateDepartment}
+                        className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold disabled:opacity-50 cursor-pointer shadow-2xs"
+                      >
+                        {creatingDept ? "..." : "Save"}
+                      </button>
+                    </div>
+                  ) : (
                     <ThemedSelect
                       value={formData.teamId}
                       onChange={(val) => setFormData({ ...formData, teamId: val })}
                       options={[
-                        { value: "", label: "-- No Department --" },
-                        ...teams.map((t) => ({ value: String(t.id), label: t.name })),
-                      ]}
-                    />
-                  </div>
-                </div>
-
-                {/* Conditional Reporting Manager */}
-                {isFormEmployeeRole && (
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Assign Reporting Manager <span className="text-rose-500">*</span>
-                    </label>
-                    <ThemedSelect
-                      value={formData.reportingToId}
-                      onChange={(val) => setFormData({ ...formData, reportingToId: val })}
-                      placeholder="-- Select Reporting Manager --"
-                      options={[
-                        { value: "", label: "-- Select Reporting Manager --" },
-                        ...teamLeads.map((tl) => ({
-                          value: String(tl.id),
-                          label: `${tl.name} (${tl.email})`,
+                        { value: "", label: "No Department (Unassigned)" },
+                        ...teams.map((t) => ({
+                          value: String(t.id),
+                          label: t.name,
                         })),
                       ]}
+                      size="md"
                     />
-                    <p className="text-[11px] text-slate-400 mt-1">
-                      Employee will report directly to this Manager for leaves and attendance approvals.
-                    </p>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
 
-              {/* Clean Section Divider */}
-              <div className="h-px bg-slate-100 my-1" />
-
-              {/* SECTION 3: Account Status */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                  Account Status
-                </label>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setFormData({ ...formData, isActive: true })}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-colors cursor-pointer ${
-                      formData.isActive
-                        ? "bg-emerald-50 text-emerald-700 border-emerald-300 shadow-2xs"
-                        : "bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100"
-                    }`}
-                  >
-                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                    <span>Active Staff</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setFormData({ ...formData, isActive: false })}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-colors cursor-pointer ${
-                      !formData.isActive
-                        ? "bg-slate-900 text-white border-slate-800 shadow-2xs"
-                        : "bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100"
-                    }`}
-                  >
-                    <span className="w-2 h-2 rounded-full bg-slate-400" />
-                    <span>Inactive</span>
-                  </button>
+              {/* Reporting Manager (If Employee Role) */}
+              {isFormEmployeeRole && (
+                <div className="space-y-1 p-3.5 rounded-xl bg-indigo-50/50 border border-indigo-100 animate-in fade-in">
+                  <label className="block text-xs font-semibold text-slate-800">
+                    Reporting Manager (Team Lead / Admin) <span className="text-rose-500">*</span>
+                  </label>
+                  <p className="text-[11px] text-slate-500 mb-1.5">
+                    Leave requests submitted by this employee will be routed to this manager.
+                  </p>
+                  <ThemedSelect
+                    value={formData.reportingToId}
+                    onChange={(val) => setFormData({ ...formData, reportingToId: val })}
+                    options={[
+                      { value: "", label: "Select Reporting Manager..." },
+                      ...teamLeads.map((tl) => ({
+                        value: String(tl.id),
+                        label: `${tl.name} (${tl.email})`,
+                      })),
+                    ]}
+                    size="md"
+                  />
                 </div>
+              )}
+
+              {/* Status Switch */}
+              <div className="flex items-center justify-between p-3.5 rounded-xl bg-slate-50 border border-slate-200/80">
+                <div>
+                  <span className="text-xs font-bold text-slate-800">Account Status</span>
+                  <p className="text-[11px] text-slate-500">
+                    Active employees can log in and submit leave requests.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, isActive: !formData.isActive })}
+                  className={`w-11 h-6 flex items-center rounded-full p-1 cursor-pointer transition-colors ${
+                    formData.isActive ? "bg-indigo-600" : "bg-slate-300"
+                  }`}
+                >
+                  <div
+                    className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${
+                      formData.isActive ? "translate-x-5" : "translate-x-0"
+                    }`}
+                  />
+                </button>
               </div>
 
               {/* Modal Footer Actions */}
@@ -1429,7 +1498,7 @@ export default function EmployeesPage() {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="flex items-center gap-1.5 px-5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold disabled:opacity-50 shadow-xs cursor-pointer transition-all active:scale-95"
+                  className="flex items-center gap-1.5 px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold disabled:opacity-50 shadow-xs cursor-pointer transition-all active:scale-95"
                 >
                   {submitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                   <span>Save Changes</span>
@@ -1677,7 +1746,7 @@ export default function EmployeesPage() {
                             type="button"
                             disabled={actionLoading || !editRoleName.trim()}
                             onClick={handleUpdateRole}
-                            className="px-3.5 py-1.5 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-lg disabled:opacity-50 flex items-center gap-1 cursor-pointer shadow-2xs"
+                            className="px-3.5 py-1.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg disabled:opacity-50 flex items-center gap-1 cursor-pointer shadow-2xs"
                           >
                             {actionLoading && <Loader2 className="w-3 h-3 animate-spin" />}
                             <span>Save Changes</span>
@@ -1786,7 +1855,7 @@ export default function EmployeesPage() {
                   setDeletingRoleId(null);
                   setIsAddingRole(false);
                 }}
-                className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold cursor-pointer transition-colors"
+                className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold cursor-pointer transition-colors shadow-xs"
               >
                 Done
               </button>
@@ -1964,7 +2033,7 @@ export default function EmployeesPage() {
                               type="button"
                               disabled={actionLoading || !editDeptName.trim()}
                               onClick={handleUpdateDepartment}
-                              className="px-3.5 py-1.5 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-lg disabled:opacity-50 flex items-center gap-1 cursor-pointer shadow-2xs"
+                              className="px-3.5 py-1.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg disabled:opacity-50 flex items-center gap-1 cursor-pointer shadow-2xs"
                             >
                               {actionLoading && <Loader2 className="w-3 h-3 animate-spin" />}
                               <span>Save Changes</span>
@@ -2058,7 +2127,7 @@ export default function EmployeesPage() {
                   setDeletingDeptId(null);
                   setIsAddingDept(false);
                 }}
-                className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold cursor-pointer transition-colors"
+                className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold cursor-pointer transition-colors shadow-xs"
               >
                 Done
               </button>

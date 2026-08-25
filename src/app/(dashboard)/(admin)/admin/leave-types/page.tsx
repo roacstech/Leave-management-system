@@ -402,7 +402,7 @@ export default function LeaveTypesPage() {
             resetForm();
             setCreateModalOpen(true);
           }}
-          className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-medium shadow-2xs transition-all active:scale-95 shrink-0 self-start sm:self-auto cursor-pointer"
+          className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-xs transition-all active:scale-95 shrink-0 self-start sm:self-auto cursor-pointer"
         >
           <Plus className="w-4 h-4" />
           <span>Create Leave Type</span>
@@ -501,33 +501,33 @@ export default function LeaveTypesPage() {
         {/* Filters Cluster */}
         <div className="flex flex-wrap items-center gap-2">
           {/* Status Filter Tabs */}
-          <div className="flex items-center gap-0.5 p-0.5 bg-slate-100 rounded-lg text-xs font-medium">
+          <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-xl text-xs font-medium border border-slate-200">
             <button
               onClick={() => setFilterStatus("ALL")}
-              className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer ${
+              className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer font-semibold ${
                 filterStatus === "ALL"
-                  ? "bg-white text-slate-900 shadow-2xs font-semibold"
-                  : "text-slate-500 hover:text-slate-800"
+                  ? "bg-indigo-600 text-white shadow-xs"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60"
               }`}
             >
               All ({summary.totalLeaveTypes})
             </button>
             <button
               onClick={() => setFilterStatus("ACTIVE")}
-              className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer ${
+              className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer font-semibold ${
                 filterStatus === "ACTIVE"
-                  ? "bg-white text-slate-900 shadow-2xs font-semibold"
-                  : "text-slate-500 hover:text-slate-800"
+                  ? "bg-indigo-600 text-white shadow-xs"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60"
               }`}
             >
               Active ({summary.activeLeaveTypes})
             </button>
             <button
               onClick={() => setFilterStatus("INACTIVE")}
-              className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer ${
+              className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer font-semibold ${
                 filterStatus === "INACTIVE"
-                  ? "bg-white text-slate-900 shadow-2xs font-semibold"
-                  : "text-slate-500 hover:text-slate-800"
+                  ? "bg-indigo-600 text-white shadow-xs"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60"
               }`}
             >
               Inactive ({summary.inactiveLeaveTypes})
@@ -555,7 +555,7 @@ export default function LeaveTypesPage() {
       </div>
 
       {/* 4. LEAVE TYPES TABLE */}
-      {loading ? (
+      {loading && leaveTypes.length === 0 ? (
         <div className="p-12 text-center text-xs text-slate-400 bg-white border border-slate-200 rounded-xl">
           Loading leave types and policy settings...
         </div>
@@ -568,7 +568,7 @@ export default function LeaveTypesPage() {
           </p>
         </div>
       ) : (
-        <div className="rounded-xl bg-white border border-slate-200 overflow-hidden shadow-xs">
+        <div className={`rounded-xl bg-white border border-slate-200 overflow-hidden shadow-xs transition-opacity duration-150 ${loading ? "opacity-60 pointer-events-none" : "opacity-100"}`}>
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50/70 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
@@ -915,7 +915,7 @@ export default function LeaveTypesPage() {
               <button
                 type="submit"
                 disabled={submitting}
-                className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold shadow-xs transition-colors disabled:opacity-50 cursor-pointer"
+                className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-xs transition-colors disabled:opacity-50 cursor-pointer"
               >
                 {submitting ? "Saving..." : "Create Leave Type"}
               </button>
@@ -1053,7 +1053,7 @@ export default function LeaveTypesPage() {
                   setViewModalOpen(false);
                   openEditModal(selectedLeaveType);
                 }}
-                className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold cursor-pointer transition-colors shadow-xs"
+                className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold cursor-pointer transition-colors shadow-xs"
               >
                 Edit Policy
               </button>
@@ -1280,7 +1280,7 @@ export default function LeaveTypesPage() {
               <button
                 type="submit"
                 disabled={submitting}
-                className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold shadow-xs transition-colors disabled:opacity-50 cursor-pointer"
+                className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-xs transition-colors disabled:opacity-50 cursor-pointer"
               >
                 {submitting ? "Saving Changes..." : "Save Changes"}
               </button>
@@ -1340,7 +1340,7 @@ export default function LeaveTypesPage() {
                       setDeleteModalOpen(false);
                       handleToggleStatus(selectedLeaveType);
                     }}
-                    className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold cursor-pointer transition-colors shadow-xs"
+                    className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold cursor-pointer transition-colors shadow-xs"
                   >
                     Deactivate Instead
                   </button>

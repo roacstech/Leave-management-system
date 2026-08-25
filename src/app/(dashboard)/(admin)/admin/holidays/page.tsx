@@ -187,7 +187,7 @@ export default function HolidaysPage() {
 
           <button
             onClick={() => handleOpenModal()}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-medium shadow-2xs transition-all active:scale-95 shrink-0 self-start sm:self-auto"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-xs transition-all active:scale-95 shrink-0 self-start sm:self-auto cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Create New Holiday</span>
@@ -212,33 +212,33 @@ export default function HolidaysPage() {
           </div>
 
           {/* Filters */}
-          <div className="flex items-center gap-0.5 p-0.5 bg-slate-100 rounded-lg text-xs font-medium">
+          <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-xl text-xs font-medium border border-slate-200">
             <button
               onClick={() => setFilterStatus("ALL")}
-              className={`px-2.5 py-1 rounded-md transition-colors ${
+              className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer font-semibold ${
                 filterStatus === "ALL"
-                  ? "bg-white text-slate-900 shadow-2xs"
-                  : "text-slate-500 hover:text-slate-800"
+                  ? "bg-indigo-600 text-white shadow-xs"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60"
               }`}
             >
               All
             </button>
             <button
               onClick={() => setFilterStatus("UPCOMING")}
-              className={`px-2.5 py-1 rounded-md transition-colors ${
+              className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer font-semibold ${
                 filterStatus === "UPCOMING"
-                  ? "bg-white text-slate-900 shadow-2xs"
-                  : "text-slate-500 hover:text-slate-800"
+                  ? "bg-indigo-600 text-white shadow-xs"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60"
               }`}
             >
               Upcoming
             </button>
             <button
               onClick={() => setFilterStatus("PAST")}
-              className={`px-2.5 py-1 rounded-md transition-colors ${
+              className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer font-semibold ${
                 filterStatus === "PAST"
-                  ? "bg-white text-slate-900 shadow-2xs"
-                  : "text-slate-500 hover:text-slate-800"
+                  ? "bg-indigo-600 text-white shadow-xs"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60"
               }`}
             >
               Past
@@ -412,7 +412,7 @@ export default function HolidaysPage() {
               </button>
               <button
                 type="submit"
-                className="px-3.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-medium disabled:opacity-50"
+                className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold disabled:opacity-50 shadow-xs transition-colors cursor-pointer"
                 disabled={isSaving}
               >
                 {editingHoliday ? "Save Changes" : "Create Holiday"}

@@ -23,6 +23,7 @@ interface DatePickerProps {
   error?: string;
   align?: "left" | "right";
   size?: "xs" | "sm" | "md";
+  dropPosition?: "auto" | "up" | "down";
 }
 
 const MONTH_NAMES = [
@@ -70,8 +71,10 @@ export default function DatePicker({
   error,
   align = "left",
   size = "xs",
+  dropPosition = "auto",
 }: DatePickerProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [openUpwards, setOpenUpwards] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const selectedDateObj = parseISODate(value);
@@ -79,6 +82,36 @@ export default function DatePicker({
 
   const [viewYear, setViewYear] = useState<number>(initialDate.getFullYear());
   const [viewMonth, setViewMonth] = useState<number>(initialDate.getMonth());
+
+  useEffect(() => {
+    if (isOpen && containerRef.current) {
+      if (dropPosition === "up") {
+        setOpenUpwards(true);
+        return;
+      }
+      if (dropPosition === "down") {
+        setOpenUpwards(false);
+        return;
+      }
+
+      const el = containerRef.current;
+      const rect = el.getBoundingClientRect();
+      let availableBelow = window.innerHeight - rect.bottom - 70;
+
+      const parent = el.closest(".overflow-y-auto, form, [role='dialog']") as HTMLElement | null;
+      if (parent) {
+        const parentRect = parent.getBoundingClientRect();
+        availableBelow = Math.min(availableBelow, parentRect.bottom - rect.bottom - 10);
+      }
+
+      // If available space below is less than 260px, open upwards
+      if (availableBelow < 260 && rect.top > 200) {
+        setOpenUpwards(true);
+      } else {
+        setOpenUpwards(false);
+      }
+    }
+  }, [isOpen, dropPosition]);
 
   useEffect(() => {
     if (value) {
@@ -227,17 +260,6 @@ export default function DatePicker({
     setIsOpen(false);
   };
 
-  const handleQuickToday = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (minDateObj && today.getTime() < minDateObj.getTime()) return;
-    if (maxDateObj && today.getTime() > maxDateObj.getTime()) return;
-    if (disableSundays && today.getDay() === 0) return;
-    onChange(formatToISODate(today));
-    setViewYear(today.getFullYear());
-    setViewMonth(today.getMonth());
-    setIsOpen(false);
-  };
-
   const formatDisplay = (iso: string) => {
     if (!iso) return placeholder;
     const d = parseISODate(iso);
@@ -302,21 +324,23 @@ export default function DatePicker({
       {/* Modern Popover Calendar */}
       {isOpen && (
         <div
-          className={`absolute top-full mt-1.5 z-[100] w-72 bg-white rounded-2xl border border-slate-200 shadow-xl p-3.5 animate-in fade-in zoom-in-95 duration-150 ${
+          className={`absolute z-[100] w-64 bg-white rounded-2xl border border-slate-200 shadow-xl p-3 animate-in fade-in zoom-in-95 duration-150 ${
+            openUpwards ? "bottom-full mb-1.5" : "top-full mt-1.5"
+          } ${
             align === "right" ? "right-0" : "left-0"
           }`}
         >
           {/* Header Month / Year controls */}
-          <div className="flex items-center justify-between mb-2.5 pb-2 border-b border-slate-100">
+          <div className="flex items-center justify-between mb-2 pb-1.5 border-b border-slate-100">
             <button
               type="button"
               onClick={prevMonth}
-              className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-600 transition-colors cursor-pointer"
+              className="w-6 h-6 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-600 transition-colors cursor-pointer"
             >
-              <ChevronLeft className="w-4 h-4" />
+              <ChevronLeft className="w-3.5 h-3.5" />
             </button>
 
-            <div className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+            <div className="text-xs font-bold text-slate-900 flex items-center gap-1">
               <span>{MONTH_NAMES[viewMonth]}</span>
               <span className="text-slate-400 font-medium">{viewYear}</span>
             </div>
@@ -324,9 +348,9 @@ export default function DatePicker({
             <button
               type="button"
               onClick={nextMonth}
-              className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-600 transition-colors cursor-pointer"
+              className="w-6 h-6 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-600 transition-colors cursor-pointer"
             >
-              <ChevronRight className="w-4 h-4" />
+              <ChevronRight className="w-3.5 h-3.5" />
             </button>
           </div>
 
@@ -335,7 +359,7 @@ export default function DatePicker({
             {WEEK_DAYS.map((day, idx) => (
               <div
                 key={day}
-                className={`text-[10px] font-bold py-1 ${
+                className={`text-[9px] font-bold py-0.5 ${
                   idx === 0 || idx === 6 ? "text-slate-300" : "text-slate-400"
                 }`}
               >
@@ -345,7 +369,7 @@ export default function DatePicker({
           </div>
 
           {/* Days Grid */}
-          <div className="grid grid-cols-7 gap-1">
+          <div className="grid grid-cols-7 gap-0.5">
             {daysGrid.map((cell, idx) => {
               const isCellToday = cell.isToday;
               const isCellSelected = cell.isSelected;
@@ -358,7 +382,7 @@ export default function DatePicker({
                   type="button"
                   disabled={isCellDisabled}
                   onClick={() => handleSelectDate(cell.date, isCellDisabled)}
-                  className={`h-8 w-8 text-xs font-medium rounded-lg flex items-center justify-center transition-all cursor-pointer ${
+                  className={`h-7 w-7 text-[11px] font-medium rounded-lg flex items-center justify-center transition-all cursor-pointer ${
                     isCellSelected
                       ? "bg-indigo-600 text-white font-bold shadow-2xs"
                       : isCellDisabled
@@ -374,26 +398,6 @@ export default function DatePicker({
                 </button>
               );
             })}
-          </div>
-
-          {/* Footer with Today Shortcut */}
-          <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs">
-            <button
-              type="button"
-              onClick={handleQuickToday}
-              disabled={Boolean(minDateObj && today.getTime() < minDateObj.getTime())}
-              className="text-indigo-600 hover:text-indigo-700 font-bold disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-            >
-              Today
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setIsOpen(false)}
-              className="text-slate-400 hover:text-slate-700 font-medium cursor-pointer"
-            >
-              Close
-            </button>
           </div>
         </div>
       )}
