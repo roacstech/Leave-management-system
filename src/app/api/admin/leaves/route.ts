@@ -275,6 +275,7 @@ export async function POST(request: NextRequest) {
             days: requestedDays,
             reason: newRequest.reason,
             recipients: [tlResolution.tl.email],
+            recipientRole: tlResolution.tl.role,
             settings,
           }).catch((err) => console.error("Error sending leave applied email to TL:", err));
         }

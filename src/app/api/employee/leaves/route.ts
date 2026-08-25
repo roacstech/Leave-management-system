@@ -35,16 +35,19 @@ export async function POST(request: NextRequest) {
     }
 
     // 1. Role-specific routing validation
-    let assignedTL: { id: number; name: string; email: string } | null = null;
+    let assignedTL: { id: number; name: string; email: string; role?: string } | null = null;
     let initialStatus: "PENDING_TL" | "PENDING_ADMIN" = "PENDING_ADMIN";
 
     if (userRole === "EMPLOYEE") {
       const tlResolution = await resolveEmployeeTeamLead(userId);
       if (tlResolution.success && tlResolution.tl) {
         assignedTL = tlResolution.tl;
-        initialStatus = "PENDING_TL";
+        initialStatus =
+          assignedTL.role === "ADMIN" || assignedTL.role === "CEO"
+            ? "PENDING_ADMIN"
+            : "PENDING_TL";
       } else {
-        // Route directly to Admin/CEO if no TL is assigned
+        // Route directly to Admin/CEO if no TL/Manager is assigned
         initialStatus = "PENDING_ADMIN";
       }
     } else if (userRole === "TL") {
@@ -183,8 +186,40 @@ export async function POST(request: NextRequest) {
           days: requestedDays,
           reason: newRequest.reason,
           recipients: [assignedTL.email],
+          recipientRole: assignedTL.role,
           settings,
         }).catch((err) => console.error("Error sending leave applied email:", err));
+      }
+    } else if (userRole === "EMPLOYEE" && !assignedTL) {
+      // Employee with no TL assigned -> Notify Admins & CEO directly
+      const admins = await prisma.user.findMany({
+        where: { role: { in: ["ADMIN", "CEO"] }, isActive: true },
+        select: { id: true, email: true },
+      });
+      for (const admin of admins) {
+        await createNotification({
+          userId: admin.id,
+          type: "LEAVE_REQUEST",
+          title: "New Leave Request",
+          message: `${newRequest.user.name} submitted a ${newRequest.leaveType.name} request (${formattedStart} - ${formattedEnd}).`,
+          entityType: "LEAVE_REQUEST",
+          entityId: newRequest.id,
+        });
+      }
+
+      const adminEmails = admins.map((a) => a.email).filter(Boolean);
+      if (adminEmails.length > 0) {
+        sendLeaveAppliedEmail({
+          applicantName: newRequest.user.name,
+          applicantEmail: newRequest.user.email,
+          leaveType: newRequest.leaveType.name,
+          startDate: formattedStart,
+          endDate: formattedEnd,
+          days: requestedDays,
+          reason: newRequest.reason,
+          recipients: adminEmails,
+          settings,
+        }).catch((err) => console.error("Error sending employee leave applied email to Admin:", err));
       }
     } else if (userRole === "TL") {
       // TL leave -> Notify Admins directly
