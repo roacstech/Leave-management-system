@@ -80,7 +80,7 @@ export default function LoginPage() {
       {/* Top Brand Logo */}
       <div className="relative z-10 flex flex-col items-center justify-center">
         <img src="/logo.png" alt="Embassy of India" className="h-20 w-auto object-contain mb-3" />
-        <h2 className="text-xl font-bold text-slate-900 tracking-tight">LMS Portal</h2>
+        {/* <h2 className="text-xl font-bold text-slate-900 tracking-tight">LMS Portal</h2> */}
       </div>
 
       {/* Main Login Card */}
@@ -90,9 +90,9 @@ export default function LoginPage() {
             <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight mb-2">
               Sign in
             </h1>
-            <p className="text-xs text-slate-500">
+            {/* <p className="text-xs text-slate-500">
               Enter your corporate credentials to access your dashboard.
-            </p>
+            </p> */}
           </div>
 
           {/* Error Banner */}
