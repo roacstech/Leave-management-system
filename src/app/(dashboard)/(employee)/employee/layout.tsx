@@ -27,15 +27,18 @@ function EmployeeHeader({
 
   const [userName, setUserName] = useState("Employee");
   const [userInitials, setUserInitials] = useState("EMP");
+  const [userRole, setUserRole] = useState("Staff Member");
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
 
   React.useEffect(() => {
-    getSession().then(session => {
+    getSession().then((session) => {
       if (session?.user?.name) {
         setUserName(session.user.name);
-        // Get initials (up to 2 characters)
         const initials = session.user.name.substring(0, 2).toUpperCase();
         setUserInitials(initials);
+      }
+      if (session?.user?.role) {
+        setUserRole(session.user.role === "EMPLOYEE" ? "Staff Member" : session.user.role);
       }
     });
   }, []);
@@ -57,7 +60,7 @@ function EmployeeHeader({
         <button
           type="button"
           onClick={onOpenMobile}
-          className="p-1.5 -ml-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-50 lg:hidden transition-colors"
+          className="p-1.5 -ml-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-50 lg:hidden transition-colors cursor-pointer"
           aria-label="Open sidebar"
         >
           <Menu className="w-5 h-5" />
@@ -75,7 +78,7 @@ function EmployeeHeader({
         <button
           onClick={onRefresh}
           title="Refresh Dashboard"
-          className={`p-1.5 rounded-md text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-all ${
+          className={`p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-all cursor-pointer ${
             isRefreshing
               ? "rotate-180 transition-transform duration-700 text-slate-900"
               : ""
@@ -91,19 +94,19 @@ function EmployeeHeader({
         <div className="relative">
           <button
             onClick={() => setProfileMenuOpen(!profileMenuOpen)}
-            className="flex items-center gap-2 pl-1 p-1 rounded-md hover:bg-slate-50 transition-colors cursor-pointer text-left"
+            className="flex items-center gap-2.5 pl-1.5 pr-2 py-1 rounded-xl hover:bg-slate-50 transition-colors cursor-pointer text-left"
           >
-            <div className="w-7 h-7 rounded-md bg-primary flex items-center justify-center text-primary-content font-bold text-xs shadow-2xs uppercase">
+            <div className="w-8 h-8 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-bold text-xs shadow-xs uppercase">
               {userInitials}
             </div>
 
             <div className="hidden sm:block text-left">
-              <div className="text-xs font-semibold text-slate-900 leading-tight uppercase">
+              <div className="text-xs font-bold text-slate-900 leading-tight uppercase">
                 {userName}
               </div>
-              {/* <div className="text-[10px] text-slate-500 leading-none">
-                Staff Member
-              </div> */}
+              <div className="text-[10px] text-slate-500 font-medium leading-none mt-0.5">
+                {userRole}
+              </div>
             </div>
           </button>
           
@@ -113,12 +116,16 @@ function EmployeeHeader({
                 className="fixed inset-0 z-40" 
                 onClick={() => setProfileMenuOpen(false)} 
               />
-              <div className="absolute right-0 mt-2 w-48 bg-base-100 border border-base-300 rounded-xl shadow-xl p-1 z-50 animate-in fade-in zoom-in-95 duration-100">
+              <div className="absolute right-0 top-full mt-2 w-52 bg-white border border-slate-200 rounded-2xl shadow-xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-100">
+                <div className="px-3 py-2.5 border-b border-slate-100 mb-1">
+                  <p className="text-xs font-bold text-slate-900 truncate uppercase">{userName}</p>
+                  <p className="text-[10px] text-slate-500 font-semibold">{userRole}</p>
+                </div>
                 <button
                   onClick={handleLogout}
-                  className="flex items-center w-full text-left px-3.5 py-2 text-xs text-base-content hover:bg-primary/10 hover:text-primary transition-colors font-semibold cursor-pointer rounded-lg gap-2"
+                  className="flex items-center w-full text-left px-3 py-2 text-xs text-rose-600 hover:bg-rose-50 hover:text-rose-700 transition-colors font-semibold cursor-pointer rounded-xl gap-2 active:scale-95"
                 >
-                  <LogOut className="w-4 h-4 text-primary" />
+                  <LogOut className="w-4 h-4 text-rose-500" />
                   <span>Sign Out</span>
                 </button>
               </div>

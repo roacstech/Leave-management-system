@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -12,14 +12,9 @@ import {
   FileSpreadsheet,
   BarChart3,
   CalendarDays,
-  Shield,
   LogOut,
-  ChevronRight,
-  Sparkles,
-  Bell,
 } from "lucide-react";
-import { signOut } from "next-auth/react";
-import { useSettings } from "@/contexts/SettingsContext";
+import { signOut, getSession } from "next-auth/react";
 
 interface NavItem {
   name: string;
@@ -45,7 +40,7 @@ const navItems: NavItem[] = [
     icon: UserCheck,
   },
   {
-    name: "Leave Oversight & Approvals",
+    name: "Leave Oversight",
     href: "/ceo/leave-management",
     icon: CalendarCheck2,
   },
@@ -55,12 +50,12 @@ const navItems: NavItem[] = [
     icon: Clock3,
   },
   {
-    name: "Leave Reports & Exports",
+    name: "Leave Reports",
     href: "/ceo/leave-reports",
     icon: FileSpreadsheet,
   },
   {
-    name: "Cross-Team Analytics",
+    name: "Team Analytics",
     href: "/ceo/team-reports",
     icon: BarChart3,
   },
@@ -68,11 +63,6 @@ const navItems: NavItem[] = [
     name: "Company Holidays",
     href: "/ceo/holidays",
     icon: CalendarDays,
-  },
-  {
-    name: "Notifications",
-    href: "/ceo/notifications",
-    icon: Bell,
   },
 ];
 
@@ -82,8 +72,18 @@ export default function CEOSidebar({
   onClose?: () => void;
 }) {
   const pathname = usePathname();
-  const { settings } = useSettings();
-  const [profileMenuOpen, setProfileMenuOpen] = React.useState(false);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const [userName, setUserName] = useState("Chief Executive");
+  const [userInitials, setUserInitials] = useState("CEO");
+
+  useEffect(() => {
+    getSession().then((session) => {
+      if (session?.user?.name) {
+        setUserName(session.user.name);
+        setUserInitials(session.user.name.substring(0, 2).toUpperCase());
+      }
+    });
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -96,41 +96,41 @@ export default function CEOSidebar({
     }
   };
 
-
   return (
-    <aside className="w-60 shrink-0 bg-base-100 text-base-content flex flex-col h-full border-r border-base-300 select-none">
+    <aside className="w-64 shrink-0 bg-white text-slate-800 flex flex-col h-full border-r border-slate-200 select-none shadow-xs">
       {/* Brand Header */}
-      <div className="px-5 py-5 border-b border-base-300 bg-base-100 flex flex-col items-center justify-center gap-2">
+      <div className="px-5 py-5 border-b border-slate-100 bg-white flex items-center justify-center">
         <img src="/logo.png" alt="Embassy of India" className="h-10 w-auto object-contain" />
       </div>
 
       {/* Menu Navigation */}
-      <div className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
-        <div className="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-base-content/50">
+      <div className="flex-1 overflow-y-auto px-3.5 py-4 space-y-1.5 scrollbar-thin">
+        <div className="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">
           Executive Workspace
         </div>
 
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive =
-            pathname === item.href ||
-            (item.href !== "/ceo/dashboard" && pathname?.startsWith(item.href));
+            item.href === "/ceo/dashboard"
+              ? pathname === "/ceo/dashboard"
+              : pathname?.startsWith(item.href);
 
           return (
             <Link
               key={item.name}
               href={item.href}
               onClick={onClose}
-              className={`flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
+              className={`group flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-150 cursor-pointer active:scale-[0.98] ${
                 isActive
-                  ? "bg-primary text-primary-content shadow-xs"
-                  : "text-base-content/70 hover:text-base-content hover:bg-base-200"
+                  ? "bg-indigo-600 text-white shadow-xs"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80"
               }`}
             >
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-3">
                 <Icon
-                  className={`w-4 h-4 ${
-                    isActive ? "text-primary-content" : "text-base-content/60"
+                  className={`w-4 h-4 transition-colors ${
+                    isActive ? "text-white" : "text-slate-400 group-hover:text-slate-700"
                   }`}
                 />
                 <span>{item.name}</span>
@@ -138,10 +138,10 @@ export default function CEOSidebar({
 
               {item.badge && (
                 <span
-                  className={`text-[10px] font-bold px-1.5 py-0.2 rounded-full ${
+                  className={`text-[10px] font-bold px-2 py-0.5 rounded-full transition-colors ${
                     isActive
-                      ? "bg-primary-content text-primary"
-                      : "bg-base-200 text-base-content border border-base-300"
+                      ? "bg-white/20 text-white"
+                      : "bg-indigo-50 text-indigo-600 border border-indigo-200"
                   }`}
                 >
                   {item.badge}
@@ -153,20 +153,21 @@ export default function CEOSidebar({
       </div>
 
       {/* CEO Profile Footer */}
-      <div className="p-3.5 border-t border-base-300 bg-base-100 relative">
+      <div className="p-4 border-t border-slate-100 bg-slate-50/50 relative">
         <button
           onClick={() => setProfileMenuOpen(!profileMenuOpen)}
-          className="flex items-center justify-between w-full p-2 rounded-lg hover:bg-base-200 transition-colors cursor-pointer text-left"
+          className="flex items-center justify-between w-full p-1 rounded-xl hover:bg-slate-100/80 transition-colors cursor-pointer text-left"
         >
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center font-bold text-primary-content text-xs shadow-2xs shrink-0">
-              C
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-8 h-8 rounded-xl bg-indigo-600 flex items-center justify-center font-bold text-white text-xs shadow-xs shrink-0 uppercase">
+              {userInitials}
             </div>
             <div className="overflow-hidden">
-              <div className="text-xs font-semibold text-base-content truncate uppercase">
-                Chief Executive Officer
+              <div className="text-xs font-bold text-slate-900 truncate uppercase">
+                {userName}
               </div>
-              <div className="flex items-center gap-1 text-[11px] text-base-content/60">
+              <div className="flex items-center gap-1.5 text-[10px] text-slate-500 font-medium">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
                 <span>Executive Head</span>
               </div>
             </div>
@@ -179,12 +180,16 @@ export default function CEOSidebar({
               className="fixed inset-0 z-40" 
               onClick={() => setProfileMenuOpen(false)} 
             />
-            <div className="absolute bottom-full mb-2 left-3 w-52 bg-base-100 border border-base-300 rounded-xl shadow-xl p-1 z-50 animate-in fade-in zoom-in-95 duration-100">
+            <div className="absolute bottom-full mb-2 left-3 w-56 bg-white border border-slate-200 rounded-2xl shadow-xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-100">
+              <div className="px-3 py-2 border-b border-slate-100 mb-1">
+                <p className="text-xs font-bold text-slate-900 truncate uppercase">{userName}</p>
+                <p className="text-[10px] text-slate-500 font-semibold">Chief Executive Officer</p>
+              </div>
               <button
                 onClick={handleLogout}
-                className="flex items-center w-full text-left px-3.5 py-2 text-xs text-base-content hover:bg-primary/10 hover:text-primary transition-colors font-semibold cursor-pointer rounded-lg gap-2"
+                className="flex items-center w-full text-left px-3 py-2 text-xs text-rose-600 hover:bg-rose-50 hover:text-rose-700 transition-colors font-semibold cursor-pointer rounded-xl gap-2 active:scale-95"
               >
-                <LogOut className="w-4 h-4 text-primary" />
+                <LogOut className="w-4 h-4 text-rose-500" />
                 <span>Sign Out</span>
               </button>
             </div>
