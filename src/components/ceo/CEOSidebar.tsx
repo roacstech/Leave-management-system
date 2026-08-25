@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -43,6 +43,7 @@ const navItems: NavItem[] = [
   /*
   {
     name: "Leave Oversight",
+    name: "Leave Oversight",
     href: "/ceo/leave-management",
     icon: CalendarCheck2,
   },
@@ -59,6 +60,7 @@ const navItems: NavItem[] = [
   // },
   /*
   {
+    name: "Team Analytics",
     name: "Team Analytics",
     href: "/ceo/team-reports",
     icon: BarChart3,
@@ -94,8 +96,9 @@ export default function CEOSidebar({
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive =
-            pathname === item.href ||
-            (item.href !== "/ceo/dashboard" && pathname?.startsWith(item.href));
+            item.href === "/ceo/dashboard"
+              ? pathname === "/ceo/dashboard"
+              : pathname?.startsWith(item.href);
 
           return (
             <Link
@@ -108,7 +111,7 @@ export default function CEOSidebar({
                   : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80"
               }`}
             >
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-3">
                 <Icon
                   className={`w-4 h-4 transition-colors ${
                     isActive ? "text-white" : "text-slate-400 group-hover:text-slate-600"

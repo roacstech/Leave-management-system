@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -10,12 +10,9 @@ import {
   Clock3,
   CalendarDays,
   FileSpreadsheet,
-  Bell,
-  Building2,
-  Users2,
   Settings,
 } from "lucide-react";
-import { useSettings } from "@/contexts/SettingsContext";
+import { getSession } from "next-auth/react";
 
 interface TLSidebarProps {
   pendingCount?: number;
@@ -31,7 +28,22 @@ export default function TLSidebar({
   teamName = "Development Team",
 }: TLSidebarProps) {
   const pathname = usePathname();
-  const { settings } = useSettings();
+
+  const [userName, setUserName] = useState("Manager");
+  const [userInitials, setUserInitials] = useState("M");
+  const [userRole, setUserRole] = useState("Team Lead");
+
+  useEffect(() => {
+    getSession().then((session) => {
+      if (session?.user?.name) {
+        setUserName(session.user.name);
+        setUserInitials(session.user.name.substring(0, 2).toUpperCase());
+      }
+      if (session?.user?.role) {
+        setUserRole(session.user.role === "TL" ? "Team Lead" : session.user.role === "MANAGER" ? "Manager" : session.user.role);
+      }
+    });
+  }, []);
 
   const navItems = [
     {
@@ -77,7 +89,7 @@ export default function TLSidebar({
       {/* Mobile Backdrop */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-40 bg-slate-900/20 backdrop-blur-xs lg:hidden transition-opacity"
+          className="fixed inset-0 z-40 bg-slate-900/30 backdrop-blur-xs lg:hidden transition-opacity"
           onClick={onCloseMobile}
         />
       )}
@@ -101,8 +113,9 @@ export default function TLSidebar({
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive =
-              pathname === item.href ||
-              (item.href !== "/tl/dashboard" && pathname?.startsWith(item.href));
+              item.href === "/tl/dashboard"
+                ? pathname === "/tl/dashboard"
+                : pathname?.startsWith(item.href);
 
             return (
               <Link
@@ -115,7 +128,7 @@ export default function TLSidebar({
                     : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80"
                 }`}
               >
-                <div className="flex items-center gap-2.5">
+                <div className="flex items-center gap-3">
                   <Icon
                     className={`w-4 h-4 transition-colors ${
                       isActive ? "text-white" : "text-slate-400 group-hover:text-slate-600"

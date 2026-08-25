@@ -210,7 +210,40 @@ export async function GET() {
       }),
     ]);
 
-    // 6. Compute leave balances summary
+    // 6. Fetch colleagues on leave today in the same team
+    const teamMembersCount = employee.teamId
+      ? await prisma.user.count({ where: { teamId: employee.teamId } })
+      : 1;
+
+    const teamOnLeave = employee.teamId
+      ? await prisma.leaveRequest.findMany({
+          where: {
+            user: { teamId: employee.teamId },
+            status: "APPROVED",
+            endDate: { gte: startOfToday },
+            startDate: { lte: endOfToday },
+          },
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                role: true,
+              },
+            },
+            leaveType: {
+              select: {
+                name: true,
+                code: true,
+              },
+            },
+          },
+          take: 6,
+        })
+      : [];
+
+    // 7. Compute leave balances summary
     let totalDays = 0;
     let usedDays = 0;
     let remainingDays = 0;
@@ -258,6 +291,8 @@ export async function GET() {
       recentRequests,
       upcomingLeaves,
       upcomingHolidays,
+      teamOnLeave,
+      teamMembersCount,
     });
   } catch (error: any) {
     console.error("Employee dashboard API error:", error);
