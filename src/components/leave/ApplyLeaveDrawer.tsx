@@ -6,12 +6,12 @@ import {
   Calendar,
   FileText,
   Clock,
-  Sparkles,
   CheckCircle2,
   AlertCircle,
   Briefcase,
 } from "lucide-react";
 import ThemedSelect from "@/components/ui/ThemedSelect";
+import DatePicker from "@/components/ui/DatePicker";
 
 export interface LeaveTypeOption {
   id: number;
@@ -63,6 +63,7 @@ export default function ApplyLeaveDrawer({
         { id: 2, name: "Sick Day", code: "SL", availed: 9.5 },
         { id: 3, name: "Vacation Leave", code: "VL", balance: 32 },
         { id: 4, name: "Loss Of Pay", code: "LOP", availed: 0 },
+        { id: 5, name: "Comp Off", code: "CO", balance: 0 },
       ];
 
   // Auto-select first leave type
@@ -98,8 +99,6 @@ export default function ApplyLeaveDrawer({
   }, [fromDate, toDate, leaveOption]);
 
   const handleClear = () => {
-    setSelectedLeaveTypeId(availableTypes[0]?.id || "");
-    setLeaveOption("FULL_DAY");
     setFromDate("");
     setToDate("");
     setReason("");
@@ -108,6 +107,10 @@ export default function ApplyLeaveDrawer({
     setCompOffReason("");
     setErrorMessage(null);
     setSuccessMessage(null);
+    if (availableTypes.length > 0) {
+      setSelectedLeaveTypeId(availableTypes[0].id);
+    }
+    setLeaveOption("FULL_DAY");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -121,7 +124,7 @@ export default function ApplyLeaveDrawer({
         return;
       }
       if (!fromDate || !toDate) {
-        setErrorMessage("Please select both From Date and To Date.");
+        setErrorMessage("Please select both from and to dates.");
         return;
       }
       if (new Date(toDate) < new Date(fromDate)) {
@@ -129,7 +132,7 @@ export default function ApplyLeaveDrawer({
         return;
       }
       if (!reason.trim()) {
-        setErrorMessage("Please provide a reason for leave.");
+        setErrorMessage("Please provide a reason for the leave.");
         return;
       }
 
@@ -140,11 +143,10 @@ export default function ApplyLeaveDrawer({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             leaveTypeId: Number(selectedLeaveTypeId),
+            leaveOption,
             startDate: fromDate,
             endDate: toDate,
             reason: reason.trim(),
-            leaveOption,
-            days: totalDays,
           }),
         });
 
@@ -209,24 +211,24 @@ export default function ApplyLeaveDrawer({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/40 backdrop-blur-2xs transition-opacity animate-in fade-in duration-300">
+    <div className="fixed inset-0 z-50 flex justify-end bg-black/40 transition-opacity animate-in fade-in duration-200">
       <div
-        className="w-full max-w-xl bg-base-100 h-full shadow-2xl flex flex-col border-l border-base-300 transform transition-transform duration-300 ease-out animate-in slide-in-from-right"
+        className="w-full max-w-xl bg-white h-full shadow-2xl flex flex-col border-l border-gray-200 transform transition-transform duration-300 ease-out animate-in slide-in-from-right"
         role="dialog"
         aria-modal="true"
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-base-300 bg-base-200/50">
+        <div className="flex items-center justify-between px-6 py-5 border-b border-gray-200 bg-white">
           <div className="flex items-center gap-3">
-            <h2 className="text-base font-bold text-base-content tracking-tight">Apply Leave</h2>
-            <span className="px-2.5 py-0.5 text-xs font-bold rounded-md bg-primary/15 text-primary border border-primary/20">
+            <h2 className="text-base font-bold text-gray-900 tracking-tight">Apply Leave</h2>
+            <span className="px-2.5 py-0.5 text-xs font-semibold rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200">
               {year}
             </span>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-xl text-base-content/60 hover:text-base-content hover:bg-base-200 active:scale-95 transition-all duration-150 cursor-pointer"
+            className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
             aria-label="Close drawer"
           >
             <X className="w-5 h-5" />
@@ -234,21 +236,21 @@ export default function ApplyLeaveDrawer({
         </div>
 
         {/* Tabs (Apply Leave vs Apply Comp Off) */}
-        <div className="flex border-b border-base-300 px-6 py-3 gap-2 bg-base-100">
+        <div className="flex border-b border-gray-200 px-6 py-3 gap-2 bg-white">
           <button
             type="button"
             onClick={() => {
               setActiveTab("LEAVE");
               setErrorMessage(null);
             }}
-            className={`px-3.5 py-2 rounded-xl font-bold text-xs transition-all duration-150 flex items-center gap-2 cursor-pointer active:scale-95 ${
+            className={`px-3.5 py-2 rounded-xl font-semibold text-xs transition-all duration-150 flex items-center gap-2 cursor-pointer active:scale-95 ${
               activeTab === "LEAVE"
-                ? "bg-primary text-primary-content shadow-xs"
-                : "text-base-content/70 hover:text-base-content hover:bg-base-200/80 border border-transparent hover:border-base-300"
+                ? "bg-indigo-600 text-white shadow-xs"
+                : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
             }`}
           >
             <FileText className="w-3.5 h-3.5" />
-            Apply Leave
+            <span>Apply Leave</span>
           </button>
 
           <button
@@ -257,14 +259,14 @@ export default function ApplyLeaveDrawer({
               setActiveTab("COMP_OFF");
               setErrorMessage(null);
             }}
-            className={`px-3.5 py-2 rounded-xl font-bold text-xs transition-all duration-150 flex items-center gap-2 cursor-pointer active:scale-95 ${
+            className={`px-3.5 py-2 rounded-xl font-semibold text-xs transition-all duration-150 flex items-center gap-2 cursor-pointer active:scale-95 ${
               activeTab === "COMP_OFF"
-                ? "bg-primary text-primary-content shadow-xs"
-                : "text-base-content/70 hover:text-base-content hover:bg-base-200/80 border border-transparent hover:border-base-300"
+                ? "bg-indigo-600 text-white shadow-xs"
+                : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
             }`}
           >
             <Briefcase className="w-3.5 h-3.5" />
-            Apply Comp Off
+            <span>Apply Comp Off</span>
           </button>
         </div>
 
@@ -272,14 +274,14 @@ export default function ApplyLeaveDrawer({
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-5">
           {/* Notifications */}
           {errorMessage && (
-            <div className="flex items-center gap-2 p-3 text-xs font-semibold rounded-xl bg-error/15 text-error border border-error/20">
+            <div className="flex items-center gap-2 p-3.5 text-xs font-semibold rounded-xl bg-rose-50 text-rose-700 border border-rose-200">
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{errorMessage}</span>
             </div>
           )}
 
           {successMessage && (
-            <div className="flex items-center gap-2 p-3 text-xs font-semibold rounded-xl bg-success/15 text-success border border-success/20">
+            <div className="flex items-center gap-2 p-3.5 text-xs font-semibold rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200">
               <CheckCircle2 className="w-4 h-4 shrink-0" />
               <span>{successMessage}</span>
             </div>
@@ -289,8 +291,8 @@ export default function ApplyLeaveDrawer({
             <>
               {/* Leave Type */}
               <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-base-content">
-                  Leave Type <span className="text-error">*</span>
+                <label className="block text-xs font-semibold text-gray-700">
+                  Leave Type <span className="text-rose-500">*</span>
                 </label>
                 <ThemedSelect
                   value={String(selectedLeaveTypeId)}
@@ -299,14 +301,14 @@ export default function ApplyLeaveDrawer({
                     value: String(type.id),
                     label: `${type.name} ${type.balance !== undefined ? `(Balance: ${type.balance})` : type.availed !== undefined ? `(Availed: ${type.availed})` : ""}`,
                   }))}
-                  size="sm"
+                  size="md"
                 />
               </div>
 
               {/* Leave Option */}
               <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-base-content">
-                  Leave Option <span className="text-error">*</span>
+                <label className="block text-xs font-semibold text-gray-700">
+                  Leave Option <span className="text-rose-500">*</span>
                 </label>
                 <ThemedSelect
                   value={leaveOption}
@@ -316,47 +318,45 @@ export default function ApplyLeaveDrawer({
                     { value: "HALF_DAY_FIRST", label: "Half Day - First Half" },
                     { value: "HALF_DAY_SECOND", label: "Half Day - Second Half" },
                   ]}
-                  size="sm"
+                  size="md"
                 />
               </div>
 
               {/* Dates Row */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-base-content">
-                    From Date <span className="text-error">*</span>
+                  <label className="block text-xs font-semibold text-gray-700">
+                    From Date <span className="text-rose-500">*</span>
                   </label>
-                  <input
-                    type="date"
+                  <DatePicker
                     value={fromDate}
-                    onChange={(e) => {
-                      setFromDate(e.target.value);
-                      if (!toDate) setToDate(e.target.value);
+                    onChange={(val) => {
+                      setFromDate(val);
+                      if (!toDate) setToDate(val);
                     }}
-                    className="input input-bordered input-sm w-full text-xs bg-base-100"
-                    required
+                    size="sm"
+                    placeholder="Select start date"
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-base-content">
-                    To Date <span className="text-error">*</span>
+                  <label className="block text-xs font-semibold text-gray-700">
+                    To Date <span className="text-rose-500">*</span>
                   </label>
-                  <input
-                    type="date"
+                  <DatePicker
                     value={toDate}
-                    min={fromDate}
-                    onChange={(e) => setToDate(e.target.value)}
-                    className="input input-bordered input-sm w-full text-xs bg-base-100"
-                    required
+                    minDate={fromDate}
+                    onChange={setToDate}
+                    size="sm"
+                    placeholder="Select end date"
                   />
                 </div>
               </div>
 
               {/* Total Days */}
-              <div className="flex items-center justify-between p-3.5 rounded-xl bg-base-200/60 border border-base-300">
-                <span className="text-xs font-bold text-base-content">Total Day(s)</span>
-                <span className="text-xs font-extrabold text-primary px-3 py-1 rounded-lg bg-primary/10 border border-primary/20">
+              <div className="flex items-center justify-between p-4 rounded-xl bg-gray-50 border border-gray-200">
+                <span className="text-xs font-semibold text-gray-700">Total Day(s)</span>
+                <span className="text-xs font-bold text-indigo-600 px-3 py-1 rounded-lg bg-indigo-50 border border-indigo-200">
                   {totalDays} {totalDays === 1 ? "Day" : "Days"}
                 </span>
               </div>
@@ -364,10 +364,10 @@ export default function ApplyLeaveDrawer({
               {/* Reason for Leave */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold text-base-content">
-                    Reason for Leave <span className="text-error">*</span>
+                  <label className="text-xs font-semibold text-gray-700">
+                    Reason for Leave <span className="text-rose-500">*</span>
                   </label>
-                  <span className="text-2xs text-base-content/60 font-medium">
+                  <span className="text-[11px] text-gray-400">
                     {reason.length} / 500 characters
                   </span>
                 </div>
@@ -377,7 +377,7 @@ export default function ApplyLeaveDrawer({
                   onChange={(e) => setReason(e.target.value)}
                   placeholder="State the reason for your leave request..."
                   rows={4}
-                  className="textarea textarea-bordered w-full text-xs bg-base-100 resize-none"
+                  className="w-full p-3 rounded-xl bg-gray-50 border border-gray-200 text-xs text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 resize-none"
                   required
                 />
               </div>
@@ -386,21 +386,20 @@ export default function ApplyLeaveDrawer({
             <>
               {/* Comp-Off Form */}
               <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-base-content">
-                  Date Worked (Overtime / Weekend) <span className="text-error">*</span>
+                <label className="block text-xs font-semibold text-gray-700">
+                  Date Worked (Overtime / Weekend) <span className="text-rose-500">*</span>
                 </label>
-                <input
-                  type="date"
+                <DatePicker
                   value={workedDate}
-                  onChange={(e) => setWorkedDate(e.target.value)}
-                  className="input input-bordered input-sm w-full text-xs bg-base-100"
-                  required
+                  onChange={setWorkedDate}
+                  size="sm"
+                  placeholder="Select worked date"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-base-content">
-                  Hours Worked <span className="text-error">*</span>
+                <label className="block text-xs font-semibold text-gray-700">
+                  Hours Worked <span className="text-rose-500">*</span>
                 </label>
                 <ThemedSelect
                   value={String(hoursWorked)}
@@ -410,13 +409,13 @@ export default function ApplyLeaveDrawer({
                     { value: "8", label: "8 Hours (Full Day Credit)" },
                     { value: "12", label: "12 Hours (1.5 Day Credit)" },
                   ]}
-                  size="sm"
+                  size="md"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-base-content">
-                  Reason / Task Details <span className="text-error">*</span>
+                <label className="block text-xs font-semibold text-gray-700">
+                  Reason / Task Details <span className="text-rose-500">*</span>
                 </label>
                 <textarea
                   value={compOffReason}
@@ -424,7 +423,7 @@ export default function ApplyLeaveDrawer({
                   onChange={(e) => setCompOffReason(e.target.value)}
                   placeholder="Explain duties performed on the overtime date..."
                   rows={4}
-                  className="textarea textarea-bordered w-full text-xs bg-base-100 resize-none"
+                  className="w-full p-3 rounded-xl bg-gray-50 border border-gray-200 text-xs text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 resize-none"
                   required
                 />
               </div>
@@ -433,11 +432,11 @@ export default function ApplyLeaveDrawer({
         </form>
 
         {/* Footer Actions */}
-        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-base-300 bg-base-200/50">
+        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50">
           <button
             type="button"
             onClick={handleClear}
-            className="px-4 py-2 rounded-xl text-xs font-semibold text-base-content/70 hover:text-base-content hover:bg-base-300/60 active:scale-95 transition-all duration-150 cursor-pointer"
+            className="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-200 active:scale-95 transition-all duration-150 cursor-pointer"
             disabled={submitting}
           >
             Clear
@@ -446,9 +445,9 @@ export default function ApplyLeaveDrawer({
             type="button"
             onClick={handleSubmit}
             disabled={submitting}
-            className="px-6 py-2 rounded-xl text-xs font-bold bg-primary hover:bg-primary/90 text-primary-content shadow-xs hover:shadow active:scale-95 transition-all duration-150 cursor-pointer disabled:opacity-50"
+            className="px-6 py-2 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs hover:shadow active:scale-95 transition-all duration-150 cursor-pointer disabled:opacity-50"
           >
-            {submitting ? "Submitting..." : "Submit"}
+            {submitting ? "Submitting..." : "Submit Application"}
           </button>
         </div>
       </div>

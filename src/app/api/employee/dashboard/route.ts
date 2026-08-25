@@ -35,34 +35,42 @@ export async function GET() {
       );
     }
 
-    // 2. Fetch all active leave types from DB (seed defaults if empty)
-    let allLeaveTypes = await prisma.leaveType.findMany({
-      where: { isActive: true },
-      orderBy: { id: "asc" },
+    // 2. Fetch the 5 official Leave Types from Slide 7 (CL, SL, VL, CO, LOP)
+    const allowedCodes = ["CL", "SL", "VL", "CO", "LOP"];
+
+    // Ensure non-standard types like Maternity/Paternity are inactive
+    await prisma.leaveType.updateMany({
+      where: {
+        code: { notIn: allowedCodes },
+      },
+      data: {
+        isActive: false,
+      },
     });
 
-    if (allLeaveTypes.length === 0) {
-      const defaultTypeConfigs = [
-        { name: "Casual Leave", code: "CL", annualAllocation: 12, isPaid: true },
-        { name: "Sick Day", code: "SL", annualAllocation: 10, isPaid: true },
-        { name: "Vacation Leave", code: "VL", annualAllocation: 15, isPaid: true },
-        { name: "Comp Off", code: "CO", annualAllocation: 0, isPaid: true },
-        { name: "Loss Of Pay", code: "LOP", annualAllocation: 0, isPaid: false },
-      ];
+    const defaultTypeConfigs = [
+      { name: "Casual Leave", code: "CL", annualAllocation: 12, isPaid: true },
+      { name: "Sick Day", code: "SL", annualAllocation: 10, isPaid: true },
+      { name: "Comp Off", code: "CO", annualAllocation: 0, isPaid: true },
+      { name: "Loss Of Pay", code: "LOP", annualAllocation: 0, isPaid: false },
+      { name: "Vacation Leave", code: "VL", annualAllocation: 32, isPaid: true },
+    ];
 
-      for (const dt of defaultTypeConfigs) {
-        await prisma.leaveType.upsert({
-          where: { code: dt.code },
-          update: { name: dt.name, annualAllocation: dt.annualAllocation, isPaid: dt.isPaid, isActive: true },
-          create: { name: dt.name, code: dt.code, annualAllocation: dt.annualAllocation, isPaid: dt.isPaid, isActive: true },
-        });
-      }
-
-      allLeaveTypes = await prisma.leaveType.findMany({
-        where: { isActive: true },
-        orderBy: { id: "asc" },
+    for (const dt of defaultTypeConfigs) {
+      await prisma.leaveType.upsert({
+        where: { code: dt.code },
+        update: { name: dt.name, annualAllocation: dt.annualAllocation, isPaid: dt.isPaid, isActive: true },
+        create: { name: dt.name, code: dt.code, annualAllocation: dt.annualAllocation, isPaid: dt.isPaid, isActive: true },
       });
     }
+
+    const allLeaveTypes = await prisma.leaveType.findMany({
+      where: {
+        code: { in: allowedCodes },
+        isActive: true,
+      },
+      orderBy: { id: "asc" },
+    });
 
     let existingBalances = await prisma.leaveBalance.findMany({
       where: { userId, year: currentYear },

@@ -10,15 +10,11 @@ import {
   CalendarCheck2,
   FileSpreadsheet,
   CalendarDays,
-  Clock3,
   Settings,
-  ShieldCheck,
-  Building2,
-  ChevronRight,
-  Network,
   Bell,
+  Sparkles,
 } from "lucide-react";
-import { useSettings } from "@/contexts/SettingsContext";
+import { getSession } from "next-auth/react";
 
 interface AdminSidebarProps {
   pendingCount?: number;
@@ -32,8 +28,22 @@ export default function AdminSidebar({
   onCloseMobile,
 }: AdminSidebarProps) {
   const pathname = usePathname();
-  const { settings } = useSettings();
   const [liveCount, setLiveCount] = useState(pendingCount);
+  const [userName, setUserName] = useState("Admin User");
+  const [userRole, setUserRole] = useState("Administrator");
+  const [userInitial, setUserInitial] = useState("A");
+
+  useEffect(() => {
+    getSession().then((session) => {
+      if (session?.user?.name) {
+        setUserName(session.user.name);
+        setUserInitial(session.user.name.charAt(0).toUpperCase());
+      }
+      if (session?.user?.role) {
+        setUserRole(session.user.role === "ADMIN" ? "Administrator" : session.user.role);
+      }
+    });
+  }, []);
 
   useEffect(() => {
     fetch("/api/admin/leaves?limit=1")
@@ -53,11 +63,11 @@ export default function AdminSidebar({
       name: "Dashboard",
       href: "/admin/dashboard",
       icon: LayoutDashboard,
-      badge: effectiveCount > 0 ? `${effectiveCount}` : null,
+      badge: null,
     },
     {
       name: "My Leave",
-      href: "/admin/my-leaves",
+      href: "/admin/my-leave",
       icon: CalendarCheck,
       badge: null,
     },
@@ -65,12 +75,6 @@ export default function AdminSidebar({
       name: "Employees",
       href: "/admin/employees",
       icon: Users,
-      badge: null,
-    },
-    {
-      name: "Departments",
-      href: "/admin/departments",
-      icon: Network,
       badge: null,
     },
     {
@@ -92,18 +96,6 @@ export default function AdminSidebar({
       badge: null,
     },
     {
-      name: "Attendance",
-      href: "/admin/attendance",
-      icon: Clock3,
-      badge: null,
-    },
-    {
-      name: "Notifications",
-      href: "/admin/notifications",
-      icon: Bell,
-      badge: null,
-    },
-    {
       name: "Settings",
       href: "/admin/settings",
       icon: Settings,
@@ -116,49 +108,51 @@ export default function AdminSidebar({
       {/* Mobile Backdrop */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-40 bg-slate-900/20 backdrop-blur-xs lg:hidden transition-opacity"
+          className="fixed inset-0 z-40 bg-slate-900/30 backdrop-blur-xs lg:hidden transition-opacity"
           onClick={onCloseMobile}
         />
       )}
 
       <aside
-        className={`fixed lg:sticky top-0 left-0 z-50 flex flex-col h-screen w-60 shrink-0 bg-base-100 text-base-content border-r border-base-300 transition-transform duration-200 ease-in-out ${
+        className={`fixed lg:sticky top-0 left-0 z-50 flex flex-col h-screen w-64 shrink-0 bg-white text-slate-800 border-r border-slate-200 shadow-xs transition-transform duration-200 ease-in-out ${
           mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
       >
         {/* Brand Header */}
-        <div className="px-5 py-5 border-b border-base-300 bg-base-100 flex flex-col items-center justify-center gap-2">
+        <div className="px-5 py-5 border-b border-slate-100 bg-white flex items-center justify-center">
           <img src="/logo.png" alt="Embassy of India" className="h-10 w-auto object-contain" />
         </div>
 
-        {/* Menu Navigation - Only Menus (No Submenus) */}
-        <div className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
-          <div className="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-base-content/50">
+        {/* Navigation */}
+        <div className="flex-1 overflow-y-auto px-3.5 py-4 space-y-1.5 scrollbar-thin">
+          <div className="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">
             Navigation
           </div>
 
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive =
-              pathname === item.href ||
-              (item.href !== "/admin/dashboard" &&
-                pathname?.startsWith(item.href));
+              item.href === "/admin/my-leave"
+                ? pathname === "/admin/my-leave" || pathname === "/admin/my-leaves"
+                : item.href === "/admin/dashboard"
+                ? pathname === "/admin/dashboard"
+                : pathname?.startsWith(item.href);
 
             return (
               <Link
                 key={item.name}
                 href={item.href}
                 onClick={onCloseMobile}
-                className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-all duration-150 cursor-pointer active:scale-[0.98] ${
+                className={`group flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-150 cursor-pointer active:scale-[0.98] ${
                   isActive
-                    ? "bg-primary text-primary-content shadow-xs font-semibold"
-                    : "text-base-content/70 hover:text-base-content hover:bg-base-200/80"
+                    ? "bg-slate-900 text-white shadow-xs"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80"
                 }`}
               >
-                <div className="flex items-center gap-2.5">
+                <div className="flex items-center gap-3">
                   <Icon
-                    className={`w-4 h-4 ${
-                      isActive ? "text-primary-content" : "text-base-content/60"
+                    className={`w-4 h-4 transition-colors ${
+                      isActive ? "text-white" : "text-slate-400 group-hover:text-slate-700"
                     }`}
                   />
                   <span>{item.name}</span>
@@ -166,10 +160,10 @@ export default function AdminSidebar({
 
                 {item.badge && (
                   <span
-                    className={`text-[10px] font-bold px-1.5 py-0.2 rounded-full ${
+                    className={`text-[10px] font-bold px-2 py-0.5 rounded-full transition-colors ${
                       isActive
-                        ? "bg-primary-content text-primary"
-                        : "bg-base-200 text-base-content border border-base-300"
+                        ? "bg-white/20 text-white"
+                        : "bg-indigo-50 text-indigo-600 border border-indigo-200"
                     }`}
                   >
                     {item.badge}
@@ -180,23 +174,23 @@ export default function AdminSidebar({
           })}
         </div>
 
-        {/* Admin / Manager User Footer Profile */}
-        <div className="p-3.5 border-t border-base-300 bg-base-100">
+        {/* Admin User Footer Profile */}
+        <div className="p-4 border-t border-slate-100 bg-slate-50/50">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center font-bold text-primary-content text-xs">
-                M
+            <div className="flex items-center gap-3 overflow-hidden">
+              <div className="w-8 h-8 rounded-xl bg-slate-900 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-2xs">
+                {userInitial}
               </div>
               <div className="overflow-hidden">
-                <div className="text-xs font-semibold text-base-content truncate uppercase">
-                  Admin
+                <div className="text-xs font-bold text-slate-900 truncate">
+                  {userName}
                 </div>
-                <div className="flex items-center gap-1 text-[11px] text-base-content/60">
-                  <span>Manager</span>
+                <div className="text-[11px] font-medium text-slate-500 truncate">
+                  {userRole}
                 </div>
               </div>
             </div>
-            <span className="w-2 h-2 rounded-full bg-emerald-500" title="Online" />
+            <div className="w-2 h-2 rounded-full bg-emerald-500 shrink-0 ml-2" title="Online" />
           </div>
         </div>
       </aside>

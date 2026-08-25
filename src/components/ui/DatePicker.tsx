@@ -6,9 +6,8 @@ import {
   ChevronLeft,
   ChevronRight,
   X,
-  Check,
+  RotateCcw,
 } from "lucide-react";
-import { useSettings } from "@/contexts/SettingsContext";
 
 interface DatePickerProps {
   value: string; // "YYYY-MM-DD"
@@ -23,6 +22,7 @@ interface DatePickerProps {
   className?: string;
   error?: string;
   align?: "left" | "right";
+  size?: "xs" | "sm" | "md";
 }
 
 const MONTH_NAMES = [
@@ -42,7 +42,6 @@ const MONTH_NAMES = [
 
 const WEEK_DAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 
-// Helper to convert "YYYY-MM-DD" to Date at midnight
 function parseISODate(dateStr: string): Date | null {
   if (!dateStr) return null;
   const [y, m, d] = dateStr.split("-").map(Number);
@@ -50,7 +49,6 @@ function parseISODate(dateStr: string): Date | null {
   return new Date(y, m - 1, d, 0, 0, 0, 0);
 }
 
-// Helper to format Date to "YYYY-MM-DD"
 function formatToISODate(date: Date): string {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, "0");
@@ -71,20 +69,17 @@ export default function DatePicker({
   className = "",
   error,
   align = "left",
+  size = "xs",
 }: DatePickerProps) {
-  const { formatDate } = useSettings();
-
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Parse initial selected date or default to current date
   const selectedDateObj = parseISODate(value);
   const initialDate = selectedDateObj || parseISODate(minDate || "") || new Date();
 
   const [viewYear, setViewYear] = useState<number>(initialDate.getFullYear());
-  const [viewMonth, setViewMonth] = useState<number>(initialDate.getMonth()); // 0-11
+  const [viewMonth, setViewMonth] = useState<number>(initialDate.getMonth());
 
-  // Update view when value or minDate changes
   useEffect(() => {
     if (value) {
       const parsed = parseISODate(value);
@@ -101,18 +96,31 @@ export default function DatePicker({
     }
   }, [value, minDate]);
 
-  // Click outside listener
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
         setIsOpen(false);
       }
     }
+    function handleScrollOutside(event: Event) {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setIsOpen(false);
+      }
+    }
     if (isOpen) {
       document.addEventListener("mousedown", handleClickOutside);
+      window.addEventListener("scroll", handleScrollOutside, { capture: true, passive: true });
+      document.addEventListener("keydown", handleKeyDown);
     }
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
+      window.removeEventListener("scroll", handleScrollOutside, { capture: true });
+      document.removeEventListener("keydown", handleKeyDown);
     };
   }, [isOpen]);
 
@@ -122,7 +130,6 @@ export default function DatePicker({
   const minDateObj = minDate ? parseISODate(minDate) : null;
   const maxDateObj = maxDate ? parseISODate(maxDate) : null;
 
-  // Month navigation
   const prevMonth = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (viewMonth === 0) {
@@ -143,7 +150,6 @@ export default function DatePicker({
     }
   };
 
-  // Build grid days for viewMonth and viewYear
   const firstDayOfWeek = new Date(viewYear, viewMonth, 1).getDay();
   const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
   const daysInPrevMonth = new Date(viewYear, viewMonth, 0).getDate();
@@ -158,7 +164,6 @@ export default function DatePicker({
     isSunday: boolean;
   }> = [];
 
-  // Trailing previous month days
   for (let i = firstDayOfWeek - 1; i >= 0; i--) {
     const dayNum = daysInPrevMonth - i;
     const date = new Date(viewYear, viewMonth - 1, dayNum, 0, 0, 0, 0);
@@ -173,7 +178,6 @@ export default function DatePicker({
     });
   }
 
-  // Current month days
   for (let dayNum = 1; dayNum <= daysInMonth; dayNum++) {
     const date = new Date(viewYear, viewMonth, dayNum, 0, 0, 0, 0);
     const isToday = date.getTime() === today.getTime();
@@ -202,7 +206,6 @@ export default function DatePicker({
     });
   }
 
-  // Leading next month days
   const remaining = (7 - (daysGrid.length % 7)) % 7;
   for (let dayNum = 1; dayNum <= remaining; dayNum++) {
     const date = new Date(viewYear, viewMonth + 1, dayNum, 0, 0, 0, 0);
@@ -235,12 +238,21 @@ export default function DatePicker({
     setIsOpen(false);
   };
 
-  const displayFormattedText = value ? formatDate(new Date(value)) : placeholder;
+  const formatDisplay = (iso: string) => {
+    if (!iso) return placeholder;
+    const d = parseISODate(iso);
+    if (!d) return iso;
+    return d.toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  };
 
   return (
     <div className={`relative ${className}`} ref={containerRef}>
       {label && (
-        <label className="block text-xs font-semibold text-base-content mb-1.5">
+        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
           {label} {required && <span className="text-rose-500">*</span>}
         </label>
       )}
@@ -250,20 +262,22 @@ export default function DatePicker({
         onClick={() => {
           if (!disabled) setIsOpen(!isOpen);
         }}
-        className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl border text-xs bg-base-100 text-base-content cursor-pointer transition-all select-none ${
+        className={`w-full flex items-center justify-between rounded-xl border text-xs bg-slate-50 text-slate-900 cursor-pointer transition-all select-none shadow-2xs ${
+          size === "xs" ? "px-3 py-1.5" : "px-3.5 py-2"
+        } ${
           disabled
-            ? "bg-base-200 text-base-content/40 border-base-300 cursor-not-allowed"
+            ? "bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed"
             : isOpen
-            ? "border-primary ring-2 ring-primary/20 shadow-xs"
+            ? "border-indigo-500 ring-2 ring-indigo-500/10 bg-white"
             : error
-            ? "border-rose-300 ring-2 ring-rose-500/10"
-            : "border-base-300 hover:border-primary/50"
+            ? "border-rose-300 ring-2 ring-rose-500/10 bg-white"
+            : "border-slate-200 hover:border-indigo-300 hover:bg-white"
         }`}
       >
-        <div className="flex items-center gap-2.5 overflow-hidden">
-          <CalendarIcon className="w-4 h-4 text-base-content/50 shrink-0" />
-          <span className={`truncate ${value ? "text-base-content font-semibold" : "text-base-content/40"}`}>
-            {displayFormattedText}
+        <div className="flex items-center gap-2 overflow-hidden">
+          <CalendarIcon className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+          <span className={`truncate ${value ? "text-slate-900 font-semibold" : "text-slate-400"}`}>
+            {formatDisplay(value)}
           </span>
         </div>
 
@@ -274,55 +288,55 @@ export default function DatePicker({
                 e.stopPropagation();
                 onChange("");
               }}
-              className="p-1 text-base-content/40 hover:text-base-content rounded-md transition-colors"
+              className="p-0.5 text-slate-400 hover:text-slate-600 rounded transition-colors"
               title="Clear date"
             >
-              <X className="w-3.5 h-3.5" />
+              <X className="w-3 h-3" />
             </span>
           )}
         </div>
       </div>
 
-      {error && <p className="text-[11px] text-rose-500 mt-1">{error}</p>}
+      {error && <p className="text-[10px] text-rose-500 mt-1">{error}</p>}
 
-      {/* Formal Calendar Popup */}
+      {/* Modern Popover Calendar */}
       {isOpen && (
         <div
-          className={`absolute top-full mt-1.5 z-[70] w-72 bg-base-100 text-base-content rounded-2xl border border-base-300 shadow-2xl p-3.5 animate-in fade-in zoom-in-95 duration-100 ${
+          className={`absolute top-full mt-1.5 z-[100] w-72 bg-white rounded-2xl border border-slate-200 shadow-xl p-3.5 animate-in fade-in zoom-in-95 duration-150 ${
             align === "right" ? "right-0" : "left-0"
           }`}
         >
           {/* Header Month / Year controls */}
-          <div className="flex items-center justify-between mb-3 pb-2 border-b border-base-300">
+          <div className="flex items-center justify-between mb-2.5 pb-2 border-b border-slate-100">
             <button
               type="button"
               onClick={prevMonth}
-              className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-base-200 text-base-content transition-colors cursor-pointer"
+              className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-600 transition-colors cursor-pointer"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
 
-            <div className="text-xs font-bold text-base-content flex items-center gap-1.5">
+            <div className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
               <span>{MONTH_NAMES[viewMonth]}</span>
-              <span className="text-base-content/60">{viewYear}</span>
+              <span className="text-slate-400 font-medium">{viewYear}</span>
             </div>
 
             <button
               type="button"
               onClick={nextMonth}
-              className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-base-200 text-base-content transition-colors cursor-pointer"
+              className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-600 transition-colors cursor-pointer"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
 
           {/* Weekday Headers */}
-          <div className="grid grid-cols-7 mb-1.5 text-center">
+          <div className="grid grid-cols-7 mb-1 text-center">
             {WEEK_DAYS.map((day, idx) => (
               <div
                 key={day}
                 className={`text-[10px] font-bold py-1 ${
-                  idx === 0 || idx === 6 ? "text-base-content/40" : "text-base-content/70"
+                  idx === 0 || idx === 6 ? "text-slate-300" : "text-slate-400"
                 }`}
               >
                 {day}
@@ -344,23 +358,16 @@ export default function DatePicker({
                   type="button"
                   disabled={isCellDisabled}
                   onClick={() => handleSelectDate(cell.date, isCellDisabled)}
-                  title={
-                    disableSundays && isSunday
-                      ? "Sundays are weekly off days (applications not allowed)"
-                      : undefined
-                  }
-                  className={`h-8 w-8 text-xs font-medium rounded-lg flex items-center justify-center transition-all ${
+                  className={`h-8 w-8 text-xs font-medium rounded-lg flex items-center justify-center transition-all cursor-pointer ${
                     isCellSelected
-                      ? "bg-primary text-primary-content font-bold shadow-2xs cursor-pointer"
+                      ? "bg-indigo-600 text-white font-bold shadow-2xs"
                       : isCellDisabled
-                      ? disableSundays && isSunday
-                        ? "text-base-content/20 bg-base-200/60 cursor-not-allowed pointer-events-none opacity-40"
-                        : "text-base-content/20 bg-base-200/40 cursor-not-allowed pointer-events-none"
+                      ? "text-slate-300 bg-slate-50/50 cursor-not-allowed pointer-events-none opacity-40"
                       : isCellToday
-                      ? "border border-primary text-primary font-bold hover:bg-base-200 cursor-pointer"
+                      ? "border border-indigo-600 text-indigo-700 font-bold bg-indigo-50/50 hover:bg-indigo-100/60"
                       : isSunday
-                      ? "text-rose-500 hover:bg-rose-500/10 cursor-pointer font-semibold"
-                      : "text-base-content hover:bg-base-200 cursor-pointer"
+                      ? "text-rose-500 hover:bg-rose-50 font-semibold"
+                      : "text-slate-700 hover:bg-slate-100 hover:text-slate-900"
                   }`}
                 >
                   {cell.dayNum}
@@ -370,12 +377,12 @@ export default function DatePicker({
           </div>
 
           {/* Footer with Today Shortcut */}
-          <div className="mt-3 pt-2.5 border-t border-base-300 flex items-center justify-between text-[11px]">
+          <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs">
             <button
               type="button"
               onClick={handleQuickToday}
               disabled={Boolean(minDateObj && today.getTime() < minDateObj.getTime())}
-              className="text-primary hover:opacity-80 font-bold disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+              className="text-indigo-600 hover:text-indigo-700 font-bold disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
             >
               Today
             </button>
@@ -383,7 +390,7 @@ export default function DatePicker({
             <button
               type="button"
               onClick={() => setIsOpen(false)}
-              className="text-base-content/60 hover:text-base-content font-medium cursor-pointer"
+              className="text-slate-400 hover:text-slate-700 font-medium cursor-pointer"
             >
               Close
             </button>

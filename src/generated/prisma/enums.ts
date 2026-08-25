@@ -20,8 +20,10 @@ export type Role = (typeof Role)[keyof typeof Role]
 
 
 export const LeaveStatus = {
+  PENDING: 'PENDING',
   PENDING_TL: 'PENDING_TL',
   PENDING_ADMIN: 'PENDING_ADMIN',
+  ESCALATED: 'ESCALATED',
   APPROVED: 'APPROVED',
   REJECTED: 'REJECTED',
   CANCELLED: 'CANCELLED'

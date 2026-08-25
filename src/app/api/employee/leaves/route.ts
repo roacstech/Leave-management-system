@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
 
     // 1. Role-specific routing validation
     let assignedTL: { id: number; name: string; email: string } | null = null;
-    let initialStatus: "PENDING_TL" | "PENDING_ADMIN" = "PENDING_TL";
+    let initialStatus: "PENDING_TL" | "PENDING_ADMIN" = "PENDING_ADMIN";
 
     if (userRole === "EMPLOYEE") {
       const tlResolution = await resolveEmployeeTeamLead(userId);
@@ -44,15 +44,18 @@ export async function POST(request: NextRequest) {
         assignedTL = tlResolution.tl;
         initialStatus = "PENDING_TL";
       } else {
-        // Route directly to Admin if no TL is assigned
+        // Route directly to Admin/CEO if no TL is assigned
         initialStatus = "PENDING_ADMIN";
       }
     } else if (userRole === "TL") {
-      // Manager/TL leave routes directly to Admin
+      // Manager/TL leave routes directly to Admin/CEO
+      initialStatus = "PENDING_ADMIN";
+    } else if (userRole === "ADMIN") {
+      // Admin leave MUST route to CEO for approval!
       initialStatus = "PENDING_ADMIN";
     } else {
-      // Admin / Executive leaves auto-approved or recorded
-      initialStatus = "APPROVED";
+      // CEO/Executive leaves
+      initialStatus = "PENDING_ADMIN";
     }
 
     const start = new Date(startDate);
@@ -213,6 +216,37 @@ export async function POST(request: NextRequest) {
           recipients: adminEmails,
           settings,
         }).catch((err) => console.error("Error sending TL leave applied email:", err));
+      }
+    } else if (userRole === "ADMIN") {
+      // Admin leave -> Notify CEO directly
+      const ceos = await prisma.user.findMany({
+        where: { role: "CEO", isActive: true },
+        select: { id: true, email: true },
+      });
+      for (const ceo of ceos) {
+        await createNotification({
+          userId: ceo.id,
+          type: "LEAVE_REQUEST",
+          title: "New Admin Leave Request",
+          message: `Administrator ${newRequest.user.name} submitted a ${newRequest.leaveType.name} request (${formattedStart} - ${formattedEnd}) requiring your executive approval.`,
+          entityType: "LEAVE_REQUEST",
+          entityId: newRequest.id,
+        });
+      }
+
+      const ceoEmails = ceos.map((c) => c.email).filter(Boolean);
+      if (ceoEmails.length > 0) {
+        sendLeaveAppliedEmail({
+          applicantName: newRequest.user.name,
+          applicantEmail: newRequest.user.email,
+          leaveType: newRequest.leaveType.name,
+          startDate: formattedStart,
+          endDate: formattedEnd,
+          days: requestedDays,
+          reason: newRequest.reason,
+          recipients: ceoEmails,
+          settings,
+        }).catch((err) => console.error("Error sending Admin leave applied email to CEO:", err));
       }
     }
 

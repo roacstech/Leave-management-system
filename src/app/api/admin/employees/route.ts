@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
       ];
     }
 
-    const [total, employees, teams, teamLeads, activeCount, inactiveCount] =
+    const [total, employees, teams, teamLeads, roles, activeCount, inactiveCount] =
       await Promise.all([
         prisma.user.count({ where: whereClause }),
         prisma.user.findMany({
@@ -92,6 +92,12 @@ export async function GET(request: NextRequest) {
           select: {
             id: true,
             name: true,
+            description: true,
+            _count: {
+              select: {
+                users: true,
+              },
+            },
           },
           orderBy: {
             name: "asc",
@@ -109,6 +115,20 @@ export async function GET(request: NextRequest) {
             name: "asc",
           },
         }),
+        prisma.roleDefinition.findMany({
+          where: { isActive: true },
+          select: {
+            id: true,
+            name: true,
+            code: true,
+            accessLevel: true,
+            isSystem: true,
+            description: true,
+          },
+          orderBy: {
+            name: "asc",
+          },
+        }),
         prisma.user.count({ where: { isActive: true } }),
         prisma.user.count({ where: { isActive: false } }),
       ]);
@@ -120,6 +140,7 @@ export async function GET(request: NextRequest) {
       employees,
       teams,
       teamLeads,
+      roles,
       pagination: {
         total,
         page,
@@ -153,13 +174,33 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Role-specific validation: Employee MUST report to a specific TL
-    if (role === "EMPLOYEE") {
+    // Resolve user role from enum or RoleDefinition
+    let userRole = role;
+    if (!["EMPLOYEE", "TL", "ADMIN", "CEO"].includes(userRole)) {
+      const roleDef = await prisma.roleDefinition.findFirst({
+        where: { OR: [{ code: role }, { name: role }] },
+      });
+      if (roleDef) {
+        userRole =
+          roleDef.accessLevel === "EXECUTIVE"
+            ? "CEO"
+            : roleDef.accessLevel === "ADMIN"
+            ? "ADMIN"
+            : roleDef.accessLevel === "LEAD" || roleDef.accessLevel === "MANAGEMENT"
+            ? "TL"
+            : "EMPLOYEE";
+      } else {
+        userRole = "EMPLOYEE";
+      }
+    }
+
+    // Role-specific validation: Employee MUST report to a specific Manager
+    if (userRole === "EMPLOYEE") {
       if (!reportingToId) {
         return NextResponse.json(
           {
             success: false,
-            error: "Please assign a Reporting Team Leader (TL) for this employee.",
+            error: "Please assign a Reporting Manager for this employee.",
           },
           { status: 400 }
         );
@@ -183,10 +224,10 @@ export async function POST(request: NextRequest) {
         name: name.trim(),
         email: email.trim().toLowerCase(),
         password: password.trim(),
-        role: role as any,
+        role: userRole as any,
         teamId: teamId ? Number(teamId) : null,
         reportingToId:
-          role === "EMPLOYEE" && reportingToId ? Number(reportingToId) : null,
+          userRole === "EMPLOYEE" && reportingToId ? Number(reportingToId) : null,
         isActive: isActive !== undefined ? Boolean(isActive) : true,
       },
       include: {
@@ -274,18 +315,40 @@ export async function PATCH(request: NextRequest) {
     const updateData: any = {};
     if (name !== undefined) updateData.name = name.trim();
     if (email !== undefined) updateData.email = email.trim().toLowerCase();
-    if (role !== undefined) updateData.role = role;
+    
+    let userRole = role;
+    if (role !== undefined) {
+      if (!["EMPLOYEE", "TL", "ADMIN", "CEO"].includes(role)) {
+        const roleDef = await prisma.roleDefinition.findFirst({
+          where: { OR: [{ code: role }, { name: role }] },
+        });
+        if (roleDef) {
+          userRole =
+            roleDef.accessLevel === "EXECUTIVE"
+              ? "CEO"
+              : roleDef.accessLevel === "ADMIN"
+              ? "ADMIN"
+              : roleDef.accessLevel === "LEAD" || roleDef.accessLevel === "MANAGEMENT"
+              ? "TL"
+              : "EMPLOYEE";
+        } else {
+          userRole = "EMPLOYEE";
+        }
+      }
+      updateData.role = userRole;
+    }
+
     if (teamId !== undefined) updateData.teamId = teamId ? Number(teamId) : null;
     if (isActive !== undefined) updateData.isActive = Boolean(isActive);
     if (password) updateData.password = password.trim();
 
-    if (role !== undefined) {
-      if (role === "EMPLOYEE") {
+    if (userRole !== undefined) {
+      if (userRole === "EMPLOYEE") {
         if (reportingToId !== undefined) {
           updateData.reportingToId = reportingToId ? Number(reportingToId) : null;
         }
       } else {
-        // Admin or TL does not have a reporting TL
+        // Admin or Manager does not have a reporting manager
         updateData.reportingToId = null;
       }
     } else if (reportingToId !== undefined) {

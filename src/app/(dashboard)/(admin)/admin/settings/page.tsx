@@ -18,9 +18,7 @@ import {
   Square,
   Mail,
   Send,
-  Palette,
 } from "lucide-react";
-import ThemeSelector from "@/components/theme/ThemeSelector";
 import {
   SystemSettingsData,
   DEFAULT_SYSTEM_SETTINGS,
@@ -32,8 +30,7 @@ type TabType =
   | "organization"
   | "attendance"
   | "leave"
-  | "notifications"
-  | "themes";
+  | "notifications";
 
 const TIMEZONE_OPTIONS = [
   { value: "Asia/Kolkata", label: "Asia/Kolkata (IST, UTC+5:30)" },
@@ -522,14 +519,14 @@ export default function AdminSettingsPage() {
         </div>
 
         {/* 4 Tabs */}
-        <div className="flex items-center gap-2 mt-6 p-1.5 bg-base-200 rounded-xl border border-base-300 overflow-x-auto">
+        <div className="flex items-center gap-2 mt-6 p-1.5 bg-slate-100 rounded-xl border border-slate-200 overflow-x-auto">
           <button
             type="button"
             onClick={() => setActiveTab("organization")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-colors whitespace-nowrap cursor-pointer ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
               activeTab === "organization"
-                ? "bg-primary text-primary-content shadow-xs"
-                : "text-base-content/70 hover:text-base-content hover:bg-base-300/50"
+                ? "bg-indigo-600 text-white shadow-2xs"
+                : "text-slate-600 hover:text-slate-900 hover:bg-white/60"
             }`}
           >
             <Building2 className="w-3.5 h-3.5" />
@@ -539,10 +536,10 @@ export default function AdminSettingsPage() {
           <button
             type="button"
             onClick={() => setActiveTab("attendance")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-colors whitespace-nowrap cursor-pointer ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
               activeTab === "attendance"
-                ? "bg-primary text-primary-content shadow-xs"
-                : "text-base-content/70 hover:text-base-content hover:bg-base-300/50"
+                ? "bg-indigo-600 text-white shadow-2xs"
+                : "text-slate-600 hover:text-slate-900 hover:bg-white/60"
             }`}
           >
             <Clock3 className="w-3.5 h-3.5" />
@@ -552,10 +549,10 @@ export default function AdminSettingsPage() {
           <button
             type="button"
             onClick={() => setActiveTab("leave")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-colors whitespace-nowrap cursor-pointer ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
               activeTab === "leave"
-                ? "bg-primary text-primary-content shadow-xs"
-                : "text-base-content/70 hover:text-base-content hover:bg-base-300/50"
+                ? "bg-indigo-600 text-white shadow-2xs"
+                : "text-slate-600 hover:text-slate-900 hover:bg-white/60"
             }`}
           >
             <CalendarCheck2 className="w-3.5 h-3.5" />
@@ -565,27 +562,14 @@ export default function AdminSettingsPage() {
           <button
             type="button"
             onClick={() => setActiveTab("notifications")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-colors whitespace-nowrap cursor-pointer ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
               activeTab === "notifications"
-                ? "bg-primary text-primary-content shadow-xs"
-                : "text-base-content/70 hover:text-base-content hover:bg-base-300/50"
+                ? "bg-indigo-600 text-white shadow-2xs"
+                : "text-slate-600 hover:text-slate-900 hover:bg-white/60"
             }`}
           >
             <Bell className="w-3.5 h-3.5" />
             Notifications
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab("themes")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-colors whitespace-nowrap cursor-pointer ${
-              activeTab === "themes"
-                ? "bg-primary text-primary-content shadow-xs"
-                : "text-base-content/70 hover:text-base-content hover:bg-base-300/50"
-            }`}
-          >
-            <Palette className="w-3.5 h-3.5" />
-            Themes & Appearance
           </button>
         </div>
       </div>
@@ -1366,13 +1350,6 @@ export default function AdminSettingsPage() {
                 )}
               </div>
             </form>
-          )}
-
-          {/* ─── 5. Themes & Appearance Tab ──────────────────────────────── */}
-          {activeTab === "themes" && (
-            <div className="p-6 sm:p-8">
-              <ThemeSelector />
-            </div>
           )}
         </div>
       )}

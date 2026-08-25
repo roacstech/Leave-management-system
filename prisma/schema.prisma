@@ -50,7 +50,7 @@ model User {
 model Team {
   id          Int      @id @default(autoincrement())
   name        String   @unique
-  description String?
+  description String?  @db.Text
   tlId        Int?
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
@@ -66,7 +66,7 @@ model LeaveType {
   id                  Int            @id @default(autoincrement())
   name                String         @unique
   code                String         @unique
-  description         String?
+  description         String?        @db.Text
   category            String         @default("Annual")
   annualAllocation    Float          @default(0)
   isPaid              Boolean        @default(true)
@@ -89,8 +89,8 @@ model RoleDefinition {
   id          Int      @id @default(autoincrement())
   name        String   @unique
   code        String   @unique
-  description String?
-  permissions String?  @default("VIEW_DASHBOARD,APPLY_LEAVE")
+  description String?  @db.Text
+  permissions String?  @db.Text
   accessLevel String   @default("STANDARD")
   isSystem    Boolean  @default(false)
   isActive    Boolean  @default(true)
@@ -123,8 +123,10 @@ model LeaveBalance {
 //-----Leave status and request
 
 enum LeaveStatus {
+  PENDING
   PENDING_TL
   PENDING_ADMIN
+  ESCALATED
   APPROVED
   REJECTED
   CANCELLED
@@ -136,12 +138,12 @@ model LeaveRequest {
   leaveTypeId      Int
   startDate        DateTime
   endDate          DateTime
-  reason           String?
+  reason           String?     @db.Text
   status           LeaveStatus @default(PENDING_TL)
-  rejectionReason  String?
+  rejectionReason  String?     @db.Text
   escalatedById    Int?
   escalatedAt      DateTime?
-  escalationReason String?
+  escalationReason String?     @db.Text
   approverId       Int?
   approverRole     String?
   approvedAt       DateTime?
@@ -182,7 +184,7 @@ model Holiday {
   date        DateTime?
   fromDate    DateTime?
   toDate      DateTime?
-  description String?
+  description String?   @db.Text
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 }
@@ -200,7 +202,7 @@ model Notification {
   id         Int              @id @default(autoincrement())
   userId     Int
   title      String
-  message    String
+  message    String           @db.Text
   type       NotificationType @default(SYSTEM)
   entityType String?          @default("LEAVE_REQUEST")
   entityId   Int?
@@ -274,9 +276,9 @@ model OvertimeRecord {
   date             DateTime
   hours            Float
   type             String   // "WEEKDAY_OT" | "WEEKEND_OT" | "HOLIDAY_OT"
-  reason           String?
+  reason           String?  @db.Text
   status           String   @default("PENDING") // "PENDING" | "APPROVED" | "REJECTED"
-  rejectionReason  String?
+  rejectionReason  String?  @db.Text
   claimCompOff     Boolean  @default(false)
   compOffDays      Float    @default(0) // 0.5 (4-7.9h) or 1.0 (8h+)
   extraOtHours     Float    @default(0) // hours beyond 8.0 on holiday/weekend

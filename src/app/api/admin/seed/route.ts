@@ -17,21 +17,31 @@ export async function POST() {
       });
     }
 
-    // 2. Create Leave Types
+    // 2. Create Leave Types (Exact 5 types from Slide 7)
     const leaveTypeConfigs = [
-      { name: "Annual Leave", code: "AL", description: "Paid vacation leave" },
-      { name: "Casual Leave", code: "CL", description: "Emergency and personal casual leave" },
-      { name: "Sick Leave", code: "SL", description: "Medical and health related leave" },
-      { name: "Maternity/Paternity", code: "MPL", description: "Parental family support leave" },
-      { name: "Compensatory Off", code: "COMP", description: "Earned compensatory off days" },
+      { name: "Casual Leave", code: "CL", description: "Casual and personal leave" },
+      { name: "Sick Day", code: "SL", description: "Medical and health related sick leave" },
+      { name: "Comp Off", code: "CO", description: "Earned compensatory off days" },
+      { name: "Loss Of Pay", code: "LOP", description: "Unpaid leave of absence" },
+      { name: "Vacation Leave", code: "VL", description: "Paid vacation and annual leave" },
     ];
+
+    // Deactivate non-standard types like Maternity/Paternity
+    await prisma.leaveType.updateMany({
+      where: {
+        code: { notIn: ["CL", "SL", "CO", "LOP", "VL"] },
+      },
+      data: {
+        isActive: false,
+      },
+    });
 
     const leaveTypes: { [key: string]: any } = {};
     for (const lt of leaveTypeConfigs) {
       leaveTypes[lt.code] = await prisma.leaveType.upsert({
         where: { code: lt.code },
-        update: { name: lt.name, description: lt.description },
-        create: { name: lt.name, code: lt.code, description: lt.description },
+        update: { name: lt.name, description: lt.description, isActive: true },
+        create: { name: lt.name, code: lt.code, description: lt.description, isActive: true },
       });
     }
 
