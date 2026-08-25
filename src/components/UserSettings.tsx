@@ -88,9 +88,9 @@ export default function UserSettings() {
   return (
     <div className="space-y-6">
       {/* 1. PAGE HEADER */}
-      <div className="bg-base-100 p-5 rounded-2xl border border-base-300 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="bg-white p-5 rounded-2xl shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold text-base-content tracking-tight">
+          <h1 className="text-xl font-bold text-slate-900 tracking-tight">
             Settings & Preferences
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">

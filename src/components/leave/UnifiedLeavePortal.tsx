@@ -198,7 +198,7 @@ export default function UnifiedLeavePortal({
   };
 
   return (
-    <div className="w-full space-y-5 pb-16 animate-in fade-in duration-200">
+    <div className="w-full space-y-5 animate-in fade-in duration-200">
       {/* 1. Page Header */}
       <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -238,10 +238,10 @@ export default function UnifiedLeavePortal({
       </div>
 
       {/* 2. Main 2-Column Content Grid: Left Side Leave Balances + Right Side Filters & History Table */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
         {/* Left Column (3.5 / 12 cols): CLEAN LIST OF LEAVE TYPES (TOTAL & USED LEAVE) */}
-        <div className="lg:col-span-4 xl:col-span-3 space-y-4">
-          <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 shadow-2xs space-y-3">
+        <div className="lg:col-span-4 xl:col-span-3">
+          <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 shadow-2xs space-y-3 h-full flex flex-col justify-between">
             {/* Clean Header without distracting badge */}
             <div className="pb-2.5 border-b border-slate-100">
               <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center gap-2">
@@ -327,7 +327,7 @@ export default function UnifiedLeavePortal({
         </div>
 
         {/* Right Column (8.5 / 12 cols): SEARCH, FILTERS & APPLICATION HISTORY TABLE */}
-        <div className="lg:col-span-8 xl:col-span-9 space-y-4">
+        <div className="lg:col-span-8 xl:col-span-9 flex flex-col justify-between space-y-4">
           {/* 3. Search & Filter Bar */}
           <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-2xs space-y-4">
             <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
@@ -443,47 +443,48 @@ export default function UnifiedLeavePortal({
           </div>
 
           {/* 4. Full-Width Leave History Table */}
-          <div className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs overflow-hidden">
-            <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between">
-              <div>
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">
-                  Application History & Records
-                </h3>
-                <p className="text-[11px] text-slate-500 mt-0.5">
-                  Chronological log of submitted leave requests and approval status.
-                </p>
+          <div className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs overflow-hidden flex-1 flex flex-col justify-between">
+            <div>
+              <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between">
+                <div>
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">
+                    Application History & Records
+                  </h3>
+                  <p className="text-[11px] text-slate-500 mt-0.5">
+                    Chronological log of submitted leave requests and approval status.
+                  </p>
+                </div>
+                <span className="text-xs font-bold text-slate-500 px-2.5 py-0.5 rounded-full bg-slate-100 border border-slate-200">
+                  {filteredList.length} request{filteredList.length === 1 ? "" : "s"}
+                </span>
               </div>
-              <span className="text-xs font-bold text-slate-500 px-2.5 py-0.5 rounded-full bg-slate-100 border border-slate-200">
-                {filteredList.length} request{filteredList.length === 1 ? "" : "s"}
-              </span>
-            </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-slate-50/70 text-slate-500 text-[11px] uppercase font-bold tracking-wider border-b border-slate-200">
-                    <th className="py-3.5 px-4 sm:px-5">Leave Type</th>
-                    <th className="py-3.5 px-4">Period / Duration</th>
-                    <th className="py-3.5 px-3 text-center">Days</th>
-                    <th className="py-3.5 px-4">Reason / Notes</th>
-                    <th className="py-3.5 px-3 text-center">Status</th>
-                    <th className="py-3.5 px-4 sm:px-5 text-right">Details</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 text-xs">
-                  {filteredList.length === 0 ? (
-                    <tr>
-                      <td colSpan={6} className="text-center py-14 text-slate-400">
-                        <div className="w-10 h-10 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center mx-auto mb-2 text-slate-400">
-                          <Layers className="w-5 h-5" />
-                        </div>
-                        <p className="font-bold text-xs text-slate-800">No leave records found</p>
-                        <p className="text-[11px] text-slate-400 mt-0.5">
-                          Try adjusting your search criteria or submit a new leave application.
-                        </p>
-                      </td>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-slate-50/70 text-slate-500 text-[11px] uppercase font-bold tracking-wider border-b border-slate-200">
+                      <th className="py-3.5 px-4 sm:px-5">Leave Type</th>
+                      <th className="py-3.5 px-4">Period / Duration</th>
+                      <th className="py-3.5 px-3 text-center">Days</th>
+                      <th className="py-3.5 px-4">Reason / Notes</th>
+                      <th className="py-3.5 px-3 text-center">Status</th>
+                      <th className="py-3.5 px-4 sm:px-5 text-right">Details</th>
                     </tr>
-                  ) : (
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 text-xs">
+                    {filteredList.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="text-center py-24 text-slate-400">
+                          <div className="w-10 h-10 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center mx-auto mb-2 text-slate-400">
+                            <Layers className="w-5 h-5" />
+                          </div>
+                          <p className="font-bold text-xs text-slate-800">No leave records found</p>
+                          <p className="text-[11px] text-slate-400 mt-0.5">
+                            Try adjusting your search criteria or submit a new leave application.
+                          </p>
+                        </td>
+                      </tr>
+                    ) : (
                     filteredList.map((item) => {
                       const theme = getLeaveTheme(item.leaveType);
                       return (
@@ -554,6 +555,7 @@ export default function UnifiedLeavePortal({
             </div>
           </div>
         </div>
+      </div>
       </div>
 
       {/* Apply Leave Drawer */}

@@ -114,12 +114,12 @@ export default function AdminSidebar({
       )}
 
       <aside
-        className={`fixed lg:sticky top-0 left-0 z-50 flex flex-col h-screen w-64 shrink-0 bg-white text-slate-800 border-r border-slate-200 shadow-xs transition-transform duration-200 ease-in-out ${
+        className={`fixed lg:sticky top-0 left-0 z-50 flex flex-col h-screen w-64 shrink-0 bg-white text-slate-800 transition-transform duration-200 ease-in-out ${
           mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
       >
         {/* Brand Header */}
-        <div className="px-5 py-5 border-b border-slate-100 bg-white flex items-center justify-center">
+        <div className="px-5 py-5 bg-white flex items-center justify-center">
           <img src="/logo.png" alt="Embassy of India" className="h-10 w-auto object-contain" />
         </div>
 
@@ -145,7 +145,7 @@ export default function AdminSidebar({
                 onClick={onCloseMobile}
                 className={`group flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-150 cursor-pointer active:scale-[0.98] ${
                   isActive
-                    ? "bg-slate-900 text-white shadow-xs"
+                    ? "bg-indigo-600 text-white shadow-sm font-semibold"
                     : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80"
                 }`}
               >
@@ -163,7 +163,7 @@ export default function AdminSidebar({
                     className={`text-[10px] font-bold px-2 py-0.5 rounded-full transition-colors ${
                       isActive
                         ? "bg-white/20 text-white"
-                        : "bg-indigo-50 text-indigo-600 border border-indigo-200"
+                        : "bg-indigo-50 text-indigo-600"
                     }`}
                   >
                     {item.badge}
@@ -175,10 +175,10 @@ export default function AdminSidebar({
         </div>
 
         {/* Admin User Footer Profile */}
-        <div className="p-4 border-t border-slate-100 bg-slate-50/50">
-          <div className="flex items-center justify-between">
+        <div className="p-4 bg-white">
+          <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50">
             <div className="flex items-center gap-3 overflow-hidden">
-              <div className="w-8 h-8 rounded-xl bg-slate-900 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-2xs">
+              <div className="w-8 h-8 rounded-xl bg-indigo-600 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-2xs">
                 {userInitial}
               </div>
               <div className="overflow-hidden">

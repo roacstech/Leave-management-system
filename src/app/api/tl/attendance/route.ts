@@ -20,6 +20,12 @@ export async function GET(request: NextRequest) {
     const dateParam = searchParams.get("date"); // YYYY-MM-DD
     const search = searchParams.get("search")?.trim().toLowerCase() || "";
     const statusFilter = searchParams.get("status") || "ALL";
+    const pageParam = parseInt(searchParams.get("page") || "1", 10);
+    const limitParam = parseInt(searchParams.get("limit") || "10", 10);
+
+    const page = isNaN(pageParam) || pageParam < 1 ? 1 : pageParam;
+    const limit = isNaN(limitParam) || limitParam < 1 ? 10 : limitParam;
+    const skip = (page - 1) * limit;
 
     // 1. Fetch TL profile
     const tlUser = await prisma.user.findUnique({
@@ -218,6 +224,9 @@ export async function GET(request: NextRequest) {
     const totalCount = teamEmployees.length;
     const checkedInCount = presentCount + lateCount + halfDayCount;
     const attendanceRate = totalCount > 0 ? Math.round((checkedInCount / totalCount) * 100) : 0;
+    const totalFiltered = filteredRecords.length;
+    const totalPages = Math.ceil(totalFiltered / limit) || 1;
+    const paginatedRecords = filteredRecords.slice(skip, skip + limit);
 
     return NextResponse.json({
       success: true,
@@ -233,7 +242,13 @@ export async function GET(request: NextRequest) {
         notMarked: notMarkedCount,
         attendanceRate,
       },
-      records: filteredRecords,
+      pagination: {
+        page,
+        limit,
+        total: totalFiltered,
+        totalPages,
+      },
+      records: paginatedRecords,
     });
   } catch (error: any) {
     console.error("Fetch TL team attendance error:", error);

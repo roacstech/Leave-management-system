@@ -19,6 +19,12 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const search = searchParams.get("search")?.trim().toLowerCase() || "";
     const statusFilter = searchParams.get("status") || "ALL"; // ALL | ACTIVE | INACTIVE | ON_LEAVE
+    const pageParam = parseInt(searchParams.get("page") || "1", 10);
+    const limitParam = parseInt(searchParams.get("limit") || "10", 10);
+
+    const page = isNaN(pageParam) || pageParam < 1 ? 1 : pageParam;
+    const limit = isNaN(limitParam) || limitParam < 1 ? 10 : limitParam;
+    const skip = (page - 1) * limit;
 
     // 1. Fetch TL profile
     const tlUser = await prisma.user.findUnique({
@@ -48,6 +54,14 @@ export async function GET(request: NextRequest) {
       whereClause.isActive = true;
     } else if (statusFilter === "INACTIVE") {
       whereClause.isActive = false;
+    } else if (statusFilter === "ON_LEAVE") {
+      whereClause.leaveRequests = {
+        some: {
+          status: "APPROVED",
+          startDate: { lte: endOfToday },
+          endDate: { gte: startOfToday },
+        },
+      };
     }
 
     if (search) {
@@ -57,7 +71,27 @@ export async function GET(request: NextRequest) {
       ];
     }
 
-    // 3. Fetch team members with leave balances and current attendance
+    // 3. Count total and summary counts for tabs
+    const [totalFiltered, totalMembers, activeMembers, onLeaveToday] = await Promise.all([
+      prisma.user.count({ where: whereClause }),
+      prisma.user.count({ where: { role: "EMPLOYEE", reportingToId: tlId } }),
+      prisma.user.count({ where: { role: "EMPLOYEE", reportingToId: tlId, isActive: true } }),
+      prisma.user.count({
+        where: {
+          role: "EMPLOYEE",
+          reportingToId: tlId,
+          leaveRequests: {
+            some: {
+              status: "APPROVED",
+              startDate: { lte: endOfToday },
+              endDate: { gte: startOfToday },
+            },
+          },
+        },
+      }),
+    ]);
+
+    // 4. Fetch paginated team members with leave balances and current attendance
     const members = await prisma.user.findMany({
       where: whereClause,
       include: {
@@ -109,26 +143,31 @@ export async function GET(request: NextRequest) {
       orderBy: {
         name: "asc",
       },
+      skip,
+      take: limit,
     });
 
-    // 4. Check active leaves today for all fetched members
+    // 5. Check active leaves today for all fetched members
     const memberIds = members.map((m) => m.id);
-    const activeLeavesToday = await prisma.leaveRequest.findMany({
-      where: {
-        userId: { in: memberIds },
-        status: "APPROVED",
-        startDate: { lte: endOfToday },
-        endDate: { gte: startOfToday },
-      },
-      include: {
-        leaveType: {
-          select: {
-            name: true,
-            code: true,
-          },
-        },
-      },
-    });
+    const activeLeavesToday =
+      memberIds.length > 0
+        ? await prisma.leaveRequest.findMany({
+            where: {
+              userId: { in: memberIds },
+              status: "APPROVED",
+              startDate: { lte: endOfToday },
+              endDate: { gte: startOfToday },
+            },
+            include: {
+              leaveType: {
+                select: {
+                  name: true,
+                  code: true,
+                },
+              },
+            },
+          })
+        : [];
 
     const onLeaveUserIds = new Set(activeLeavesToday.map((l) => l.userId));
 
@@ -183,36 +222,23 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    // Filter by ON_LEAVE status if requested
-    const filteredMembers =
-      statusFilter === "ON_LEAVE"
-        ? enrichedMembers.filter((m) => m.isOnLeave)
-        : enrichedMembers;
-
-    // 5. Summary statistics
-    const totalMembersCount = enrichedMembers.length;
-    const activeMembersCount = enrichedMembers.filter((m) => m.isActive).length;
-    const onLeaveCount = enrichedMembers.filter((m) => m.isOnLeave).length;
-
-    let cumulativeTotalDays = 0;
-    let cumulativeRemainingDays = 0;
-
-    enrichedMembers.forEach((m) => {
-      cumulativeTotalDays += m.balanceSummary.total;
-      cumulativeRemainingDays += m.balanceSummary.remaining;
-    });
+    const totalPages = Math.ceil(totalFiltered / limit) || 1;
 
     return NextResponse.json({
       success: true,
       teamName: tlUser.team?.name || "General Team",
       summary: {
-        totalMembers: totalMembersCount,
-        activeMembers: activeMembersCount,
-        onLeaveToday: onLeaveCount,
-        cumulativeTotalDays,
-        cumulativeRemainingDays,
+        totalMembers,
+        activeMembers,
+        onLeaveToday,
       },
-      members: filteredMembers,
+      pagination: {
+        page,
+        limit,
+        total: totalFiltered,
+        totalPages,
+      },
+      members: enrichedMembers,
     });
   } catch (error: any) {
     console.error("TL My Team API error:", error);

@@ -125,6 +125,12 @@ export default function TLTeamAttendancePage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [limit] = useState(10);
+  const [pagination, setPagination] = useState({
+    total: 0,
+    totalPages: 1,
+  });
   const [toast, setToast] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   // Edit / Mark Attendance Modal state
@@ -164,6 +170,11 @@ export default function TLTeamAttendancePage() {
     setTimeout(() => setToast(null), 4000);
   };
 
+  // Reset pagination on filter or date change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, selectedDate, statusFilter]);
+
   const fetchAttendance = useCallback(async () => {
     try {
       setLoading(true);
@@ -171,6 +182,8 @@ export default function TLTeamAttendancePage() {
         date: selectedDate,
         search: search.trim(),
         status: statusFilter,
+        page: currentPage.toString(),
+        limit: limit.toString(),
       });
 
       const [resAtt, resOt] = await Promise.all([
@@ -185,6 +198,12 @@ export default function TLTeamAttendancePage() {
         setRecords(dataAtt.records || []);
         if (dataAtt.summary) setSummary(dataAtt.summary);
         if (dataAtt.teamName) setTeamName(dataAtt.teamName);
+        if (dataAtt.pagination) {
+          setPagination({
+            total: dataAtt.pagination.total || 0,
+            totalPages: dataAtt.pagination.totalPages || 1,
+          });
+        }
       }
 
       if (dataOt.success) {
@@ -196,7 +215,7 @@ export default function TLTeamAttendancePage() {
     } finally {
       setLoading(false);
     }
-  }, [selectedDate, search, statusFilter]);
+  }, [selectedDate, search, statusFilter, currentPage, limit]);
 
   useEffect(() => {
     fetchAttendance();
@@ -376,149 +395,57 @@ export default function TLTeamAttendancePage() {
         </div>
       )}
 
-      {/* 1. PAGE HEADER & TOP TAB SWITCHER */}
-      <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200 text-[10px] font-semibold mb-1">
-            <Building2 className="w-3 h-3" />
-            <span>{teamName}</span>
-          </div>
-          <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-            Team Attendance & Overtime
-          </h1>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Monitor daily check-ins, adjust timesheet punches, and approve Comp-Off & Overtime requests.
-          </p>
-        </div>
-
-        {/* Section Tabs */}
-        <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-xl self-start md:self-auto text-xs font-medium">
-          <button
-            onClick={() => setActiveTab("ATTENDANCE")}
-            className={`px-3.5 py-1.5 rounded-lg transition-colors ${
-              activeTab === "ATTENDANCE"
-                ? "bg-white text-slate-900 shadow-2xs border border-slate-200"
-                : "text-slate-500 hover:text-slate-800"
-            }`}
-          >
-            Daily Roster
-          </button>
-
-          <button
-            onClick={() => setActiveTab("OVERTIME")}
-            className={`px-3.5 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 ${
-              activeTab === "OVERTIME"
-                ? "bg-white text-slate-900 shadow-2xs border border-slate-200"
-                : "text-slate-500 hover:text-slate-800"
-            }`}
-          >
-            <span>Comp-Off & OT Approvals</span>
-            {otSummary.pendingCount > 0 && (
-              <span className="px-1.5 py-0.2 rounded-full bg-emerald-600 text-white font-bold text-[10px]">
-                {otSummary.pendingCount}
-              </span>
-            )}
-          </button>
-        </div>
-      </div>
-
-      {/* 2. MAIN TAB CONTENT */}
-      {activeTab === "ATTENDANCE" ? (
-        /* ================= DAILY ATTENDANCE ROSTER TAB ================= */
-        <div className="space-y-6">
-          {/* Summary Metrics */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
-            <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-xs">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-                  Team Size
-                </span>
-                <Building2 className="w-4 h-4 text-slate-400" />
-              </div>
-              <div className="mt-2.5">
-                <div className="text-2xl font-bold text-slate-900">
-                  {loading ? "--" : summary.totalMembers}
-                </div>
-                <div className="text-[11px] text-slate-400 mt-0.5">
-                  Assigned members
-                </div>
-              </div>
+      {/* 1. UNIFIED PAGE HEADER & FILTER CARD */}
+      <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs space-y-4">
+        {/* Header Row */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200 text-[10px] font-semibold mb-1">
+              <Building2 className="w-3 h-3" />
+              <span>{teamName}</span>
             </div>
-
-            <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-xs">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-                  Present
-                </span>
-                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-              </div>
-              <div className="mt-2.5">
-                <div className="text-2xl font-bold text-slate-900">
-                  {loading ? "--" : summary.present}
-                </div>
-                <div className="text-[11px] text-emerald-600 font-medium mt-0.5">
-                  On-time check-ins
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-xs">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-                  Late
-                </span>
-                <Clock className="w-4 h-4 text-amber-500" />
-              </div>
-              <div className="mt-2.5">
-                <div className="text-2xl font-bold text-slate-900">
-                  {loading ? "--" : summary.late}
-                </div>
-                <div className="text-[11px] text-amber-600 font-medium mt-0.5">
-                  Late arrivals
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-xs">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-                  On Leave
-                </span>
-                <UserX className="w-4 h-4 text-rose-500" />
-              </div>
-              <div className="mt-2.5">
-                <div className="text-2xl font-bold text-slate-900">
-                  {loading ? "--" : summary.onLeave}
-                </div>
-                <div className="text-[11px] text-rose-600 font-medium mt-0.5">
-                  Approved time-off
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-xs">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-                  Check-In Rate
-                </span>
-                <TrendingUp className="w-4 h-4 text-indigo-600" />
-              </div>
-              <div className="mt-2.5">
-                <div className="text-2xl font-bold text-slate-900">
-                  {loading ? "--" : `${summary.attendanceRate}%`}
-                </div>
-                <div className="w-full bg-slate-100 rounded-full h-1.5 mt-2 overflow-hidden">
-                  <div
-                    className="bg-emerald-500 h-1.5 rounded-full transition-all duration-500"
-                    style={{ width: `${Math.min(100, summary.attendanceRate)}%` }}
-                  />
-                </div>
-              </div>
-            </div>
+            <h1 className="text-xl font-bold text-slate-900 tracking-tight">
+              Team Attendance & Overtime
+            </h1>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Monitor daily check-ins, adjust timesheet punches, and approve Comp-Off & Overtime requests.
+            </p>
           </div>
 
-          {/* Date Navigator & Filter Bar */}
-          <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3">
+          {/* Section Tabs */}
+          <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-xl self-start md:self-auto text-xs font-medium">
+            <button
+              onClick={() => setActiveTab("ATTENDANCE")}
+              className={`px-3.5 py-1.5 rounded-lg transition-colors cursor-pointer ${
+                activeTab === "ATTENDANCE"
+                  ? "bg-white text-slate-900 shadow-2xs border border-slate-200 font-semibold"
+                  : "text-slate-500 hover:text-slate-800"
+              }`}
+            >
+              Daily Roster
+            </button>
+
+            <button
+              onClick={() => setActiveTab("OVERTIME")}
+              className={`px-3.5 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer ${
+                activeTab === "OVERTIME"
+                  ? "bg-white text-slate-900 shadow-2xs border border-slate-200 font-semibold"
+                  : "text-slate-500 hover:text-slate-800"
+              }`}
+            >
+              <span>Comp-Off & OT Approvals</span>
+              {otSummary.pendingCount > 0 && (
+                <span className="px-1.5 py-0.2 rounded-full bg-emerald-600 text-white font-bold text-[10px]">
+                  {otSummary.pendingCount}
+                </span>
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Filter Row (When Daily Roster is active) */}
+        {activeTab === "ATTENDANCE" && (
+          <div className="pt-4 border-t border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-3">
             {/* Search */}
             <div className="relative flex-1 max-w-sm">
               <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -536,7 +463,7 @@ export default function TLTeamAttendancePage() {
               <button
                 onClick={() => shiftDate(-1)}
                 title="Previous Day"
-                className="p-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 shadow-2xs transition-all"
+                className="p-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 shadow-2xs transition-all cursor-pointer"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
@@ -551,7 +478,7 @@ export default function TLTeamAttendancePage() {
               <button
                 onClick={() => shiftDate(1)}
                 title="Next Day"
-                className="p-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 shadow-2xs transition-all"
+                className="p-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 shadow-2xs transition-all cursor-pointer"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
@@ -559,13 +486,20 @@ export default function TLTeamAttendancePage() {
               {!isToday && (
                 <button
                   onClick={setToday}
-                  className="px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-2xs transition-all ml-1"
+                  className="px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-2xs transition-all ml-1 cursor-pointer"
                 >
                   Today
                 </button>
               )}
             </div>
           </div>
+        )}
+      </div>
+
+      {/* 2. MAIN TAB CONTENT */}
+      {activeTab === "ATTENDANCE" ? (
+        /* ================= DAILY ATTENDANCE ROSTER TAB ================= */
+        <div className="space-y-6">
 
           {/* Attendance Table */}
           <div className="rounded-xl bg-white border border-slate-200 overflow-hidden shadow-xs">
@@ -694,6 +628,60 @@ export default function TLTeamAttendancePage() {
                 </table>
               </div>
             )}
+
+            {/* PAGINATION FOOTER */}
+            <div className="px-4 py-3 border-t border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+              <div>
+                {pagination.total > 0 ? (
+                  <span>
+                    Showing <strong className="text-slate-800">{(currentPage - 1) * limit + 1}</strong> to{" "}
+                    <strong className="text-slate-800">
+                      {Math.min(currentPage * limit, pagination.total)}
+                    </strong>{" "}
+                    of <strong className="text-slate-800">{pagination.total}</strong> members
+                  </span>
+                ) : (
+                  <span>0 members</span>
+                )}
+              </div>
+
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                  disabled={currentPage <= 1 || loading}
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer font-medium"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                  <span>Previous</span>
+                </button>
+
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map((pageNum) => (
+                    <button
+                      key={pageNum}
+                      onClick={() => setCurrentPage(pageNum)}
+                      disabled={loading}
+                      className={`w-7 h-7 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                        currentPage === pageNum
+                          ? "bg-slate-900 text-white shadow-2xs"
+                          : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50"
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  ))}
+                </div>
+
+                <button
+                  onClick={() => setCurrentPage((prev) => Math.min(pagination.totalPages, prev + 1))}
+                  disabled={currentPage >= pagination.totalPages || loading}
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer font-medium"
+                >
+                  <span>Next</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       ) : (

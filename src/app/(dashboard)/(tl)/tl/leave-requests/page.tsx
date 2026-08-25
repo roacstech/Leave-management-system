@@ -89,7 +89,9 @@ export default function TLLeaveRequestsPage() {
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [leaveTypeFilter, setLeaveTypeFilter] = useState("ALL");
   const [page, setPage] = useState(1);
+  const [limit] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
   const [toast, setToast] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   // Modals state
@@ -122,7 +124,7 @@ export default function TLLeaveRequestsPage() {
         leaveTypeId: leaveTypeFilter,
         search: search.trim(),
         page: page.toString(),
-        limit: "10",
+        limit: limit.toString(),
       });
 
       const res = await fetch(`/api/tl/leaves?${params.toString()}`);
@@ -132,7 +134,10 @@ export default function TLLeaveRequestsPage() {
         setRequests(data.leaveRequests || []);
         if (data.leaveTypes) setLeaveTypes(data.leaveTypes);
         if (data.summary) setSummary(data.summary);
-        if (data.pagination) setTotalPages(data.pagination.totalPages);
+        if (data.pagination) {
+          setTotalPages(data.pagination.totalPages || 1);
+          setTotalItems(data.pagination.totalItems || 0);
+        }
       } else {
         showToast(data.error || "Failed to load leave requests", "error");
       }
@@ -141,7 +146,7 @@ export default function TLLeaveRequestsPage() {
     } finally {
       setLoading(false);
     }
-  }, [statusFilter, leaveTypeFilter, search, page]);
+  }, [statusFilter, leaveTypeFilter, search, page, limit]);
 
   useEffect(() => {
     fetchRequests();
@@ -240,108 +245,29 @@ export default function TLLeaveRequestsPage() {
         </div>
       )}
 
-      {/* 1. PAGE HEADER */}
-      <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-            Team Leave Requests
-          </h1>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Approve team applications, provide rejection reasons, or switch to Administrator for executive approval.
-          </p>
-        </div>
+      {/* 1. UNIFIED PAGE HEADER & FILTER CARD */}
+      <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs space-y-4">
+        {/* Header Row */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-xl font-bold text-slate-900 tracking-tight">
+              Team Leave Requests
+            </h1>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Approve team applications, provide rejection reasons, or switch to Administrator for executive approval.
+            </p>
+          </div>
 
-        <div className="flex items-center gap-2 text-xs">
-          <span className="px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200 font-semibold flex items-center gap-1.5">
-            <Shield className="w-3.5 h-3.5" />
-            <span>TL Authorization Authority</span>
-          </span>
-        </div>
-      </div>
-
-      {/* 2. METRICS CARDS */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-        {/* Total Requests */}
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-              Total Requests
+          <div className="flex items-center gap-2 text-xs self-start sm:self-auto">
+            <span className="px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200 font-semibold flex items-center gap-1.5">
+              <Shield className="w-3.5 h-3.5" />
+              <span>TL Authorization Authority</span>
             </span>
-            <FileSpreadsheet className="w-4 h-4 text-slate-400" />
-          </div>
-          <div className="mt-2.5">
-            <div className="text-2xl font-bold text-slate-900">
-              {loading ? "--" : summary.total}
-            </div>
-            <div className="text-[11px] text-slate-400 mt-0.5">
-              All historical submissions
-            </div>
           </div>
         </div>
 
-        {/* Pending Action */}
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-              Pending Action
-            </span>
-            <Clock className="w-4 h-4 text-amber-500" />
-          </div>
-          <div className="mt-2.5">
-            <div className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-              <span>{loading ? "--" : summary.pending}</span>
-              {summary.pending > 0 && (
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
-                  Needs Review
-                </span>
-              )}
-            </div>
-            <div className="text-[11px] text-slate-400 mt-0.5">
-              Awaiting TL decision
-            </div>
-          </div>
-        </div>
-
-        {/* Approved */}
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-              Approved by TL
-            </span>
-            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-          </div>
-          <div className="mt-2.5">
-            <div className="text-2xl font-bold text-slate-900">
-              {loading ? "--" : summary.approved}
-            </div>
-            <div className="text-[11px] text-emerald-600 font-medium mt-0.5">
-              Granted team leaves
-            </div>
-          </div>
-        </div>
-
-        {/* Escalated to Admin */}
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-              Escalated to Admin
-            </span>
-            <ArrowUpRight className="w-4 h-4 text-indigo-600" />
-          </div>
-          <div className="mt-2.5">
-            <div className="text-2xl font-bold text-slate-900">
-              {loading ? "--" : summary.escalated}
-            </div>
-            <div className="text-[11px] text-indigo-600 font-medium mt-0.5">
-              Switched for admin review
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* 3. FILTER BAR */}
-      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs space-y-3">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+        {/* Filter Row */}
+        <div className="pt-4 border-t border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-3">
           {/* Search */}
           <div className="relative flex-1 max-w-sm">
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -369,7 +295,7 @@ export default function TLLeaveRequestsPage() {
                   }}
                   className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer ${
                     statusFilter === st
-                      ? "bg-white text-slate-900 shadow-2xs"
+                      ? "bg-white text-slate-900 font-semibold shadow-2xs"
                       : "text-slate-500 hover:text-slate-800"
                   }`}
                 >
@@ -589,28 +515,59 @@ export default function TLLeaveRequestsPage() {
           </div>
         )}
 
-        {/* Pagination Controls */}
-        {totalPages > 1 && (
-          <div className="p-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-            <span>Page {page} of {totalPages}</span>
-            <div className="flex items-center gap-1.5">
-              <button
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page <= 1}
-                className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-40 transition-all"
-              >
-                <ChevronLeft className="w-3.5 h-3.5" />
-              </button>
-              <button
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={page >= totalPages}
-                className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-40 transition-all"
-              >
-                <ChevronRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
+        {/* PAGINATION FOOTER */}
+        <div className="px-4 py-3 border-t border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+          <div>
+            {totalItems > 0 ? (
+              <span>
+                Showing <strong className="text-slate-800">{(page - 1) * limit + 1}</strong> to{" "}
+                <strong className="text-slate-800">
+                  {Math.min(page * limit, totalItems)}
+                </strong>{" "}
+                of <strong className="text-slate-800">{totalItems}</strong> requests
+              </span>
+            ) : (
+              <span>0 requests</span>
+            )}
           </div>
-        )}
+
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page <= 1 || loading}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer font-medium"
+            >
+              <ChevronLeft className="w-3.5 h-3.5" />
+              <span>Previous</span>
+            </button>
+
+            <div className="flex items-center gap-1">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+                <button
+                  key={pageNum}
+                  onClick={() => setPage(pageNum)}
+                  disabled={loading}
+                  className={`w-7 h-7 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                    page === pageNum
+                      ? "bg-slate-900 text-white shadow-2xs"
+                      : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50"
+                  }`}
+                >
+                  {pageNum}
+                </button>
+              ))}
+            </div>
+
+            <button
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page >= totalPages || loading}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer font-medium"
+            >
+              <span>Next</span>
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* 5. ACTION MODAL (APPROVE / REJECT / ESCALATE) */}
