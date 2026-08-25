@@ -4,14 +4,8 @@ import React, { useEffect, useState } from "react";
 import {
   BarChart3,
   Building2,
-  Users,
   TrendingUp,
   Award,
-  Clock,
-  Calendar,
-  Sparkles,
-  ShieldCheck,
-  UserCheck,
 } from "lucide-react";
 
 interface TeamComparisonItem {
@@ -68,14 +62,14 @@ export default function CEOTeamReportsPage() {
 
   return (
     <div className="space-y-6">
-      {/* 1. Header */}
-      <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+      {/* 1. UNIFIED PAGE HEADER CARD */}
+      <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 text-xs font-semibold border border-indigo-200 mb-1">
-            <BarChart3 className="w-3.5 h-3.5" />
+          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200 text-[10px] font-semibold mb-1">
+            <BarChart3 className="w-3 h-3" />
             <span>Cross-Department Analytics</span>
           </div>
-          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+          <h1 className="text-xl font-bold text-slate-900 tracking-tight">
             Cross-Team Performance & Benchmarking
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
@@ -83,26 +77,26 @@ export default function CEOTeamReportsPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          <div className="px-3.5 py-1.5 rounded-xl bg-slate-900 text-white font-bold text-xs shadow-xs">
+        <div className="flex items-center gap-2 self-start md:self-auto">
+          <div className="px-3.5 py-1.5 rounded-lg bg-slate-900 text-white font-bold text-xs shadow-2xs">
             Fiscal Year {currentYear}
           </div>
         </div>
       </div>
 
-      {/* 2. Top Performers Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      {/* 2. TOP PERFORMERS CARDS */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
         {/* Highest Attendance */}
-        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs">
+        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
               Top Attendance Fidelity
             </span>
-            <div className="p-2 rounded-lg bg-emerald-50 text-emerald-600">
+            <div className="p-1.5 rounded-lg bg-emerald-50 text-emerald-600">
               <TrendingUp className="w-4 h-4" />
             </div>
           </div>
-          <div className="mt-3">
+          <div className="mt-2.5">
             <div className="text-2xl font-bold text-slate-900">
               {highestAttendance ? highestAttendance.name : "--"}
             </div>
@@ -113,16 +107,16 @@ export default function CEOTeamReportsPage() {
         </div>
 
         {/* Highest Overtime Support */}
-        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs">
+        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
               Highest OT Output
             </span>
-            <div className="p-2 rounded-lg bg-indigo-50 text-indigo-600">
+            <div className="p-1.5 rounded-lg bg-indigo-50 text-indigo-600">
               <Award className="w-4 h-4" />
             </div>
           </div>
-          <div className="mt-3">
+          <div className="mt-2.5">
             <div className="text-2xl font-bold text-slate-900">
               {highestOT ? highestOT.name : "--"}
             </div>
@@ -133,16 +127,16 @@ export default function CEOTeamReportsPage() {
         </div>
 
         {/* Largest Department */}
-        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs">
+        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
               Largest Business Unit
             </span>
-            <div className="p-2 rounded-lg bg-purple-50 text-purple-600">
+            <div className="p-1.5 rounded-lg bg-purple-50 text-purple-600">
               <Building2 className="w-4 h-4" />
             </div>
           </div>
-          <div className="mt-3">
+          <div className="mt-2.5">
             <div className="text-2xl font-bold text-slate-900">
               {largestTeam ? largestTeam.name : "--"}
             </div>
@@ -153,12 +147,12 @@ export default function CEOTeamReportsPage() {
         </div>
       </div>
 
-      {/* 3. Cross-Team Comparison Table */}
+      {/* 3. CROSS-TEAM COMPARISON TABLE */}
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs">
         <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
           <div className="flex items-center gap-2">
             <BarChart3 className="w-4 h-4 text-indigo-600" />
-            <h3 className="font-bold text-sm text-slate-900">
+            <h3 className="font-bold text-xs text-slate-900">
               Team Benchmarking Roster ({teams.length} Units)
             </h3>
           </div>
@@ -180,7 +174,7 @@ export default function CEOTeamReportsPage() {
                   <th className="py-3 px-4">Late Arrivals %</th>
                   <th className="py-3 px-4">Total Leave Days</th>
                   <th className="py-3 px-4">Avg / Member</th>
-                  <th className="py-3 px-4">Overtime Hours</th>
+                  <th className="py-3 px-4 text-right">Overtime Hours</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-xs">
@@ -228,7 +222,7 @@ export default function CEOTeamReportsPage() {
                       {t.avgLeavePerMember} Days
                     </td>
 
-                    <td className="py-3.5 px-4 font-bold text-indigo-700">
+                    <td className="py-3.5 px-4 text-right font-bold text-indigo-700">
                       {t.totalOtHours} hrs ({t.totalCompOffDays}d Comp-Off)
                     </td>
                   </tr>

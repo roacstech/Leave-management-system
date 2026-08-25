@@ -9,18 +9,16 @@ import {
   TrendingUp,
   Clock,
   ShieldCheck,
-  Award,
   CheckCircle2,
-  XCircle,
   AlertCircle,
   ChevronRight,
   UserCheck,
-  Sparkles,
   ArrowUpRight,
-  Activity,
   Layers,
+  BarChart3,
   Check,
   X,
+  Sparkles,
 } from "lucide-react";
 import { useSettings } from "@/contexts/SettingsContext";
 
@@ -69,13 +67,6 @@ interface DashboardData {
     email: string;
     teamName: string;
     teamSize: number;
-  }>;
-  recentActivity: Array<{
-    id: number;
-    action: string;
-    details: string | null;
-    userName: string;
-    createdAt: string;
   }>;
 }
 
@@ -160,7 +151,7 @@ export default function CEODashboardPage() {
       {/* 1. Header Banner */}
       <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200 text-[10px] font-semibold mb-1.5">
+          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200 text-[10px] font-semibold mb-1">
             <Sparkles className="w-3 h-3 text-indigo-600" />
             <span>Executive Business Overview</span>
           </div>
@@ -172,8 +163,8 @@ export default function CEODashboardPage() {
 
         <div className="flex items-center gap-3 self-start md:self-auto">
           <Link
-            href="/ceo/leave-management"
-            className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer"
+            href="/ceo/leave-requests"
+            className="px-3.5 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer"
           >
             <span>Review Pending Approvals</span>
             <ChevronRight className="w-3.5 h-3.5" />
@@ -182,75 +173,75 @@ export default function CEODashboardPage() {
       </div>
 
       {/* 2. Macro KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
         {/* Total Workforce */}
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs hover:shadow-sm transition-all">
+        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+            <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
               Total Workforce
             </p>
-            <div className="p-2 rounded-lg bg-indigo-50 text-indigo-600">
+            <div className="p-1.5 rounded-lg bg-indigo-50 text-indigo-600">
               <Users className="w-4 h-4" />
             </div>
           </div>
-          <p className="mt-3 text-3xl font-bold text-slate-900">
+          <p className="mt-2.5 text-2xl font-bold text-slate-900">
             {loading ? "--" : data?.stats.totalWorkforce || 0}
           </p>
-          <div className="mt-2 flex items-center justify-between text-[11px] text-slate-500">
+          <div className="mt-1 flex items-center justify-between text-[11px] text-slate-500">
             <span>{data?.stats.totalTeams || 0} Functional Teams</span>
             <span className="font-semibold text-indigo-600">Active</span>
           </div>
         </div>
 
         {/* Attendance Rate */}
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs hover:shadow-sm transition-all">
+        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+            <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
               Presence Rate
             </p>
-            <div className="p-2 rounded-lg bg-emerald-50 text-emerald-600">
+            <div className="p-1.5 rounded-lg bg-emerald-50 text-emerald-600">
               <TrendingUp className="w-4 h-4" />
             </div>
           </div>
-          <p className="mt-3 text-3xl font-bold text-slate-900">
+          <p className="mt-2.5 text-2xl font-bold text-slate-900">
             {loading ? "--" : `${data?.stats.attendanceRate}%`}
           </p>
-          <div className="mt-2 flex items-center justify-between text-[11px]">
+          <div className="mt-1 flex items-center justify-between text-[11px]">
             <span className="text-slate-500">Today's Check-ins: {data?.stats.todayPresent || 0}</span>
             <span className="font-bold text-emerald-600">On Schedule</span>
           </div>
         </div>
 
         {/* On Leave Today */}
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs hover:shadow-sm transition-all">
+        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+            <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
               On Leave Today
             </p>
-            <div className="p-2 rounded-lg bg-amber-50 text-amber-600">
+            <div className="p-1.5 rounded-lg bg-amber-50 text-amber-600">
               <CalendarCheck className="w-4 h-4" />
             </div>
           </div>
-          <p className="mt-3 text-3xl font-bold text-slate-900">
+          <p className="mt-2.5 text-2xl font-bold text-slate-900">
             {loading ? "--" : data?.stats.onLeaveToday || 0}
           </p>
-          <div className="mt-2 flex items-center justify-between text-[11px]">
+          <div className="mt-1 flex items-center justify-between text-[11px]">
             <span className="text-slate-500">Approved Outages</span>
             <span className="font-semibold text-amber-700">Planned Out</span>
           </div>
         </div>
 
         {/* Pending Approvals */}
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs hover:shadow-sm transition-all">
+        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+            <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
               Pending Approvals
             </p>
-            <div className="p-2 rounded-lg bg-rose-50 text-rose-600">
+            <div className="p-1.5 rounded-lg bg-rose-50 text-rose-600">
               <Clock className="w-4 h-4" />
             </div>
           </div>
-          <p className="mt-3 text-3xl font-bold text-slate-900 flex items-center gap-2">
+          <p className="mt-2.5 text-2xl font-bold text-slate-900 flex items-center gap-2">
             <span>{loading ? "--" : data?.stats.pendingApprovalsCount || 0}</span>
             {(data?.stats.pendingApprovalsCount || 0) > 0 && (
               <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200">
@@ -258,7 +249,7 @@ export default function CEODashboardPage() {
               </span>
             )}
           </p>
-          <div className="mt-2 flex items-center justify-between text-[11px]">
+          <div className="mt-1 flex items-center justify-between text-[11px]">
             <span className="text-slate-500">Admin & TL Leaves</span>
             <span className="font-semibold text-rose-600">Review</span>
           </div>
@@ -266,18 +257,18 @@ export default function CEODashboardPage() {
       </div>
 
       {/* 3. Main Grid: Approvals Queue & Outage Capacity */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Left: Pending Approvals (2 Cols) */}
         <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
           <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
             <div className="flex items-center gap-2">
               <ShieldCheck className="w-4 h-4 text-indigo-600" />
-              <h2 className="font-bold text-sm text-slate-900">
+              <h2 className="font-bold text-xs text-slate-900">
                 Executive Leave Approvals Queue
               </h2>
             </div>
             <Link
-              href="/ceo/leave-management"
+              href="/ceo/leave-requests"
               className="text-xs font-semibold text-indigo-600 hover:text-indigo-700 flex items-center gap-1"
             >
               <span>View All</span>
@@ -298,7 +289,7 @@ export default function CEODashboardPage() {
           ) : (
             <div className="divide-y divide-slate-100 text-xs">
               {data.pendingApprovals.map((req) => (
-                <div key={req.id} className="p-4 hover:bg-slate-50/60 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div key={req.id} className="p-3.5 hover:bg-slate-50/60 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="space-y-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="font-bold text-slate-900">{req.employeeName}</span>
@@ -323,25 +314,29 @@ export default function CEODashboardPage() {
                     )}
                   </div>
 
-                  {/* Approve / Reject Buttons */}
+                  {/* Request Status Badge */}
                   <div className="flex items-center gap-2 shrink-0">
-                    <button
-                      onClick={() => handleDecision(req.id, "APPROVED")}
-                      disabled={actionLoading === req.id}
-                      className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-2xs transition-all disabled:opacity-50 flex items-center gap-1 active:scale-95"
+                    <span
+                      className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                        req.status === "APPROVED"
+                          ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                          : req.status === "PENDING_ADMIN" || req.status === "PENDING" || req.status === "PENDING_TL"
+                          ? "bg-amber-50 text-amber-700 border border-amber-200"
+                          : req.status === "REJECTED"
+                          ? "bg-rose-50 text-rose-700 border border-rose-200"
+                          : "bg-slate-100 text-slate-600 border border-slate-200"
+                      }`}
                     >
-                      <Check className="w-3.5 h-3.5" />
-                      <span>Approve</span>
-                    </button>
-
-                    <button
-                      onClick={() => handleDecision(req.id, "REJECTED")}
-                      disabled={actionLoading === req.id}
-                      className="px-3 py-1.5 rounded-lg border border-rose-200 text-rose-700 hover:bg-rose-50 font-bold text-xs shadow-2xs transition-all disabled:opacity-50 flex items-center gap-1"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                      <span>Reject</span>
-                    </button>
+                      {req.status === "PENDING_ADMIN" || req.status === "PENDING"
+                        ? "Pending"
+                        : req.status === "PENDING_TL"
+                        ? "Pending TL"
+                        : req.status === "APPROVED"
+                        ? "Approved"
+                        : req.status === "REJECTED"
+                        ? "Rejected"
+                        : req.status}
+                    </span>
                   </div>
                 </div>
               ))}
@@ -354,7 +349,7 @@ export default function CEODashboardPage() {
           <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
             <div className="flex items-center gap-2">
               <CalendarCheck className="w-4 h-4 text-amber-600" />
-              <h2 className="font-bold text-sm text-slate-900">
+              <h2 className="font-bold text-xs text-slate-900">
                 Today's Company Outages
               </h2>
             </div>
@@ -389,14 +384,14 @@ export default function CEODashboardPage() {
         </div>
       </div>
 
-      {/* 4. Secondary Grid: Team Leads Performance & Annual Leave Distribution */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* 4. Secondary Grid: Team Leads & Annual Leave Consumption */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Team Leads Directory Card */}
         <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
           <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
             <div className="flex items-center gap-2">
               <UserCheck className="w-4 h-4 text-indigo-600" />
-              <h2 className="font-bold text-sm text-slate-900">
+              <h2 className="font-bold text-xs text-slate-900">
                 Team Leads & Operational Units
               </h2>
             </div>
@@ -416,8 +411,8 @@ export default function CEODashboardPage() {
               <div className="p-8 text-center text-xs text-slate-400">No Team Leads registered.</div>
             ) : (
               data.tlMetrics.slice(0, 5).map((tl) => (
-                <div key={tl.id} className="p-3.5 flex items-center justify-between hover:bg-slate-50/50 transition-colors">
-                  <div className="flex items-center gap-3">
+                <div key={tl.id} className="p-3 flex items-center justify-between hover:bg-slate-50/50 transition-colors">
+                  <div className="flex items-center gap-2.5">
                     <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 font-bold text-xs flex items-center justify-center border border-indigo-200">
                       {tl.name.charAt(0)}
                     </div>
@@ -437,45 +432,125 @@ export default function CEODashboardPage() {
           </div>
         </div>
 
-        {/* Leave Category Consumption */}
-        <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+        {/* Leave Category Consumption Graph */}
+        <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden flex flex-col">
           <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
             <div className="flex items-center gap-2">
-              <Layers className="w-4 h-4 text-emerald-600" />
-              <h2 className="font-bold text-sm text-slate-900">
-                Annual Leave Consumption Breakdown
+              <BarChart3 className="w-4 h-4 text-indigo-600" />
+              <h2 className="font-bold text-xs text-slate-900">
+                Annual Leave Consumption Graph
               </h2>
             </div>
-            <span className="text-xs text-slate-500">Year {new Date().getFullYear()}</span>
+            <span className="px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 font-bold text-[10px] border border-indigo-200">
+              {data?.categoryStats.reduce((acc, c) => acc + c.daysTaken, 0) || 0} Total Days Utilized
+            </span>
           </div>
 
-          <div className="p-5 space-y-4 text-xs">
+          <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between">
             {loading ? (
-              <div className="p-8 text-center text-xs text-slate-400">Loading consumption...</div>
+              <div className="p-12 text-center text-xs text-slate-400">Loading consumption graph...</div>
             ) : !data?.categoryStats || data.categoryStats.length === 0 ? (
-              <div className="p-8 text-center text-xs text-slate-400">No leave data available.</div>
+              <div className="p-12 text-center text-xs text-slate-400">No leave data available.</div>
             ) : (
-              data.categoryStats.map((cat) => {
-                const maxDays = 100;
-                const pct = Math.min(100, Math.round((cat.daysTaken / maxDays) * 100));
+              (() => {
+                const totalDays = data.categoryStats.reduce((acc, c) => acc + c.daysTaken, 0);
+                const maxVal = Math.max(...data.categoryStats.map((c) => c.daysTaken), 8);
 
                 return (
-                  <div key={cat.code} className="space-y-1.5">
-                    <div className="flex justify-between items-center text-xs">
-                      <span className="font-semibold text-slate-800">
-                        {cat.name} ({cat.code})
-                      </span>
-                      <span className="font-bold text-slate-900">{cat.daysTaken} Days Utilized</span>
+                  <div className="space-y-4">
+                    {/* Visual Vertical Columns Chart */}
+                    <div className="relative pt-6 pb-1">
+                      {/* Background Grid Lines */}
+                      <div className="absolute inset-0 top-6 bottom-7 flex flex-col justify-between pointer-events-none opacity-40">
+                        <div className="border-b border-dashed border-slate-200 w-full" />
+                        <div className="border-b border-dashed border-slate-200 w-full" />
+                        <div className="border-b border-dashed border-slate-200 w-full" />
+                      </div>
+
+                      {/* Columns Container (Responsive Flex Row) */}
+                      <div className="relative z-10 flex items-end justify-between gap-1 sm:gap-2 w-full h-40">
+                        {data.categoryStats.map((cat) => {
+                          const heightPct = Math.round((cat.daysTaken / maxVal) * 100);
+                          const sharePct = totalDays > 0 ? Math.round((cat.daysTaken / totalDays) * 100) : 0;
+                          const isHighlighted = cat.daysTaken > 0;
+
+                          return (
+                            <div
+                              key={cat.code}
+                              className="group flex-1 min-w-0 flex flex-col items-center justify-end relative cursor-pointer"
+                            >
+                              {/* Hover Floating Tooltip */}
+                              <div className="absolute -top-8 z-30 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none bg-slate-900 text-white text-[10px] font-semibold py-1 px-2 rounded-md shadow-lg whitespace-nowrap">
+                                {cat.name} ({cat.code}): {cat.daysTaken}d ({sharePct}%)
+                              </div>
+
+                              {/* Days Label above bar */}
+                              <span
+                                className={`text-[10px] font-bold mb-1 transition-colors ${
+                                  isHighlighted ? "text-indigo-600 font-extrabold" : "text-slate-400"
+                                }`}
+                              >
+                                {cat.daysTaken}d
+                              </span>
+
+                              {/* Bar Column Outer Track */}
+                              <div className="w-full max-w-[28px] sm:max-w-[34px] h-24 sm:h-28 bg-slate-100 rounded-xl flex items-end justify-center p-0.5 sm:p-1 overflow-hidden transition-all group-hover:bg-slate-200/70">
+                                <div
+                                  className={`w-full rounded-lg transition-all duration-700 ease-out ${
+                                    isHighlighted
+                                      ? "bg-gradient-to-t from-indigo-600 via-indigo-500 to-indigo-400 shadow-2xs group-hover:brightness-110"
+                                      : "bg-slate-300/60"
+                                  }`}
+                                  style={{
+                                    height: `${Math.max(isHighlighted ? 12 : 4, heightPct)}%`,
+                                  }}
+                                />
+                              </div>
+
+                              {/* Category Code Pill */}
+                              <span
+                                className={`mt-1.5 font-mono text-[9px] sm:text-[10px] font-bold px-1 py-0.5 rounded text-center truncate max-w-full transition-colors ${
+                                  isHighlighted
+                                    ? "bg-indigo-50 text-indigo-700 border border-indigo-200"
+                                    : "bg-slate-100 text-slate-500"
+                                }`}
+                                title={cat.name}
+                              >
+                                {cat.code}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
-                    <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-                      <div
-                        className="bg-indigo-600 h-2 rounded-full transition-all duration-500"
-                        style={{ width: `${Math.max(5, pct)}%` }}
-                      />
+
+                    {/* Category Share Legend Badges */}
+                    <div className="pt-3 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      {data.categoryStats
+                        .filter((c) => c.daysTaken > 0)
+                        .map((cat) => {
+                          const share = totalDays > 0 ? Math.round((cat.daysTaken / totalDays) * 100) : 0;
+                          return (
+                            <div
+                              key={cat.code}
+                              className="p-2 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-between text-xs"
+                            >
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                <span className="w-2 h-2 rounded-full bg-indigo-600 shrink-0" />
+                                <span className="font-semibold text-slate-800 truncate text-[11px]">
+                                  {cat.name}
+                                </span>
+                              </div>
+                              <span className="font-bold text-slate-900 shrink-0 text-[11px]">
+                                {cat.daysTaken}d ({share}%)
+                              </span>
+                            </div>
+                          );
+                        })}
                     </div>
                   </div>
                 );
-              })
+              })()
             )}
           </div>
         </div>

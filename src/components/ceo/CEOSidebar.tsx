@@ -6,20 +6,10 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   Users,
-  UserCheck,
   CalendarCheck2,
-  Clock3,
   FileSpreadsheet,
-  BarChart3,
   CalendarDays,
-  Shield,
-  LogOut,
-  ChevronRight,
-  Sparkles,
-  Bell,
 } from "lucide-react";
-import { signOut } from "next-auth/react";
-import { useSettings } from "@/contexts/SettingsContext";
 
 interface NavItem {
   name: string;
@@ -30,22 +20,29 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   {
-    name: "Executive Dashboard",
+    name: "Dashboard",
     href: "/ceo/dashboard",
     icon: LayoutDashboard,
+  },
+  {
+    name: "Leave Requests",
+    href: "/ceo/leave-requests",
+    icon: CalendarCheck2,
   },
   {
     name: "Employee Roster",
     href: "/ceo/employees",
     icon: Users,
   },
+  // {
+  //   name: "Team Leads",
+  //   href: "/ceo/team-leads",
+  //   icon: UserCheck,
+  // },
+  
+  /*
   {
-    name: "Team Leads & Units",
-    href: "/ceo/team-leads",
-    icon: UserCheck,
-  },
-  {
-    name: "Leave Oversight & Approvals",
+    name: "Leave Oversight",
     href: "/ceo/leave-management",
     icon: CalendarCheck2,
   },
@@ -54,25 +51,23 @@ const navItems: NavItem[] = [
     href: "/ceo/attendance",
     icon: Clock3,
   },
+  */
+  // {
+  //   name: "Leave Reports",
+  //   href: "/ceo/leave-reports",
+  //   icon: FileSpreadsheet,
+  // },
+  /*
   {
-    name: "Leave Reports & Exports",
-    href: "/ceo/leave-reports",
-    icon: FileSpreadsheet,
-  },
-  {
-    name: "Cross-Team Analytics",
+    name: "Team Analytics",
     href: "/ceo/team-reports",
     icon: BarChart3,
   },
+  */
   {
     name: "Company Holidays",
     href: "/ceo/holidays",
     icon: CalendarDays,
-  },
-  {
-    name: "Notifications",
-    href: "/ceo/notifications",
-    icon: Bell,
   },
 ];
 
@@ -82,20 +77,6 @@ export default function CEOSidebar({
   onClose?: () => void;
 }) {
   const pathname = usePathname();
-  const { settings } = useSettings();
-  const [profileMenuOpen, setProfileMenuOpen] = React.useState(false);
-
-  const handleLogout = async () => {
-    try {
-      await signOut({
-        redirectTo: "/login",
-        callbackUrl: "/login",
-      });
-    } catch {
-      window.location.href = "/login";
-    }
-  };
-
 
   return (
     <aside className="w-60 shrink-0 bg-white text-slate-800 flex flex-col h-full select-none">
@@ -121,7 +102,7 @@ export default function CEOSidebar({
               key={item.name}
               href={item.href}
               onClick={onClose}
-              className={`group flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-medium transition-colors cursor-pointer ${
+              className={`group flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium transition-colors cursor-pointer ${
                 isActive
                   ? "bg-indigo-600 text-white shadow-sm font-semibold"
                   : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80"
@@ -153,43 +134,23 @@ export default function CEOSidebar({
       </div>
 
       {/* CEO Profile Footer */}
-      <div className="p-3.5 bg-white relative">
-        <button
-          onClick={() => setProfileMenuOpen(!profileMenuOpen)}
-          className="flex items-center justify-between w-full p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100/80 transition-colors cursor-pointer text-left"
-        >
+      <div className="p-3.5 bg-white">
+        <div className="flex items-center justify-between w-full p-2.5 rounded-xl bg-slate-50">
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center font-bold text-white text-xs shadow-2xs shrink-0">
               C
             </div>
             <div className="overflow-hidden min-w-0">
-              <div className="text-xs font-semibold text-slate-900 truncate uppercase">
-                Chief Executive Officer
+              <div className="text-xs font-semibold text-slate-800 truncate uppercase">
+                Chief Executive
               </div>
               <div className="flex items-center gap-1 text-[11px] text-slate-500">
                 <span>Executive Head</span>
               </div>
             </div>
           </div>
-        </button>
-        
-        {profileMenuOpen && (
-          <>
-            <div 
-              className="fixed inset-0 z-40" 
-              onClick={() => setProfileMenuOpen(false)} 
-            />
-            <div className="absolute bottom-full mb-2 left-3 w-52 bg-white border border-slate-200 rounded-xl shadow-xl p-1 z-50 animate-in fade-in zoom-in-95 duration-100">
-              <button
-                onClick={handleLogout}
-                className="flex items-center w-full text-left px-3.5 py-2 text-xs text-slate-700 hover:bg-rose-50 hover:text-rose-600 transition-colors font-semibold cursor-pointer rounded-lg gap-2"
-              >
-                <LogOut className="w-4 h-4 text-rose-500" />
-                <span>Sign Out</span>
-              </button>
-            </div>
-          </>
-        )}
+          <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" title="Online" />
+        </div>
       </div>
     </aside>
   );

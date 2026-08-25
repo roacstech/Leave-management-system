@@ -44,6 +44,7 @@ const navItems: NavItem[] = [
     href: "/ceo/team-leads",
     icon: UserCheck,
   },
+  /*
   {
     name: "Leave Oversight & Approvals",
     href: "/ceo/leave-management",
@@ -54,16 +55,19 @@ const navItems: NavItem[] = [
     href: "/ceo/attendance",
     icon: Clock3,
   },
+  */
   {
     name: "Leave Reports & Exports",
     href: "/ceo/leave-reports",
     icon: FileSpreadsheet,
   },
+  /*
   {
     name: "Cross-Team Analytics",
     href: "/ceo/team-reports",
     icon: BarChart3,
   },
+  */
   {
     name: "Company Holidays",
     href: "/ceo/holidays",

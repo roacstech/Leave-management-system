@@ -24,6 +24,9 @@ export async function GET(request: NextRequest) {
     const teamId = searchParams.get("teamId");
     const roleFilter = searchParams.get("roleId");
     const status = searchParams.get("status") || "ALL";
+    const page = parseInt(searchParams.get("page") || "1", 10);
+    const limit = parseInt(searchParams.get("limit") || "10", 10);
+    const skip = (page - 1) * limit;
 
     const where: any = {};
 
@@ -53,7 +56,8 @@ export async function GET(request: NextRequest) {
     const endOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);
     const currentYear = today.getFullYear();
 
-    const [employees, teams] = await Promise.all([
+    const [totalCount, employees, teams] = await Promise.all([
+      prisma.user.count({ where }),
       prisma.user.findMany({
         where,
         include: {
@@ -81,6 +85,8 @@ export async function GET(request: NextRequest) {
           },
         },
         orderBy: { name: "asc" },
+        skip,
+        take: limit,
       }),
 
       prisma.team.findMany({
@@ -128,6 +134,8 @@ export async function GET(request: NextRequest) {
       };
     });
 
+    const totalPages = Math.ceil(totalCount / limit) || 1;
+
     return NextResponse.json({
       success: true,
       employees: formattedEmployees,
@@ -138,7 +146,12 @@ export async function GET(request: NextRequest) {
         { id: "ADMIN", name: "ADMIN" },
         { id: "CEO", name: "CEO" },
       ],
-      totalCount: formattedEmployees.length,
+      pagination: {
+        totalItems: totalCount,
+        totalPages,
+        currentPage: page,
+        limit,
+      },
     });
   } catch (error: any) {
     console.error("CEO Employees API error:", error);

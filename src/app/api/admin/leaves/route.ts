@@ -279,6 +279,37 @@ export async function POST(request: NextRequest) {
           }).catch((err) => console.error("Error sending leave applied email to TL:", err));
         }
       }
+    } else if (targetUser.role === "ADMIN" || targetUser.role === "TL") {
+      // Notify CEO for Admin and TL leaves
+      const ceos = await prisma.user.findMany({
+        where: { role: "CEO", isActive: true },
+        select: { id: true, email: true },
+      });
+      for (const ceo of ceos) {
+        await createNotification({
+          userId: ceo.id,
+          type: "LEAVE_REQUEST",
+          title: `New ${targetUser.role === "ADMIN" ? "Admin" : "TL"} Leave Request`,
+          message: `${targetUser.role === "ADMIN" ? "Administrator" : "Team Lead"} ${newRequest.user.name} submitted a ${newRequest.leaveType.name} request (${formattedStart} - ${formattedEnd}) requiring executive approval.`,
+          entityType: "LEAVE_REQUEST",
+          entityId: newRequest.id,
+        });
+      }
+
+      const ceoEmails = ceos.map((c) => c.email).filter(Boolean);
+      if (ceoEmails.length > 0) {
+        sendLeaveAppliedEmail({
+          applicantName: newRequest.user.name,
+          applicantEmail: newRequest.user.email,
+          leaveType: newRequest.leaveType.name,
+          startDate: formattedStart,
+          endDate: formattedEnd,
+          days: requestedDays,
+          reason: newRequest.reason,
+          recipients: ceoEmails,
+          settings,
+        }).catch((err) => console.error("Error sending leave applied email to CEO:", err));
+      }
     }
 
     return NextResponse.json({

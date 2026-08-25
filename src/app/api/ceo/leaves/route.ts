@@ -7,6 +7,7 @@ import {
   formatDateWithPattern,
 } from "@/lib/settings";
 import { sendLeaveDecisionEmail } from "@/lib/mail";
+import { createNotification } from "@/lib/notifications";
 
 export const dynamic = "force-dynamic";
 
@@ -28,16 +29,30 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status") || "ALL";
     const teamId = searchParams.get("teamId");
+    const roleFilter = searchParams.get("roleFilter") || "ALL"; // "ADMIN" | "TL" | "EMPLOYEE" | "ALL"
     const search = searchParams.get("search")?.toLowerCase().trim() || "";
+    const page = parseInt(searchParams.get("page") || "1", 10);
+    const limit = parseInt(searchParams.get("limit") || "10", 10);
+    const skip = (page - 1) * limit;
 
     const where: any = {};
 
     if (status !== "ALL") {
-      where.status = status;
+      if (status === "PENDING" || status === "PENDING_ADMIN") {
+        where.status = "PENDING_ADMIN";
+      } else if (status === "PENDING_TL") {
+        where.status = "PENDING_TL";
+      } else {
+        where.status = status;
+      }
+    }
+
+    if (roleFilter !== "ALL") {
+      where.user = { ...where.user, role: roleFilter };
     }
 
     if (teamId && teamId !== "ALL") {
-      where.user = { teamId: parseInt(teamId, 10) };
+      where.user = { ...where.user, teamId: parseInt(teamId, 10) };
     }
 
     if (search) {
@@ -50,7 +65,8 @@ export async function GET(request: NextRequest) {
       };
     }
 
-    const [leaves, teams] = await Promise.all([
+    const [totalItems, leaves, teams, pendingAdminLeavesCount] = await Promise.all([
+      prisma.leaveRequest.count({ where }),
       prisma.leaveRequest.findMany({
         where,
         include: {
@@ -66,13 +82,25 @@ export async function GET(request: NextRequest) {
           leaveType: {
             select: { id: true, name: true, code: true },
           },
+          approver: {
+            select: { id: true, name: true, role: true },
+          },
         },
         orderBy: { createdAt: "desc" },
+        skip,
+        take: limit,
       }),
 
       prisma.team.findMany({
         select: { id: true, name: true },
         orderBy: { name: "asc" },
+      }),
+
+      prisma.leaveRequest.count({
+        where: {
+          status: "PENDING_ADMIN",
+          user: { role: "ADMIN" },
+        },
       }),
     ]);
 
@@ -100,20 +128,25 @@ export async function GET(request: NextRequest) {
         reason: l.reason,
         status: l.status,
         rejectionReason: l.rejectionReason,
+        approverName: l.approver?.name || null,
         isExecutiveScope,
         createdAt: l.createdAt,
       };
     });
 
-    const pendingExecutiveCount = formattedLeaves.filter(
-      (l) => l.isExecutiveScope && (l.status === "PENDING_ADMIN" || l.status === "PENDING_TL")
-    ).length;
+    const totalPages = Math.ceil(totalItems / limit) || 1;
 
     return NextResponse.json({
       success: true,
       leaves: formattedLeaves,
       teams,
-      pendingExecutiveCount,
+      pendingAdminLeavesCount,
+      pagination: {
+        totalItems,
+        totalPages,
+        currentPage: page,
+        limit,
+      },
     });
   } catch (error: any) {
     console.error("CEO Leaves API error:", error);
@@ -152,7 +185,7 @@ export async function PATCH(request: NextRequest) {
     const leaveRequest = await prisma.leaveRequest.findUnique({
       where: { id: parseInt(id, 10) },
       include: {
-        user: { select: { id: true, name: true, email: true } },
+        user: { select: { id: true, name: true, email: true, role: true } },
         leaveType: { select: { name: true } },
       },
     });
@@ -167,15 +200,21 @@ export async function PATCH(request: NextRequest) {
     const settings = await getSystemSettings();
     const formattedStart = formatDateWithPattern(leaveRequest.startDate, settings.dateFormat, settings.timezone);
     const formattedEnd = formatDateWithPattern(leaveRequest.endDate, settings.dateFormat, settings.timezone);
+    const reviewerId = Number(session.user.id);
+    const now = new Date();
 
-    // Execute atomic update
+    // Execute atomic transaction
     await prisma.$transaction(async (tx) => {
-      // 1. Update Leave Request status
+      // 1. Update Leave Request status & approver fields
       await tx.leaveRequest.update({
         where: { id: leaveRequest.id },
         data: {
           status,
-          rejectionReason: status === "REJECTED" ? rejectionReason?.trim() || "Declined by Executive" : null,
+          approverId: reviewerId,
+          approverRole: "CEO",
+          approvedAt: status === "APPROVED" ? now : null,
+          rejectedAt: status === "REJECTED" ? now : null,
+          rejectionReason: status === "REJECTED" ? rejectionReason?.trim() || "Declined by CEO" : null,
         },
       });
 
@@ -201,36 +240,31 @@ export async function PATCH(request: NextRequest) {
         }
       }
 
-      // 3. Create In-App Notification for Employee
-      if (canSendNotification(status === "APPROVED" ? "LEAVE_APPROVED" : "LEAVE_REJECTED", "IN_APP", settings)) {
-        await tx.notification.create({
-          data: {
-            userId: leaveRequest.userId,
-            title: `Leave ${status === "APPROVED" ? "Approved" : "Rejected"} by CEO`,
-            message: `Your ${leaveRequest.leaveType.name} request for ${duration} day(s) was ${status.toLowerCase()} by executive management.${
-              status === "REJECTED" && rejectionReason ? ` Reason: ${rejectionReason}` : ""
-            }`,
-          },
-        });
-      }
+      // 3. Create In-App Notification for applicant
+      await tx.notification.create({
+        data: {
+          userId: leaveRequest.userId,
+          title: `Leave ${status === "APPROVED" ? "Approved" : "Rejected"} by CEO`,
+          message: `Your ${leaveRequest.leaveType.name} application (${formattedStart} - ${formattedEnd}) has been ${status.toLowerCase()} by the CEO.${
+            status === "REJECTED" && rejectionReason ? ` Remarks: ${rejectionReason}` : ""
+          }`,
+        },
+      });
 
-      // 4. Audit Log
+      // 4. Create Audit Log
       await tx.auditLog.create({
         data: {
-          userId: Number(session.user.id),
+          userId: reviewerId,
           action: `CEO_LEAVE_${status}`,
           entity: "LeaveRequest",
           entityId: leaveRequest.id,
-          details: `CEO ${session.user.name} ${status.toLowerCase()} leave #${leaveRequest.id} for ${leaveRequest.user.name}`,
+          details: `CEO ${session.user.name} ${status.toLowerCase()} leave #${leaveRequest.id} for ${leaveRequest.user.name} (${leaveRequest.user.role})`,
         },
       });
     });
 
-    // 5. Send Decision Email to Employee (Async / Non-blocking)
-    if (
-      canSendNotification(status === "APPROVED" ? "LEAVE_APPROVED" : "LEAVE_REJECTED", "EMAIL", settings) &&
-      leaveRequest.user.email
-    ) {
+    // 5. Send Decision Email to applicant (Async / Non-blocking)
+    if (leaveRequest.user.email) {
       sendLeaveDecisionEmail({
         employeeName: leaveRequest.user.name,
         employeeEmail: leaveRequest.user.email,
@@ -239,7 +273,7 @@ export async function PATCH(request: NextRequest) {
         endDate: formattedEnd,
         days: duration,
         status: status as "APPROVED" | "REJECTED",
-        reviewerName: session.user.name || "Executive Management",
+        reviewerName: session.user.name || "Chief Executive Officer",
         reviewerRole: "CEO",
         rejectionReason: status === "REJECTED" ? rejectionReason?.trim() : undefined,
         settings,
@@ -248,10 +282,10 @@ export async function PATCH(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: `Leave request #${id} ${status.toLowerCase()} successfully!`,
+      message: `Leave request successfully ${status.toLowerCase()}!`,
     });
   } catch (error: any) {
-    console.error("CEO Leave Decision error:", error);
+    console.error("CEO Leave decision error:", error);
     return NextResponse.json(
       { success: false, error: error.message || "Failed to process leave decision" },
       { status: 500 }
