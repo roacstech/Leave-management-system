@@ -328,7 +328,7 @@ export default function RolesManagementPage() {
               resetForm();
               setCreateModalOpen(true);
             }}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-medium shadow-2xs transition-all active:scale-95 shrink-0 self-start sm:self-auto"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-xs transition-all active:scale-95 shrink-0 self-start sm:self-auto cursor-pointer"
           >
             <ShieldPlus className="w-4 h-4" />
             <span>Create New Role</span>
@@ -353,33 +353,33 @@ export default function RolesManagementPage() {
           </div>
 
           {/* Status Filter Tabs */}
-          <div className="flex items-center gap-0.5 p-0.5 bg-slate-100 rounded-lg text-xs font-medium">
+          <div className="flex items-center gap-1 p-1 bg-slate-100 border border-slate-200 rounded-xl text-xs font-medium">
             <button
               onClick={() => handleStatusFilterChange("ALL")}
-              className={`px-2.5 py-1 rounded-md transition-colors ${
+              className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer font-semibold ${
                 filterStatus === "ALL"
-                  ? "bg-white text-slate-900 shadow-2xs"
-                  : "text-slate-500 hover:text-slate-800"
+                  ? "bg-indigo-600 text-white shadow-xs"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60"
               }`}
             >
               All ({paginationInfo.activeCount + paginationInfo.inactiveCount})
             </button>
             <button
               onClick={() => handleStatusFilterChange("ACTIVE")}
-              className={`px-2.5 py-1 rounded-md transition-colors ${
+              className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer font-semibold ${
                 filterStatus === "ACTIVE"
-                  ? "bg-white text-slate-900 shadow-2xs"
-                  : "text-slate-500 hover:text-slate-800"
+                  ? "bg-indigo-600 text-white shadow-xs"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60"
               }`}
             >
               Active ({paginationInfo.activeCount})
             </button>
             <button
               onClick={() => handleStatusFilterChange("INACTIVE")}
-              className={`px-2.5 py-1 rounded-md transition-colors ${
+              className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer font-semibold ${
                 filterStatus === "INACTIVE"
-                  ? "bg-white text-slate-900 shadow-2xs"
-                  : "text-slate-500 hover:text-slate-800"
+                  ? "bg-indigo-600 text-white shadow-xs"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60"
               }`}
             >
               Inactive ({paginationInfo.inactiveCount})
@@ -583,9 +583,9 @@ export default function RolesManagementPage() {
                   key={pageNum}
                   onClick={() => setCurrentPage(pageNum)}
                   disabled={loading}
-                  className={`w-7 h-7 rounded-md text-xs font-medium transition-all ${
+                  className={`w-7 h-7 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                     currentPage === pageNum
-                      ? "bg-slate-900 text-white font-semibold shadow-2xs"
+                      ? "bg-indigo-600 text-white shadow-xs"
                       : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50"
                   }`}
                 >
@@ -702,14 +702,14 @@ export default function RolesManagementPage() {
               <button
                 type="button"
                 onClick={() => setCreateModalOpen(false)}
-                className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium"
+                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={submitting}
-                className="px-3.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-medium disabled:opacity-50"
+                className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold disabled:opacity-50 shadow-xs cursor-pointer transition-colors"
               >
                 {submitting ? "Saving..." : "Create Role"}
               </button>
@@ -810,14 +810,14 @@ export default function RolesManagementPage() {
               <button
                 type="button"
                 onClick={() => setEditModalOpen(false)}
-                className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium"
+                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={submitting}
-                className="px-3.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-medium disabled:opacity-50"
+                className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold disabled:opacity-50 shadow-xs cursor-pointer transition-colors"
               >
                 {submitting ? "Saving Changes..." : "Save Changes"}
               </button>
