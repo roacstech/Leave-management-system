@@ -7,21 +7,28 @@ import { canSendNotification, getSystemSettings, SystemSettingsData } from "@/li
 let transporter: nodemailer.Transporter | null = null;
 
 export function getMailTransporter(): nodemailer.Transporter | null {
-  const mailUser = process.env.MAIL_USER || "";
-  const mailPass = (process.env.MAIL_PASS || "").replace(/\s+/g, ""); // Clean app password spaces
-  const mailService = process.env.MAIL_SERVICE || "gmail";
+  const mailUser = (process.env.MAIL_USER || "").trim().replace(/^["']|["']$/g, "");
+  const mailPass = (process.env.MAIL_PASS || "").replace(/['"]+/g, "").replace(/\s+/g, "");
+  const mailHost = (process.env.MAIL_HOST || "smtp.gmail.com").trim().replace(/^["']|["']$/g, "");
+  const mailPort = Number(process.env.MAIL_PORT) || 465;
+  const isSecure = process.env.MAIL_SECURE === "false" ? false : mailPort === 465;
 
   if (!mailUser || !mailPass) {
-    console.warn("Mail Transporter: Missing MAIL_USER or MAIL_PASS in environment.");
+    console.warn("[Mail] Missing MAIL_USER or MAIL_PASS in environment.");
     return null;
   }
 
   if (!transporter) {
     transporter = nodemailer.createTransport({
-      service: mailService,
+      host: mailHost,
+      port: mailPort,
+      secure: isSecure,
       auth: {
         user: mailUser,
         pass: mailPass,
+      },
+      tls: {
+        rejectUnauthorized: false,
       },
     });
   }
@@ -37,7 +44,7 @@ export async function verifyMailConnection(): Promise<{ success: boolean; messag
     await transport.verify();
     return { success: true, message: "SMTP connection established successfully." };
   } catch (error: any) {
-    console.error("SMTP verify error:", error);
+    console.error("[Mail] SMTP verify error:", error);
     return { success: false, message: error.message || "Failed to verify SMTP connection." };
   }
 }
@@ -55,20 +62,23 @@ export async function sendEmail(options: SendEmailOptions): Promise<boolean> {
   try {
     const transport = getMailTransporter();
     if (!transport) {
-      console.warn("Mail dispatch skipped: SMTP credentials not configured.");
+      console.warn("[Mail] Dispatch skipped: SMTP credentials not configured.");
       return false;
     }
 
-    const mailUser = process.env.MAIL_USER || "";
-    const mailFrom = process.env.MAIL_FROM || `"Roacs Leave Management" <${mailUser}>`;
-    const devOverride = (process.env.DEV_EMAIL_OVERRIDE || "").trim();
+    const mailUser = (process.env.MAIL_USER || "").trim().replace(/^["']|["']$/g, "");
+    const rawMailFrom = (process.env.MAIL_FROM || "").trim().replace(/^["']|["']$/g, "");
+    const mailFrom = rawMailFrom || `"Roacs Leave Management" <${mailUser}>`;
+    const devOverride = (process.env.DEV_EMAIL_OVERRIDE || "").trim().replace(/^["']|["']$/g, "");
 
     // Determine recipients
     let recipients: string[] = Array.isArray(options.to) ? options.to : [options.to];
-    recipients = recipients.filter((email) => Boolean(email && email.trim()));
+    recipients = recipients
+      .map((e) => (typeof e === "string" ? e.trim() : ""))
+      .filter((email) => Boolean(email && email.includes("@")));
 
     if (recipients.length === 0) {
-      console.warn("Mail dispatch skipped: No valid recipients provided.");
+      console.warn("[Mail] Dispatch skipped: No valid recipients provided.");
       return false;
     }
 
@@ -78,7 +88,7 @@ export async function sendEmail(options: SendEmailOptions): Promise<boolean> {
       ? `[DEV REDIRECT TO: ${devOverride}] (Original: ${recipients.join(", ")})`
       : recipients.join(", ");
 
-    console.log(`Sending email "${options.subject}" to: ${targetDisplay}`);
+    console.log(`[Mail] Dispatching "${options.subject}" to: ${targetDisplay}`);
 
     const info = await transport.sendMail({
       from: mailFrom,
@@ -88,10 +98,10 @@ export async function sendEmail(options: SendEmailOptions): Promise<boolean> {
       html: options.html,
     });
 
-    console.log(`Email dispatched successfully to ${targetDisplay}. Message ID: ${info.messageId}`);
+    console.log(`[Mail] Dispatched successfully to ${targetDisplay}. Message ID: ${info.messageId}`);
     return true;
   } catch (error: any) {
-    console.error("Could not dispatch email notification:", error?.message || error);
+    console.error("[Mail] Could not dispatch email notification:", error?.message || error);
     return false;
   }
 }
@@ -303,6 +313,7 @@ export async function sendLeaveAppliedEmail({
   days,
   reason,
   recipients,
+  recipientRole,
   settings,
 }: {
   applicantName: string;
@@ -313,6 +324,7 @@ export async function sendLeaveAppliedEmail({
   days: number;
   reason?: string | null;
   recipients: string[];
+  recipientRole?: string;
   settings?: SystemSettingsData;
 }): Promise<boolean> {
   const currentSettings = settings || (await getSystemSettings());
@@ -320,6 +332,7 @@ export async function sendLeaveAppliedEmail({
     return false;
   }
 
+  const isExecutive = recipientRole === "ADMIN" || recipientRole === "CEO";
   const subject = `New Leave Request: ${applicantName} (${leaveType} - ${days} day${days === 1 ? "" : "s"})`;
   
   const html = renderRealCompanyEmail({
@@ -346,7 +359,7 @@ export async function sendLeaveAppliedEmail({
         }
       : undefined,
     ctaText: "Review Leave Request",
-    ctaUrl: "/tl/leave-requests",
+    ctaUrl: isExecutive ? "/admin/leaves" : "/tl/leave-requests",
   });
 
   return sendEmail({ to: recipients, subject, html });
