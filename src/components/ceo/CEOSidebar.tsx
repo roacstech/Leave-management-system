@@ -86,15 +86,30 @@ export default function CEOSidebar({
   return (
     <aside className={`${isMinimized ? 'w-20' : 'w-60'} shrink-0 bg-white text-slate-800 flex flex-col h-full select-none transition-all duration-300 ease-in-out`}>
       {/* Brand Header */}
-      <div className={`py-5 bg-white flex items-center ${isMinimized ? 'justify-center px-2' : 'justify-between px-5'}`}>
-        {!isMinimized && <img src="/logo.png" alt="Embassy of India" className="h-10 w-auto object-contain" />}
-        <button
-          onClick={() => setIsMinimized(!isMinimized)}
-          className="hidden lg:flex p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 transition-colors shrink-0"
-          title={isMinimized ? "Expand sidebar" : "Collapse sidebar"}
-        >
-          {isMinimized ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
-        </button>
+      <div className={`py-4 bg-white flex items-center ${isMinimized ? 'flex-col justify-center gap-2 px-2' : 'justify-between px-5'}`}>
+        {isMinimized ? (
+          <>
+            <img src="/title_logo.png" alt="LMS Logo" className="h-8 w-8 object-contain rounded-lg shrink-0" />
+            <button
+              onClick={() => setIsMinimized(!isMinimized)}
+              className="hidden lg:flex p-1 rounded-lg hover:bg-slate-100 text-slate-500 transition-colors shrink-0 cursor-pointer"
+              title="Expand sidebar"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </>
+        ) : (
+          <>
+            <img src="/logo.png" alt="Embassy of India" className="h-10 w-auto object-contain" />
+            <button
+              onClick={() => setIsMinimized(!isMinimized)}
+              className="hidden lg:flex p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 transition-colors shrink-0 cursor-pointer"
+              title="Collapse sidebar"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+          </>
+        )}
       </div>
 
       {/* Menu Navigation */}
