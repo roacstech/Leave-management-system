@@ -141,26 +141,6 @@ export default function EmployeeSidebar({
             );
           })}
         </div>
-
-        {/* Profile Footer */}
-        <div className={`p-4 border-t border-slate-100 bg-slate-50/50 ${isMinimized ? 'flex justify-center' : ''}`}>
-          <div className="flex items-center gap-3 overflow-hidden">
-            <div className="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs uppercase">
-              {userInitials}
-            </div>
-            {!isMinimized && (
-              <div className="min-w-0 flex-1">
-                <div className="text-xs font-bold text-slate-900 truncate uppercase">
-                  {userName}
-                </div>
-                <div className="flex items-center gap-1.5 text-[10px] text-slate-500 font-medium truncate">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
-                  <span>{empId}</span>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
       </aside>
     </>
   );

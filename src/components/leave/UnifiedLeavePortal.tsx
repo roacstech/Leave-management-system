@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   Search,
   RotateCcw,
@@ -74,6 +74,19 @@ export default function UnifiedLeavePortal({
   // Modals
   const [isApplyDrawerOpen, setIsApplyDrawerOpen] = useState(false);
   const [selectedTimelineRecord, setSelectedTimelineRecord] = useState<LeaveRecord | null>(null);
+
+  // Lock background scroll when drawer or modal is open
+  const isAnyModalOpen = isApplyDrawerOpen || !!selectedTimelineRecord;
+  useEffect(() => {
+    if (isAnyModalOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isAnyModalOpen]);
 
   const rawList = records;
 

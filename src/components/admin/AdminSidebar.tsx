@@ -248,28 +248,6 @@ export default function AdminSidebar({
             );
           })}
         </div>
-
-        {/* Admin User Footer Profile */}
-        <div className={`p-4 bg-white ${isMinimized ? 'flex justify-center' : ''}`}>
-          <div className={`flex items-center p-2.5 rounded-xl bg-slate-50 ${isMinimized ? 'justify-center' : 'justify-between'}`}>
-            <div className="flex items-center gap-3 overflow-hidden">
-              <div className="w-8 h-8 rounded-xl bg-indigo-600 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-2xs">
-                {userInitial}
-              </div>
-              {!isMinimized && (
-                <div className="overflow-hidden">
-                  <div className="text-xs font-bold text-slate-900 truncate">
-                    {userName}
-                  </div>
-                  <div className="text-[11px] font-medium text-slate-500 truncate">
-                    {userRole}
-                  </div>
-                </div>
-              )}
-            </div>
-            {!isMinimized && <div className="w-2 h-2 rounded-full bg-emerald-500 shrink-0 ml-2" title="Online" />}
-          </div>
-        </div>
       </aside>
     </>
   );

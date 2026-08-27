@@ -176,28 +176,6 @@ export default function CEOSidebar({
           );
         })}
       </div>
-
-      {/* Profile Footer */}
-      <div className={`p-3.5 bg-white ${isMinimized ? 'flex justify-center' : ''}`}>
-        <div className={`flex items-center w-full p-2.5 rounded-xl bg-slate-50 ${isMinimized ? 'justify-center' : 'justify-between'}`}>
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center font-bold text-white text-xs shadow-2xs shrink-0 uppercase">
-              {userInitials}
-            </div>
-            {!isMinimized && (
-              <div className="overflow-hidden min-w-0">
-                <div className="text-xs font-semibold text-slate-800 truncate">
-                  {userName}
-                </div>
-                <div className="flex items-center gap-1 text-[11px] text-slate-500">
-                  <span>Head Of Chancery</span>
-                </div>
-              </div>
-            )}
-          </div>
-          {!isMinimized && <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" title="Online" />}
-        </div>
-      </div>
     </aside>
   );
 }

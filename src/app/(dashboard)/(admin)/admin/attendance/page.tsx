@@ -320,6 +320,19 @@ export default function AttendanceAdminPage() {
   const [detailLoading, setDetailLoading] = useState(false);
   const [actionMenuOpen, setActionMenuOpen] = useState<number | null>(null);
 
+  // Lock background scroll when modal or drawer is open
+  const isAnyModalOpen = addModalOpen || editModalOpen || detailDrawerOpen;
+  useEffect(() => {
+    if (isAnyModalOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isAnyModalOpen]);
+
   // ── Add form ──
   const [addForm, setAddForm] = useState({
     userId: "",

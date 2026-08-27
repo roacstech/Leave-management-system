@@ -171,33 +171,6 @@ export default function CEOSidebar({
           );
         })}
       </div>
-
-      {/* CEO Profile Footer */}
-      <div className="p-3.5 bg-white">
-        <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center font-bold text-white text-xs shadow-2xs shrink-0">
-              C
-            </div>
-            <div className="overflow-hidden min-w-0">
-              <div className="text-xs font-semibold text-slate-900 truncate uppercase">
-                Chief Executive Officer
-              </div>
-              <div className="flex items-center gap-1 text-[11px] text-slate-500">
-                <span>Executive Head</span>
-              </div>
-            </div>
-          </div>
-
-          <button
-            onClick={handleLogout}
-            title="Sign out"
-            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
-          >
-            <LogOut className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
     </aside>
   );
 }

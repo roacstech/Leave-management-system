@@ -68,6 +68,19 @@ export default function RolesManagementPage() {
   const [submitting, setSubmitting] = useState(false);
   const [togglingId, setTogglingId] = useState<number | null>(null);
 
+  // Lock background scroll when any modal is open
+  const isAnyModalOpen = createModalOpen || editModalOpen || deleteModalOpen;
+  useEffect(() => {
+    if (isAnyModalOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isAnyModalOpen]);
+
   // Form state
   const [formData, setFormData] = useState({
     name: "",
@@ -651,17 +664,6 @@ export default function RolesManagementPage() {
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   className="w-full px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-slate-400"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">
-                  Status
-                </label>
-                <ThemedSelect
-                  value={formData.isActive ? "true" : "false"}
-                  onChange={(val) => setFormData({ ...formData, isActive: val === "true" })}
-                  options={STATUS_OPTIONS}
                 />
               </div>
             </div>

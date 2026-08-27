@@ -111,6 +111,19 @@ export default function TLLeaveRequestsPage() {
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<LeaveRequestItem | null>(null);
 
+  // Lock background scroll when modal is open
+  const isAnyModalOpen = actionModal.open || detailModalOpen;
+  useEffect(() => {
+    if (isAnyModalOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isAnyModalOpen]);
+
   const showToast = (text: string, type: "success" | "error" = "success") => {
     setToast({ text, type });
     setTimeout(() => setToast(null), 4000);

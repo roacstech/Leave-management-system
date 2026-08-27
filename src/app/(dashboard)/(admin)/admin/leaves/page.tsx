@@ -94,6 +94,19 @@ export default function LeavesAdminPage() {
   // Details Modal State (for full reason popup)
   const [selectedDetails, setSelectedDetails] = useState<LeaveRequestItem | null>(null);
 
+  // Lock background scroll when modal is open
+  const isAnyModalOpen = modalState.isOpen || !!selectedDetails;
+  useEffect(() => {
+    if (isAnyModalOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isAnyModalOpen]);
+
   const [actionReason, setActionReason] = useState("");
   const [submitting, setSubmitting] = useState(false);
 

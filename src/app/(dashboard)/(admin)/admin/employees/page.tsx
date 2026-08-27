@@ -136,6 +136,25 @@ export default function EmployeesPage() {
   const [submitting, setSubmitting] = useState(false);
   const [togglingId, setTogglingId] = useState<number | null>(null);
 
+  // Lock background scroll when any modal is open
+  const isAnyModalOpen =
+    createModalOpen ||
+    editModalOpen ||
+    deleteModalOpen ||
+    manageRolesModalOpen ||
+    manageDeptsModalOpen;
+
+  useEffect(() => {
+    if (isAnyModalOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isAnyModalOpen]);
+
   // Form states
   const [formData, setFormData] = useState({
     name: "",
@@ -711,10 +730,12 @@ export default function EmployeesPage() {
               onChange={(val) => handleRoleChange(val)}
               options={[
                 { value: "ALL", label: "All Roles" },
-                ...rolesList.map((r) => ({
-                  value: r.code,
-                  label: r.name,
-                })),
+                ...rolesList
+                  .filter((r) => !["ADMIN", "CEO"].includes(r.code))
+                  .map((r) => ({
+                    value: r.code,
+                    label: r.name,
+                  })),
               ]}
               size="xs"
             />
@@ -800,19 +821,9 @@ export default function EmployeesPage() {
                         </div>
                       </td>
 
-                      {/* 2. Role Badge */}
-                      <td className="py-3.5 px-3">
-                        <span
-                          className={`inline-block px-2.5 py-0.5 rounded-lg text-[11px] font-semibold border ${
-                            emp.role === "ADMIN" || emp.role === "CEO"
-                              ? "bg-slate-900 text-white border-slate-800"
-                              : emp.role === "TL"
-                              ? "bg-indigo-50 text-indigo-700 border-indigo-200"
-                              : "bg-slate-100 text-slate-700 border-slate-200"
-                          }`}
-                        >
-                          {roleDisplayName}
-                        </span>
+                      {/* 2. Role */}
+                      <td className="py-3.5 px-3 text-slate-700 font-medium">
+                        {roleDisplayName}
                       </td>
 
                       {/* 3. Department / Team */}
@@ -1082,10 +1093,12 @@ export default function EmployeesPage() {
                     <ThemedSelect
                       value={formData.role}
                       onChange={(val) => setFormData({ ...formData, role: val })}
-                      options={rolesList.map((r) => ({
-                        value: r.code,
-                        label: r.name,
-                      }))}
+                      options={rolesList
+                        .filter((r) => !["ADMIN", "CEO"].includes(r.code))
+                        .map((r) => ({
+                          value: r.code,
+                          label: r.name,
+                        }))}
                       size="md"
                     />
                   )}
@@ -1319,10 +1332,12 @@ export default function EmployeesPage() {
                     <ThemedSelect
                       value={formData.role}
                       onChange={(val) => setFormData({ ...formData, role: val })}
-                      options={rolesList.map((r) => ({
-                        value: r.code,
-                        label: r.name,
-                      }))}
+                      options={rolesList
+                        .filter((r) => !["ADMIN", "CEO"].includes(r.code))
+                        .map((r) => ({
+                          value: r.code,
+                          label: r.name,
+                        }))}
                       size="md"
                     />
                   )}

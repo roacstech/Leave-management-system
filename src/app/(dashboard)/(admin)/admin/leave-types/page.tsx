@@ -133,6 +133,19 @@ export default function LeaveTypesPage() {
   const [modalError, setModalError] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
+  // Lock background scroll when any modal is open
+  const isAnyModalOpen = createModalOpen || editModalOpen || viewModalOpen || deleteModalOpen;
+  useEffect(() => {
+    if (isAnyModalOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isAnyModalOpen]);
+
   // Form state
   const [formData, setFormData] = useState({
     name: "",

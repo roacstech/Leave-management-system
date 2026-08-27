@@ -17,6 +17,19 @@ export default function HolidaysPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
 
+  // Lock background scroll when modal is open
+  const isAnyModalOpen = isModalOpen || !!holidayToDelete;
+  useEffect(() => {
+    if (isAnyModalOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isAnyModalOpen]);
+
   // Form & modal error state
   const [formData, setFormData] = useState({ name: "", fromDate: "", toDate: "" });
   const [modalError, setModalError] = useState<string | null>(null);
