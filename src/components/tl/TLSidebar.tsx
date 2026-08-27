@@ -8,9 +8,10 @@ import {
   Users,
   CalendarCheck2,
   Clock3,
-  CalendarDays,
   FileSpreadsheet,
   Settings,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { getSession } from "next-auth/react";
 
@@ -28,6 +29,7 @@ export default function TLSidebar({
   teamName = "Development Team",
 }: TLSidebarProps) {
   const pathname = usePathname();
+  const [isMinimized, setIsMinimized] = useState(false);
 
   const [userName, setUserName] = useState("Manager");
   const [userInitials, setUserInitials] = useState("M");
@@ -95,20 +97,29 @@ export default function TLSidebar({
       )}
 
       <aside
-        className={`fixed lg:sticky top-0 left-0 z-50 flex flex-col h-screen w-60 shrink-0 bg-white text-slate-800 transition-transform duration-200 ease-in-out ${
+        className={`fixed lg:sticky top-0 left-0 z-50 flex flex-col h-screen ${isMinimized ? 'w-20' : 'w-60'} shrink-0 bg-white text-slate-800 transition-all duration-300 ease-in-out ${
           mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
       >
         {/* Brand Header */}
-        <div className="px-5 py-5 bg-white flex flex-col items-center justify-center gap-2">
-          <img src="/logo.png" alt="Embassy of India" className="h-10 w-auto object-contain" />
+        <div className={`py-5 bg-white flex items-center ${isMinimized ? 'justify-center px-2' : 'justify-between px-5'}`}>
+          {!isMinimized && <img src="/logo.png" alt="Embassy of India" className="h-10 w-auto object-contain" />}
+          <button
+            onClick={() => setIsMinimized(!isMinimized)}
+            className="hidden lg:flex p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 transition-colors shrink-0"
+            title={isMinimized ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            {isMinimized ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
+          </button>
         </div>
 
         {/* Menu Navigation */}
         <div className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
-          <div className="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-            Team Management
-          </div>
+          {!isMinimized && (
+            <div className="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-slate-400 whitespace-nowrap">
+              Team Management
+            </div>
+          )}
 
           {navItems.map((item) => {
             const Icon = item.icon;
@@ -122,11 +133,12 @@ export default function TLSidebar({
                 key={item.name}
                 href={item.href}
                 onClick={onCloseMobile}
-                className={`group flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium transition-colors cursor-pointer ${
+                className={`group flex items-center ${isMinimized ? 'justify-center' : 'justify-between'} px-3 py-2.5 rounded-xl text-xs font-medium transition-colors cursor-pointer ${
                   isActive
                     ? "bg-indigo-600 text-white shadow-sm font-semibold"
                     : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80"
                 }`}
+                title={isMinimized ? item.name : undefined}
               >
                 <div className="flex items-center gap-3">
                   <Icon
@@ -134,10 +146,10 @@ export default function TLSidebar({
                       isActive ? "text-white" : "text-slate-400 group-hover:text-slate-600"
                     }`}
                   />
-                  <span>{item.name}</span>
+                  {!isMinimized && <span>{item.name}</span>}
                 </div>
 
-                {item.badge && (
+                {!isMinimized && item.badge && (
                   <span
                     className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
                       isActive
@@ -154,22 +166,24 @@ export default function TLSidebar({
         </div>
 
         {/* Manager Profile Footer */}
-        <div className="p-3.5 bg-white">
-          <div className="flex items-center justify-between p-2 rounded-xl bg-slate-50">
+        <div className={`p-3.5 bg-white ${isMinimized ? 'flex justify-center' : ''}`}>
+          <div className={`flex items-center p-2 rounded-xl bg-slate-50 ${isMinimized ? 'justify-center' : 'justify-between'}`}>
             <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center font-bold text-white text-xs shadow-2xs shrink-0">
-                M
+              <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center font-bold text-white text-xs shadow-2xs shrink-0 uppercase">
+                {userInitials}
               </div>
-              <div className="overflow-hidden min-w-0">
-                <div className="text-xs font-semibold text-slate-800 truncate uppercase">
-                  Manager
+              {!isMinimized && (
+                <div className="overflow-hidden min-w-0">
+                  <div className="text-xs font-semibold text-slate-800 truncate uppercase">
+                    {userName}
+                  </div>
+                  <div className="flex items-center gap-1 text-[11px] text-slate-500">
+                    <span>{userRole}</span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-1 text-[11px] text-slate-500">
-                  <span>Reporting Officer</span>
-                </div>
-              </div>
+              )}
             </div>
-            <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" title="Online" />
+            {!isMinimized && <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" title="Online" />}
           </div>
         </div>
       </aside>

@@ -4,26 +4,19 @@ import React, { useState } from "react";
 import { signOut, getSession } from "next-auth/react";
 import EmployeeSidebar from "@/components/employee/EmployeeSidebar";
 import NotificationDropdown from "@/components/ui/NotificationDropdown";
+import WeatherWidget from "@/components/ui/WeatherWidget";
 import {
   Menu,
-  Calendar,
-  RefreshCw,
   LogOut,
 } from "lucide-react";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
-import { SettingsProvider, useSettings } from "@/contexts/SettingsContext";
+import { SettingsProvider } from "@/contexts/SettingsContext";
 
 function EmployeeHeader({
   onOpenMobile,
-  isRefreshing,
-  onRefresh,
 }: {
   onOpenMobile: () => void;
-  isRefreshing: boolean;
-  onRefresh: () => void;
 }) {
-  const { formatDate } = useSettings();
-  const currentDate = formatDate(new Date());
 
   const [userName, setUserName] = useState("Employee");
   const [userInitials, setUserInitials] = useState("EMP");
@@ -65,28 +58,11 @@ function EmployeeHeader({
         >
           <Menu className="w-5 h-5" />
         </button>
-
-        {/* Dynamic Date Chip */}
-        <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-50 border border-slate-200 text-xs text-slate-600 font-medium">
-          <Calendar className="w-3.5 h-3.5 text-slate-400" />
-          <span>{currentDate}</span>
-        </div>
       </div>
 
       {/* Right Header Actions */}
       <div className="flex items-center gap-2.5">
-        <button
-          onClick={onRefresh}
-          title="Refresh Dashboard"
-          className={`p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-all cursor-pointer ${
-            isRefreshing
-              ? "rotate-180 transition-transform duration-700 text-slate-900"
-              : ""
-          }`}
-        >
-          <RefreshCw className="w-4 h-4" />
-        </button>
-
+        <WeatherWidget />
         <NotificationDropdown />
 
         <div className="h-4 w-px bg-slate-200 hidden sm:block mx-1" />
@@ -143,13 +119,6 @@ export default function EmployeeLayout({
   children: React.ReactNode;
 }) {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-
-  const handleRefresh = () => {
-    setIsRefreshing(true);
-    window.dispatchEvent(new CustomEvent("refresh-emp-dashboard"));
-    setTimeout(() => setIsRefreshing(false), 700);
-  };
 
   return (
     <SettingsProvider>
@@ -164,8 +133,6 @@ export default function EmployeeLayout({
         <div className="flex-1 flex flex-col min-w-0">
           <EmployeeHeader
             onOpenMobile={() => setMobileOpen(true)}
-            isRefreshing={isRefreshing}
-            onRefresh={handleRefresh}
           />
 
           {/* Main Body */}

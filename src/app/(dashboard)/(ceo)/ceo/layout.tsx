@@ -5,10 +5,9 @@ import CEOSidebar from "@/components/ceo/CEOSidebar";
 import {
   Menu,
   X,
-  RotateCw,
-  Calendar,
   LogOut,
 } from "lucide-react";
+import WeatherWidget from "@/components/ui/WeatherWidget";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { signOut } from "next-auth/react";
 
@@ -19,13 +18,6 @@ export default function CEOLayout({
 }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
-
-  const todayFormatted = new Date().toLocaleDateString("en-US", {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col lg:flex-row antialiased text-slate-800">
@@ -66,25 +58,10 @@ export default function CEOLayout({
             >
               <Menu className="w-5 h-5" />
             </button>
-
-            {/* Date Badge */}
-            <div className="flex items-center gap-2">
-              <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-lg bg-slate-100 border border-slate-200 text-xs font-semibold text-slate-700">
-                <Calendar className="w-3.5 h-3.5 text-indigo-600" />
-                <span>{todayFormatted}</span>
-              </div>
-            </div>
           </div>
 
           <div className="flex items-center gap-2.5">
-            <button
-              onClick={() => window.location.reload()}
-              title="Refresh Portal Data"
-              className="p-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors cursor-pointer"
-            >
-              <RotateCw className="w-4 h-4" />
-            </button>
-
+            <WeatherWidget />
             <NotificationBell />
 
             <div className="h-6 w-px bg-slate-200 mx-1 hidden sm:block" />

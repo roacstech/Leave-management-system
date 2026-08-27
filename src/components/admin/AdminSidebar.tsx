@@ -13,6 +13,8 @@ import {
   Settings,
   Bell,
   Sparkles,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { getSession } from "next-auth/react";
 
@@ -28,6 +30,7 @@ export default function AdminSidebar({
   onCloseMobile,
 }: AdminSidebarProps) {
   const pathname = usePathname();
+  const [isMinimized, setIsMinimized] = useState(false);
   const [liveCount, setLiveCount] = useState(pendingCount);
   const [userName, setUserName] = useState("Admin User");
   const [userRole, setUserRole] = useState("Administrator");
@@ -114,20 +117,29 @@ export default function AdminSidebar({
       )}
 
       <aside
-        className={`fixed lg:sticky top-0 left-0 z-50 flex flex-col h-screen w-64 shrink-0 bg-white text-slate-800 transition-transform duration-200 ease-in-out ${
+        className={`fixed lg:sticky top-0 left-0 z-50 flex flex-col h-screen ${isMinimized ? 'w-20' : 'w-64'} shrink-0 bg-white text-slate-800 transition-all duration-300 ease-in-out ${
           mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
       >
         {/* Brand Header */}
-        <div className="px-5 py-5 bg-white flex items-center justify-center">
-          <img src="/logo.png" alt="Embassy of India" className="h-10 w-auto object-contain" />
+        <div className={`py-5 bg-white flex items-center ${isMinimized ? 'justify-center px-2' : 'justify-between px-5'}`}>
+          {!isMinimized && <img src="/logo.png" alt="Embassy of India" className="h-10 w-auto object-contain" />}
+          <button
+            onClick={() => setIsMinimized(!isMinimized)}
+            className="hidden lg:flex p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 transition-colors shrink-0"
+            title={isMinimized ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            {isMinimized ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
+          </button>
         </div>
 
         {/* Navigation */}
         <div className="flex-1 overflow-y-auto px-3.5 py-4 space-y-1.5 scrollbar-thin">
-          <div className="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-            Navigation
-          </div>
+          {!isMinimized && (
+            <div className="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-slate-400 whitespace-nowrap">
+              Navigation
+            </div>
+          )}
 
           {navItems.map((item) => {
             const Icon = item.icon;
@@ -143,11 +155,12 @@ export default function AdminSidebar({
                 key={item.name}
                 href={item.href}
                 onClick={onCloseMobile}
-                className={`group flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-150 cursor-pointer active:scale-[0.98] ${
+                className={`group flex items-center ${isMinimized ? 'justify-center' : 'justify-between'} px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-150 cursor-pointer active:scale-[0.98] ${
                   isActive
                     ? "bg-indigo-600 text-white shadow-xs"
                     : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80"
                 }`}
+                title={isMinimized ? item.name : undefined}
               >
                 <div className="flex items-center gap-3">
                   <Icon
@@ -155,10 +168,10 @@ export default function AdminSidebar({
                       isActive ? "text-white" : "text-slate-400 group-hover:text-slate-700"
                     }`}
                   />
-                  <span>{item.name}</span>
+                  {!isMinimized && <span>{item.name}</span>}
                 </div>
 
-                {item.badge && (
+                {!isMinimized && item.badge && (
                   <span
                     className={`text-[10px] font-bold px-2 py-0.5 rounded-full transition-colors ${
                       isActive
@@ -175,22 +188,24 @@ export default function AdminSidebar({
         </div>
 
         {/* Admin User Footer Profile */}
-        <div className="p-4 bg-white">
-          <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50">
+        <div className={`p-4 bg-white ${isMinimized ? 'flex justify-center' : ''}`}>
+          <div className={`flex items-center p-2.5 rounded-xl bg-slate-50 ${isMinimized ? 'justify-center' : 'justify-between'}`}>
             <div className="flex items-center gap-3 overflow-hidden">
               <div className="w-8 h-8 rounded-xl bg-indigo-600 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-2xs">
                 {userInitial}
               </div>
-              <div className="overflow-hidden">
-                <div className="text-xs font-bold text-slate-900 truncate">
-                  {userName}
+              {!isMinimized && (
+                <div className="overflow-hidden">
+                  <div className="text-xs font-bold text-slate-900 truncate">
+                    {userName}
+                  </div>
+                  <div className="text-[11px] font-medium text-slate-500 truncate">
+                    {userRole}
+                  </div>
                 </div>
-                <div className="text-[11px] font-medium text-slate-500 truncate">
-                  {userRole}
-                </div>
-              </div>
+              )}
             </div>
-            <div className="w-2 h-2 rounded-full bg-emerald-500 shrink-0 ml-2" title="Online" />
+            {!isMinimized && <div className="w-2 h-2 rounded-full bg-emerald-500 shrink-0 ml-2" title="Online" />}
           </div>
         </div>
       </aside>

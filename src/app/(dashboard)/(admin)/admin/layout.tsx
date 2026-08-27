@@ -4,26 +4,19 @@ import React, { useState } from "react";
 import { signOut, getSession } from "next-auth/react";
 import AdminSidebar from "@/components/admin/AdminSidebar";
 import NotificationDropdown from "@/components/ui/NotificationDropdown";
+import WeatherWidget from "@/components/ui/WeatherWidget";
 import {
   Menu,
-  Calendar,
-  RefreshCw,
   LogOut,
 } from "lucide-react";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
-import { SettingsProvider, useSettings } from "@/contexts/SettingsContext";
+import { SettingsProvider } from "@/contexts/SettingsContext";
 
 function AdminHeader({
   onOpenMobile,
-  isRefreshing,
-  onRefresh,
 }: {
   onOpenMobile: () => void;
-  isRefreshing: boolean;
-  onRefresh: () => void;
 }) {
-  const { formatDate } = useSettings();
-  const currentDate = formatDate(new Date());
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [userName, setUserName] = useState("Admin User");
   const [userInitials, setUserInitials] = useState("A");
@@ -63,28 +56,11 @@ function AdminHeader({
         >
           <Menu className="w-5 h-5" />
         </button>
-
-        {/* Dynamic Date chip */}
-        <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-50 border border-slate-200 text-xs text-slate-600 font-medium">
-          <Calendar className="w-3.5 h-3.5 text-slate-400" />
-          <span>{currentDate}</span>
-        </div>
       </div>
 
       {/* Right Header Actions */}
       <div className="flex items-center gap-2.5">
-        <button
-          onClick={onRefresh}
-          title="Refresh Dashboard"
-          className={`p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-all cursor-pointer ${
-            isRefreshing
-              ? "rotate-180 transition-transform duration-700 text-slate-900"
-              : ""
-          }`}
-        >
-          <RefreshCw className="w-4 h-4" />
-        </button>
-
+        <WeatherWidget />
         <NotificationBell />
 
         <div className="h-4 w-px bg-slate-200 hidden sm:block mx-1" />
@@ -142,13 +118,6 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-
-  const handleRefresh = () => {
-    setIsRefreshing(true);
-    window.dispatchEvent(new CustomEvent("refresh-dashboard"));
-    setTimeout(() => setIsRefreshing(false), 700);
-  };
 
   return (
     <SettingsProvider>
@@ -163,8 +132,6 @@ export default function AdminLayout({
         <div className="flex-1 flex flex-col min-w-0">
           <AdminHeader
             onOpenMobile={() => setMobileOpen(true)}
-            isRefreshing={isRefreshing}
-            onRefresh={handleRefresh}
           />
 
           {/* Main Body */}
