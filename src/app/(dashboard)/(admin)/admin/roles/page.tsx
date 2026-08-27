@@ -310,48 +310,20 @@ export default function RolesManagementPage() {
         </div>
       )}
 
-      {/* UNIFIED HEADER & FILTER BOX - All in one single box */}
-      <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs space-y-4">
-        {/* Top Section: Title, Description & Create Button */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-              Roles Management
-            </h1>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Create, edit, delete, and configure system and custom organization roles.
-            </p>
-          </div>
-
-          <button
-            onClick={() => {
-              resetForm();
-              setCreateModalOpen(true);
-            }}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-xs transition-all active:scale-95 shrink-0 self-start sm:self-auto cursor-pointer"
-          >
-            <ShieldPlus className="w-4 h-4" />
-            <span>Create New Role</span>
-          </button>
+      {/* UNIFIED HEADER & FILTER BOX */}
+      <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        {/* Left Section: Title & Description */}
+        <div>
+          <h1 className="text-xl font-bold text-slate-900 tracking-tight">
+            Roles Management
+          </h1>
+          <p className="text-xs text-slate-500 mt-0.5">
+            Create, edit, delete, and configure system and custom organization roles.
+          </p>
         </div>
 
-        {/* Clean Divider */}
-        <div className="h-px bg-slate-100" />
-
-        {/* Bottom Section: Search & Filter Tabs */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pt-0.5">
-          {/* Search */}
-          <div className="relative flex-1 max-w-sm">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              placeholder="Search by role name, code, description..."
-              value={search}
-              onChange={(e) => handleSearchChange(e.target.value)}
-              className="w-full pl-9 pr-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-slate-400 focus:bg-white"
-            />
-          </div>
-
+        {/* Right Section: Filter Tabs & Create Button */}
+        <div className="flex flex-wrap items-center gap-3">
           {/* Status Filter Tabs */}
           <div className="flex items-center gap-1 p-1 bg-slate-100 border border-slate-200 rounded-xl text-xs font-medium">
             <button
@@ -385,6 +357,17 @@ export default function RolesManagementPage() {
               Inactive ({paginationInfo.inactiveCount})
             </button>
           </div>
+
+          <button
+            onClick={() => {
+              resetForm();
+              setCreateModalOpen(true);
+            }}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-xs transition-all active:scale-95 shrink-0 cursor-pointer"
+          >
+            <ShieldPlus className="w-4 h-4" />
+            <span>Create New Role</span>
+          </button>
         </div>
       </div>
 
@@ -397,7 +380,6 @@ export default function RolesManagementPage() {
                 <th className="py-3 px-4">Role Name</th>
                 <th className="py-3 px-3">Code</th>
                 <th className="py-3 px-3">Description</th>
-                <th className="py-3 px-3">Access Level</th>
                 <th className="py-3 px-3">Assigned Staff</th>
                 <th className="py-3 px-3">Status</th>
                 <th className="py-3 px-4 text-right">Actions</th>
@@ -406,13 +388,13 @@ export default function RolesManagementPage() {
             <tbody className="divide-y divide-slate-100 text-xs">
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="py-10 text-center text-slate-400">
+                  <td colSpan={6} className="py-10 text-center text-slate-400">
                     Loading roles (page {currentPage})...
                   </td>
                 </tr>
               ) : roles.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-10 text-center text-slate-400">
+                  <td colSpan={6} className="py-10 text-center text-slate-400">
                     No roles found matching criteria.
                   </td>
                 </tr>
@@ -455,20 +437,6 @@ export default function RolesManagementPage() {
                         {r.description || "—"}
                       </td>
 
-                      {/* 4. Access Level */}
-                      <td className="py-3 px-3">
-                        <span
-                          className={`inline-block px-2 py-0.5 rounded text-[10px] ${
-                            r.accessLevel === "ADMIN" || r.accessLevel === "EXECUTIVE"
-                              ? "bg-primary text-primary-content font-bold shadow-2xs"
-                              : r.accessLevel === "LEAD" || r.accessLevel === "MANAGEMENT"
-                              ? "bg-primary/15 text-primary border border-primary/30 font-bold"
-                              : "bg-base-200 text-base-content/80 border border-base-300 font-medium"
-                          }`}
-                        >
-                          {r.accessLevel}
-                        </span>
-                      </td>
 
                       {/* 5. Assigned Staff Count */}
                       <td className="py-3 px-3 text-slate-600">
