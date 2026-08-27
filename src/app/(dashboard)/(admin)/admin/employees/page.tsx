@@ -657,117 +657,79 @@ export default function EmployeesPage() {
           </button>
         </div>
       )}
-      <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs space-y-4">
-        {/* Top Section: Title, Description & Create Button */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <h1 className="text-xl font-extrabold text-slate-900 tracking-tight">
-              Employees Management
-            </h1>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Manage organization staff, Managers, departments, and active statuses.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2 flex-wrap shrink-0 self-start sm:self-auto">
-            <button
-              onClick={() => setManageRolesModalOpen(true)}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-semibold shadow-2xs transition-all cursor-pointer"
-            >
-              <Shield className="w-3.5 h-3.5 text-indigo-600" />
-              <span>Manage Roles</span>
-            </button>
-
-            <button
-              onClick={() => setManageDeptsModalOpen(true)}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-semibold shadow-2xs transition-all cursor-pointer"
-            >
-              <Building2 className="w-3.5 h-3.5 text-indigo-600" />
-              <span>Manage Depts</span>
-            </button>
-
-            <button
-              onClick={() => {
-                resetForm();
-                setCreateModalOpen(true);
-              }}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-xs transition-all active:scale-95 cursor-pointer"
-            >
-              <UserPlus className="w-4 h-4" />
-              <span>Create New Employee</span>
-            </button>
-          </div>
+      <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        {/* Left Section: Title & Description */}
+        <div>
+          <h1 className="text-xl font-extrabold text-slate-900 tracking-tight">
+            Employees Management
+          </h1>
+          <p className="text-xs text-slate-500 mt-0.5">
+            Manage organization staff, Managers, departments, and active statuses.
+          </p>
         </div>
 
-        {/* Clean Divider */}
-        <div className="h-px bg-slate-100" />
+        {/* Right Section: Filter Tabs, Role Select & Create Button */}
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Status filter */}
+          <div className="flex items-center gap-1 p-1 bg-slate-100 border border-slate-200 rounded-xl text-xs font-medium">
+            <button
+              onClick={() => handleStatusChange("ALL")}
+              className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer font-semibold ${
+                filterStatus === "ALL"
+                  ? "bg-indigo-600 text-white shadow-xs"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60"
+              }`}
+            >
+              All ({paginationInfo.activeCount + paginationInfo.inactiveCount})
+            </button>
+            <button
+              onClick={() => handleStatusChange("ACTIVE")}
+              className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer font-semibold ${
+                filterStatus === "ACTIVE"
+                  ? "bg-indigo-600 text-white shadow-xs"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60"
+              }`}
+            >
+              Active ({paginationInfo.activeCount})
+            </button>
+            <button
+              onClick={() => handleStatusChange("INACTIVE")}
+              className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer font-semibold ${
+                filterStatus === "INACTIVE"
+                  ? "bg-indigo-600 text-white shadow-xs"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60"
+              }`}
+            >
+              Inactive ({paginationInfo.inactiveCount})
+            </button>
+          </div>
 
-        {/* Bottom Section: Search & Filter Tabs */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pt-0.5">
-          {/* Search */}
-          <div className="relative flex-1 max-w-sm">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              placeholder="Search by name, email, department..."
-              value={search}
-              onChange={(e) => handleSearchChange(e.target.value)}
-              className="w-full pl-9 pr-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-slate-400 focus:bg-white"
+          {/* Dynamic Role Filter Dropdown */}
+          <div className="w-40 sm:w-44 shrink-0">
+            <ThemedSelect
+              value={filterRole}
+              onChange={(val) => handleRoleChange(val)}
+              options={[
+                { value: "ALL", label: "All Roles" },
+                ...rolesList.map((r) => ({
+                  value: r.code,
+                  label: r.name,
+                })),
+              ]}
+              size="xs"
             />
           </div>
 
-          {/* Filter Tabs */}
-          <div className="flex flex-wrap items-center gap-2">
-            {/* Status filter */}
-            <div className="flex items-center gap-1 p-1 bg-slate-100 border border-slate-200 rounded-xl text-xs font-medium">
-              <button
-                onClick={() => handleStatusChange("ALL")}
-                className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer font-semibold ${
-                  filterStatus === "ALL"
-                    ? "bg-indigo-600 text-white shadow-xs"
-                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60"
-                }`}
-              >
-                All ({paginationInfo.activeCount + paginationInfo.inactiveCount})
-              </button>
-              <button
-                onClick={() => handleStatusChange("ACTIVE")}
-                className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer font-semibold ${
-                  filterStatus === "ACTIVE"
-                    ? "bg-indigo-600 text-white shadow-xs"
-                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60"
-                }`}
-              >
-                Active ({paginationInfo.activeCount})
-              </button>
-              <button
-                onClick={() => handleStatusChange("INACTIVE")}
-                className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer font-semibold ${
-                  filterStatus === "INACTIVE"
-                    ? "bg-indigo-600 text-white shadow-xs"
-                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60"
-                }`}
-              >
-                Inactive ({paginationInfo.inactiveCount})
-              </button>
-            </div>
-
-            {/* Dynamic Role Filter Dropdown */}
-            <div className="w-40 sm:w-44 shrink-0">
-              <ThemedSelect
-                value={filterRole}
-                onChange={(val) => handleRoleChange(val)}
-                options={[
-                  { value: "ALL", label: "All Roles" },
-                  ...rolesList.map((r) => ({
-                    value: r.code,
-                    label: r.name,
-                  })),
-                ]}
-                size="xs"
-              />
-            </div>
-          </div>
+          <button
+            onClick={() => {
+              resetForm();
+              setCreateModalOpen(true);
+            }}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-xs transition-all active:scale-95 cursor-pointer shrink-0"
+          >
+            <UserPlus className="w-4 h-4" />
+            <span>Create New Employee</span>
+          </button>
         </div>
       </div>
 
@@ -1204,28 +1166,6 @@ export default function EmployeesPage() {
                 </div>
               )}
 
-              {/* Status Switch */}
-              <div className="flex items-center justify-between p-3.5 rounded-xl bg-slate-50 border border-slate-200/80">
-                <div>
-                  <span className="text-xs font-bold text-slate-800">Account Status</span>
-                  <p className="text-[11px] text-slate-500">
-                    Active employees can log in and submit leave requests.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setFormData({ ...formData, isActive: !formData.isActive })}
-                  className={`w-11 h-6 flex items-center rounded-full p-1 cursor-pointer transition-colors ${
-                    formData.isActive ? "bg-indigo-600" : "bg-slate-300"
-                  }`}
-                >
-                  <div
-                    className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${
-                      formData.isActive ? "translate-x-5" : "translate-x-0"
-                    }`}
-                  />
-                </button>
-              </div>
 
               {/* Modal Footer Actions */}
               <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-slate-100">
