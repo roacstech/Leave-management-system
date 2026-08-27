@@ -82,6 +82,19 @@ export default function CEOSidebar({
 }) {
   const pathname = usePathname();
   const [isMinimized, setIsMinimized] = useState(false);
+  const [userName, setUserName] = useState("Mr. Yashas Ravi");
+  const [userInitials, setUserInitials] = useState("Y");
+
+  useEffect(() => {
+    import("next-auth/react").then(({ getSession }) => {
+      getSession().then((session) => {
+        if (session?.user?.name) {
+          setUserName(session.user.name);
+          setUserInitials(session.user.name.charAt(0).toUpperCase());
+        }
+      });
+    });
+  }, []);
 
   return (
     <aside className={`${isMinimized ? 'w-20' : 'w-60'} shrink-0 bg-white text-slate-800 flex flex-col h-full select-none transition-all duration-300 ease-in-out`}>
@@ -164,20 +177,20 @@ export default function CEOSidebar({
         })}
       </div>
 
-      {/* CEO Profile Footer */}
+      {/* Profile Footer */}
       <div className={`p-3.5 bg-white ${isMinimized ? 'flex justify-center' : ''}`}>
         <div className={`flex items-center w-full p-2.5 rounded-xl bg-slate-50 ${isMinimized ? 'justify-center' : 'justify-between'}`}>
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center font-bold text-white text-xs shadow-2xs shrink-0">
-              C
+            <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center font-bold text-white text-xs shadow-2xs shrink-0 uppercase">
+              {userInitials}
             </div>
             {!isMinimized && (
               <div className="overflow-hidden min-w-0">
-                <div className="text-xs font-semibold text-slate-800 truncate uppercase">
-                  Chief Executive
+                <div className="text-xs font-semibold text-slate-800 truncate">
+                  {userName}
                 </div>
                 <div className="flex items-center gap-1 text-[11px] text-slate-500">
-                  <span>Executive Head</span>
+                  <span>Head Of Chancery</span>
                 </div>
               </div>
             )}
@@ -188,3 +201,4 @@ export default function CEOSidebar({
     </aside>
   );
 }
+

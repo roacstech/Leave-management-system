@@ -24,6 +24,8 @@ import {
   Gift,
   Award,
   Paperclip,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { useSettings } from "@/contexts/SettingsContext";
 import DatePicker from "@/components/ui/DatePicker";
