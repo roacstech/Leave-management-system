@@ -53,6 +53,11 @@ export default function EmployeeSidebar({
       href: "/employee/my-leaves",
       icon: CalendarCheck2,
     },
+    {
+      name: "Holidays",
+      href: "/employee/holidays",
+      icon: CalendarDays,
+    },
   ];
 
   return (

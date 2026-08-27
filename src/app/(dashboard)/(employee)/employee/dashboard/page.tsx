@@ -357,7 +357,7 @@ export default function EmployeeDashboardPage() {
 
           {/* Action Buttons */}
           <div className="flex items-center gap-2.5 self-start lg:self-auto shrink-0">
-            <button
+            {/* <button
               type="button"
               onClick={() => {
                 fetchDashboardData();
@@ -367,7 +367,7 @@ export default function EmployeeDashboardPage() {
               className="p-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 shadow-2xs transition-all cursor-pointer"
             >
               <RotateCcw className={`w-4 h-4 ${loading ? "animate-spin text-indigo-600" : ""}`} />
-            </button>
+            </button> */}
 
             <Link
               href="/employee/my-leaves"
