@@ -238,10 +238,11 @@ export function validateLeaveApplication({
     const checkStart = new Date(start);
     checkStart.setHours(0, 0, 0, 0);
     if (checkStart.getTime() < today.getTime()) {
-      return {
-        isValid: false,
-        error: "Backdated leave requests are disabled. Please select a date on or after today.",
-      };
+      // Allow backdated leaves as requested
+      // return {
+      //   isValid: false,
+      //   error: "Backdated leave requests are disabled. Please select a date on or after today.",
+      // };
     }
   }
 

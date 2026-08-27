@@ -161,7 +161,7 @@ export async function GET() {
     }
 
     // 5. Fetch recent requests, upcoming approved leaves, and upcoming holidays
-    const [recentRequests, upcomingLeaves, upcomingHolidays] = await Promise.all([
+    const [recentRequestsRaw, recentOvertime, upcomingLeaves, upcomingHolidays] = await Promise.all([
       prisma.leaveRequest.findMany({
         where: { userId },
         include: {
@@ -176,6 +176,12 @@ export async function GET() {
         orderBy: {
           createdAt: "desc",
         },
+        take: 6,
+      }),
+
+      prisma.overtimeRecord.findMany({
+        where: { userId },
+        orderBy: { createdAt: "desc" },
         take: 6,
       }),
 
@@ -209,6 +215,22 @@ export async function GET() {
         take: 3,
       }),
     ]);
+
+    const recentRequests = [
+      ...recentRequestsRaw,
+      ...recentOvertime.map((o) => ({
+        id: o.id + 100000,
+        startDate: o.date,
+        endDate: o.date,
+        status: o.status === "PENDING" ? "PENDING_TL" : o.status,
+        reason: o.reason,
+        createdAt: o.createdAt,
+        leaveType: {
+          name: o.claimCompOff ? "Comp-Off Claim" : "Overtime Claim",
+          code: "CO",
+        },
+      })),
+    ].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()).slice(0, 6);
 
     // 6. Fetch colleagues on leave today in the same team
     const teamMembersCount = employee.teamId

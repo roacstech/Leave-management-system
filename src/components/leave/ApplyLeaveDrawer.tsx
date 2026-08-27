@@ -40,7 +40,7 @@ export default function ApplyLeaveDrawer({
 
   // Form states for Leave
   const [selectedLeaveTypeId, setSelectedLeaveTypeId] = useState<number | "">("");
-  const [leaveOption, setLeaveOption] = useState<"FULL_DAY" | "HALF_DAY_FIRST" | "HALF_DAY_SECOND">("FULL_DAY");
+  const [leaveOption, setLeaveOption] = useState<"FULL_DAY" | "HALF_DAY_FIRST" | "HALF_DAY_SECOND" | "">("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [reason, setReason] = useState("");
@@ -48,30 +48,25 @@ export default function ApplyLeaveDrawer({
 
   // Form states for Comp-off
   const [workedDate, setWorkedDate] = useState("");
-  const [hoursWorked, setHoursWorked] = useState(8);
+  const [hoursWorked, setHoursWorked] = useState<number | "">("");
   const [compOffReason, setCompOffReason] = useState("");
 
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  // Default fallback leave types if none passed
-  const availableTypes: LeaveTypeOption[] = leaveTypes.length > 0
-    ? leaveTypes
-    : [
-        { id: 1, name: "Casual Leave", code: "CL", balance: 5 },
-        { id: 2, name: "Sick Day", code: "SL", availed: 9.5 },
-        { id: 3, name: "Vacation Leave", code: "VL", balance: 32 },
-        { id: 4, name: "Loss Of Pay", code: "LOP", availed: 0 },
-        { id: 5, name: "Comp Off", code: "CO", balance: 0 },
-      ];
+  // Use real leave types from API
+  const availableTypes: LeaveTypeOption[] = leaveTypes;
 
-  // Auto-select first leave type
+
+
+  // Reset form when drawer opens or closes
   useEffect(() => {
-    if (availableTypes.length > 0 && selectedLeaveTypeId === "") {
-      setSelectedLeaveTypeId(availableTypes[0].id);
+    if (isOpen) {
+      handleClear();
+      setActiveTab("LEAVE");
     }
-  }, [availableTypes, selectedLeaveTypeId]);
+  }, [isOpen]);
 
   // Calculate total days
   useEffect(() => {
@@ -102,15 +97,14 @@ export default function ApplyLeaveDrawer({
     setFromDate("");
     setToDate("");
     setReason("");
+    // Comp-Off reset
     setWorkedDate("");
-    setHoursWorked(8);
+    setHoursWorked("");
     setCompOffReason("");
     setErrorMessage(null);
     setSuccessMessage(null);
-    if (availableTypes.length > 0) {
-      setSelectedLeaveTypeId(availableTypes[0].id);
-    }
-    setLeaveOption("FULL_DAY");
+    setSelectedLeaveTypeId("");
+    setLeaveOption("");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -121,6 +115,10 @@ export default function ApplyLeaveDrawer({
     if (activeTab === "LEAVE") {
       if (!selectedLeaveTypeId) {
         setErrorMessage("Please select a leave type.");
+        return;
+      }
+      if (!leaveOption) {
+        setErrorMessage("Please select a leave option.");
         return;
       }
       if (!fromDate || !toDate) {
@@ -221,7 +219,7 @@ export default function ApplyLeaveDrawer({
         <div className="flex items-center justify-between px-6 py-5 border-b border-gray-200 bg-white">
           <div>
             <h2 className="text-base font-bold text-gray-900 tracking-tight">Apply Leave</h2>
-            <p className="text-xs text-gray-500 mt-0.5">Submit a new leave or compensatory off application</p>
+            {/* <p className="text-xs text-gray-500 mt-0.5">Submit a new leave or compensatory off application</p> */}
           </div>
           <button
             type="button"
@@ -241,11 +239,10 @@ export default function ApplyLeaveDrawer({
               setActiveTab("LEAVE");
               setErrorMessage(null);
             }}
-            className={`px-3.5 py-2 rounded-xl font-semibold text-xs transition-all duration-150 flex items-center gap-2 cursor-pointer active:scale-95 ${
-              activeTab === "LEAVE"
-                ? "bg-indigo-600 text-white shadow-xs"
-                : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-            }`}
+            className={`px-3.5 py-2 rounded-xl font-semibold text-xs transition-all duration-150 flex items-center gap-2 cursor-pointer active:scale-95 ${activeTab === "LEAVE"
+              ? "bg-indigo-600 text-white shadow-xs"
+              : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+              }`}
           >
             <FileText className="w-3.5 h-3.5" />
             <span>Apply Leave</span>
@@ -257,11 +254,10 @@ export default function ApplyLeaveDrawer({
               setActiveTab("COMP_OFF");
               setErrorMessage(null);
             }}
-            className={`px-3.5 py-2 rounded-xl font-semibold text-xs transition-all duration-150 flex items-center gap-2 cursor-pointer active:scale-95 ${
-              activeTab === "COMP_OFF"
-                ? "bg-indigo-600 text-white shadow-xs"
-                : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-            }`}
+            className={`px-3.5 py-2 rounded-xl font-semibold text-xs transition-all duration-150 flex items-center gap-2 cursor-pointer active:scale-95 ${activeTab === "COMP_OFF"
+              ? "bg-indigo-600 text-white shadow-xs"
+              : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+              }`}
           >
             <Briefcase className="w-3.5 h-3.5" />
             <span>Apply Comp Off</span>
@@ -296,10 +292,13 @@ export default function ApplyLeaveDrawer({
                   <ThemedSelect
                     value={String(selectedLeaveTypeId)}
                     onChange={(val) => setSelectedLeaveTypeId(Number(val))}
-                    options={availableTypes.map((type) => ({
-                      value: String(type.id),
-                      label: `${type.name} ${type.balance !== undefined ? `(Balance: ${type.balance})` : type.availed !== undefined ? `(Availed: ${type.availed})` : ""}`,
-                    }))}
+                    options={[
+                      { value: "", label: "Select an option" },
+                      ...availableTypes.map((type) => ({
+                        value: String(type.id),
+                        label: `${type.name} ${type.balance !== undefined ? `(Balance: ${type.balance})` : type.availed !== undefined ? `(Availed: ${type.availed})` : ""}`,
+                      }))
+                    ]}
                     size="md"
                   />
                 </div>
@@ -312,6 +311,7 @@ export default function ApplyLeaveDrawer({
                     value={leaveOption}
                     onChange={(val: any) => setLeaveOption(val)}
                     options={[
+                      { value: "", label: "Select an option" },
                       { value: "FULL_DAY", label: "Full Day" },
                       { value: "HALF_DAY_FIRST", label: "Half Day - First Half" },
                       { value: "HALF_DAY_SECOND", label: "Half Day - Second Half" },
@@ -331,7 +331,6 @@ export default function ApplyLeaveDrawer({
                     value={fromDate}
                     onChange={(val) => {
                       setFromDate(val);
-                      if (!toDate) setToDate(val);
                     }}
                     size="sm"
                     placeholder="Select start date"
@@ -353,12 +352,12 @@ export default function ApplyLeaveDrawer({
               </div>
 
               {/* Total Days */}
-              <div className="flex items-center justify-between p-3 rounded-xl bg-gray-50 border border-gray-200">
+              {/* <div className="flex items-center justify-between p-3 rounded-xl bg-gray-50 border border-gray-200">
                 <span className="text-xs font-semibold text-gray-700">Total Day(s)</span>
                 <span className="text-xs font-bold text-indigo-600 px-3 py-1 rounded-lg bg-indigo-50 border border-indigo-200">
                   {totalDays} {totalDays === 1 ? "Day" : "Days"}
                 </span>
-              </div>
+              </div> */}
 
               {/* Reason for Leave */}
               <div className="space-y-1">
@@ -403,8 +402,9 @@ export default function ApplyLeaveDrawer({
                   </label>
                   <ThemedSelect
                     value={String(hoursWorked)}
-                    onChange={(val) => setHoursWorked(Number(val))}
+                    onChange={(val) => setHoursWorked(val ? Number(val) : "")}
                     options={[
+                      { value: "", label: "Select hours" },
                       { value: "4", label: "4 Hours (Half Day Credit)" },
                       { value: "8", label: "8 Hours (Full Day Credit)" },
                       { value: "12", label: "12 Hours (1.5 Day Credit)" },
