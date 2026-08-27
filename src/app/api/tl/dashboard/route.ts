@@ -267,6 +267,95 @@ export async function GET() {
     const checkedInCount = presentCount + lateCount + halfDayCount;
     const attendanceRate = totalTeamCount > 0 ? Math.round((checkedInCount / totalTeamCount) * 100) : 0;
 
+    // 6. Fetch 6-Month Leave Request Trend Analytics for Team
+    const rawTrends = [];
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const startOfMonth = new Date(d.getFullYear(), d.getMonth(), 1, 0, 0, 0, 0);
+      const endOfMonth = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59, 999);
+
+      if (hasMembers) {
+        const [approvedInMonth, pendingInMonth, rejectedInMonth] = await Promise.all([
+          prisma.leaveRequest.count({
+            where: {
+              userId: { in: teamMemberIds },
+              status: "APPROVED",
+              startDate: { gte: startOfMonth, lte: endOfMonth },
+            },
+          }),
+          prisma.leaveRequest.count({
+            where: {
+              userId: { in: teamMemberIds },
+              status: { in: ["PENDING_ADMIN", "PENDING_TL"] },
+              startDate: { gte: startOfMonth, lte: endOfMonth },
+            },
+          }),
+          prisma.leaveRequest.count({
+            where: {
+              userId: { in: teamMemberIds },
+              status: { in: ["REJECTED", "CANCELLED"] },
+              startDate: { gte: startOfMonth, lte: endOfMonth },
+            },
+          }),
+        ]);
+
+        const totalInMonth = approvedInMonth + pendingInMonth + rejectedInMonth;
+        const approvalRate = totalInMonth > 0 ? Math.round((approvedInMonth / totalInMonth) * 100) : 100;
+
+        rawTrends.push({
+          month: monthNames[d.getMonth()],
+          fullMonth: d.toLocaleDateString("en-US", { month: "long" }),
+          year: d.getFullYear(),
+          approved: approvedInMonth,
+          pending: pendingInMonth,
+          rejected: rejectedInMonth,
+          approvalRate,
+          total: totalInMonth,
+        });
+      } else {
+        rawTrends.push({
+          month: monthNames[d.getMonth()],
+          fullMonth: d.toLocaleDateString("en-US", { month: "long" }),
+          year: d.getFullYear(),
+          approved: 0,
+          pending: 0,
+          rejected: 0,
+          approvalRate: 100,
+          total: 0,
+        });
+      }
+    }
+
+    const totalPeriodLeaves = rawTrends.reduce((sum, m) => sum + m.total, 0) || 1;
+    const monthlyTrends = rawTrends.map((m) => ({
+      ...m,
+      percentage: Math.round((m.total / totalPeriodLeaves) * 100),
+    }));
+
+    // 7. Fetch Leave Type Distribution for Team
+    const leaveTypeStats = hasMembers
+      ? await prisma.leaveType.findMany({
+          where: { isActive: true },
+          select: {
+            id: true,
+            name: true,
+            code: true,
+            annualAllocation: true,
+            _count: {
+              select: {
+                leaveRequests: {
+                  where: { 
+                    userId: { in: teamMemberIds },
+                    status: "APPROVED" 
+                  },
+                },
+              },
+            },
+          },
+        })
+      : [];
+
     return NextResponse.json({
       success: true,
       tl: {
@@ -295,6 +384,8 @@ export async function GET() {
       onLeaveToday: onLeaveTodayList,
       teamMembers,
       recentActivity: recentTeamLeaves,
+      monthlyTrends,
+      leaveTypeStats,
     });
   } catch (error: any) {
     console.error("TL Dashboard API error:", error);

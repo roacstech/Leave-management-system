@@ -9,6 +9,7 @@ import {
   CalendarCheck2,
   Clock3,
   FileSpreadsheet,
+  FileText,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
@@ -51,6 +52,12 @@ export default function TLSidebar({
       name: "Dashboard",
       href: "/tl/dashboard",
       icon: LayoutDashboard,
+      badge: null,
+    },
+    {
+      name: "My Leave",
+      href: "/tl/my-leaves",
+      icon: FileText,
       badge: null,
     },
     {
