@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
     });
     const tlTeamIds = tlTeams.map((t) => t.id);
 
-    const baseTeamFilter = {
+    const baseTeamFilter: any = {
       role: "EMPLOYEE",
       OR: [
         { reportingToId: tlId },

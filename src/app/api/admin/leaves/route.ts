@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
       ];
     }
 
-    const baseWhere = { user: { role: { notIn: ["ADMIN", "CEO"] } } };
+    const baseWhere: any = { user: { role: { notIn: ["ADMIN", "CEO"] } } };
 
     const [
       pendingAdminCount,
