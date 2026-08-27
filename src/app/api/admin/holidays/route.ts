@@ -50,20 +50,52 @@ async function ensureHolidayTable() {
   hasCheckedHolidayCols = true;
 }
 
-// GET all holidays
+// GET all holidays with server-side pagination and status filter
 export async function GET(request: NextRequest) {
   try {
     await ensureHolidayTable();
 
-    const holidays = await prisma.holiday.findMany({
-      orderBy: {
-        fromDate: "asc",
-      },
-    });
+    const { searchParams } = new URL(request.url);
+    const status = searchParams.get("status") || "ALL";
+    const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
+    const limit = Math.max(1, parseInt(searchParams.get("limit") || "10", 10));
+    const skip = (page - 1) * limit;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const where: any = {};
+    if (status === "UPCOMING") {
+      where.fromDate = { gte: today };
+    } else if (status === "PAST") {
+      where.fromDate = { lt: today };
+    }
+
+    const [total, totalFiltered, holidays] = await Promise.all([
+      prisma.holiday.count(),
+      prisma.holiday.count({ where }),
+      prisma.holiday.findMany({
+        where,
+        orderBy: {
+          fromDate: status === "PAST" ? "desc" : "asc",
+        },
+        skip,
+        take: limit,
+      }),
+    ]);
+
+    const totalPages = Math.max(1, Math.ceil(totalFiltered / limit));
 
     return NextResponse.json({
       success: true,
       holidays,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalFiltered,
+        totalPages,
+      },
     });
   } catch (error: any) {
     console.error("Fetch holidays error:", error);
