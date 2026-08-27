@@ -10,7 +10,6 @@ import {
   CalendarCheck2,
   FileSpreadsheet,
   CalendarDays,
-  Settings,
   Bell,
   Sparkles,
   ChevronLeft,
@@ -94,12 +93,6 @@ export default function AdminSidebar({
         { name: "Leave Types", href: "/admin/leave-types" },
         { name: "Holidays", href: "/admin/holidays" },
       ],
-    },
-    {
-      name: "Settings",
-      href: "/admin/settings",
-      icon: Settings,
-      badge: null,
     },
   ];
 

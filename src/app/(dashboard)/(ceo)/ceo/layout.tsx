@@ -6,7 +6,9 @@ import {
   Menu,
   X,
   LogOut,
+  Settings,
 } from "lucide-react";
+import Link from "next/link";
 import WeatherWidget from "@/components/ui/WeatherWidget";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { signOut } from "next-auth/react";
@@ -50,7 +52,7 @@ export default function CEOLayout({
       {/* Main Container */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top Executive Header */}
-        <header className="h-16 shrink-0 bg-white border-b border-slate-200 sticky top-0 z-30 px-4 sm:px-6 flex items-center justify-between shadow-2xs">
+        <header className="h-16 shrink-0 bg-white border-b border-slate-200 sticky top-0 z-30 px-3 sm:px-4 flex items-center justify-between shadow-2xs">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setMobileMenuOpen(true)}
@@ -70,7 +72,7 @@ export default function CEOLayout({
             <div className="relative">
               <button
                 onClick={() => setProfileMenuOpen(!profileMenuOpen)}
-                className="flex items-center gap-2 pl-1 p-1.5 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer text-left"
+                className="flex items-center gap-2 pl-1 pr-1 p-1.5 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer text-left"
               >
                 <div className="w-8 h-8 rounded-full bg-indigo-600 text-white font-bold text-xs flex items-center justify-center shadow-xs ring-2 ring-indigo-200 uppercase">
                   C
@@ -89,7 +91,16 @@ export default function CEOLayout({
                     className="fixed inset-0 z-40"
                     onClick={() => setProfileMenuOpen(false)}
                   />
-                  <div className="absolute right-0 mt-2 w-48 bg-white border border-slate-200 rounded-xl shadow-xl p-1 z-50 animate-in fade-in zoom-in-95 duration-100">
+                  <div className="absolute right-0 mt-1.5 w-40 bg-white border border-slate-200 rounded-xl shadow-xl p-1 z-50 animate-in fade-in zoom-in-95 duration-100">
+                    <Link
+                      href="/ceo/settings"
+                      onClick={() => setProfileMenuOpen(false)}
+                      className="flex items-center w-full text-left px-3.5 py-2 text-xs text-slate-700 hover:bg-slate-50 hover:text-indigo-600 transition-colors font-semibold cursor-pointer rounded-lg gap-2"
+                    >
+                      <Settings className="w-4 h-4 text-slate-400 group-hover:text-indigo-500" />
+                      <span>Settings</span>
+                    </Link>
+                    <div className="h-px bg-slate-100 my-1 mx-2" />
                     <button
                       onClick={async () => {
                         try {

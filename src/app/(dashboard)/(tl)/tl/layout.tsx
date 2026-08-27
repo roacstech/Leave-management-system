@@ -8,7 +8,9 @@ import WeatherWidget from "@/components/ui/WeatherWidget";
 import {
   Menu,
   LogOut,
+  Settings,
 } from "lucide-react";
+import Link from "next/link";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { SettingsProvider } from "@/contexts/SettingsContext";
 
@@ -47,7 +49,7 @@ function TLHeader({
   };
 
   return (
-    <header className="sticky top-0 z-30 h-14 shrink-0 bg-white border-b border-slate-200 px-4 sm:px-6 flex items-center justify-between">
+    <header className="sticky top-0 z-30 h-14 shrink-0 bg-white border-b border-slate-200 px-3 sm:px-4 flex items-center justify-between">
       <div className="flex items-center gap-3">
         <button
           type="button"
@@ -69,7 +71,7 @@ function TLHeader({
         <div className="relative">
           <button
             onClick={() => setProfileMenuOpen(!profileMenuOpen)}
-            className="flex items-center gap-2.5 pl-1.5 pr-2 py-1 rounded-xl hover:bg-slate-50 transition-colors cursor-pointer text-left"
+            className="flex items-center gap-2.5 pl-1.5 pr-1 py-1 rounded-xl hover:bg-slate-50 transition-colors cursor-pointer text-left"
           >
             <div className="w-8 h-8 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-bold text-xs shadow-xs uppercase">
               {userInitials}
@@ -91,11 +93,20 @@ function TLHeader({
                 className="fixed inset-0 z-40" 
                 onClick={() => setProfileMenuOpen(false)} 
               />
-              <div className="absolute right-0 top-full mt-2 w-52 bg-white border border-slate-200 rounded-2xl shadow-xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-100">
+              <div className="absolute right-0 top-full mt-1.5 w-40 bg-white border border-slate-200 rounded-2xl shadow-xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-100">
                 <div className="px-3 py-2.5 border-b border-slate-100 mb-1">
                   <p className="text-xs font-bold text-slate-900 truncate uppercase">{userName}</p>
                   <p className="text-[10px] text-slate-500 font-semibold">{userRole}</p>
                 </div>
+                <Link
+                  href="/tl/settings"
+                  onClick={() => setProfileMenuOpen(false)}
+                  className="flex items-center w-full text-left px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 hover:text-indigo-600 transition-colors font-semibold cursor-pointer rounded-xl gap-2 active:scale-95"
+                >
+                  <Settings className="w-4 h-4 text-slate-400 group-hover:text-indigo-500" />
+                  <span>Settings</span>
+                </Link>
+                <div className="h-px bg-slate-100 my-1 mx-2" />
                 <button
                   onClick={handleLogout}
                   className="flex items-center w-full text-left px-3 py-2 text-xs text-rose-600 hover:bg-rose-50 hover:text-rose-700 transition-colors font-semibold cursor-pointer rounded-xl gap-2 active:scale-95"

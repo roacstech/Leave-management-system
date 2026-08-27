@@ -9,7 +9,6 @@ import {
   CalendarCheck2,
   Clock3,
   FileSpreadsheet,
-  Settings,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
@@ -76,12 +75,6 @@ export default function TLSidebar({
       name: "Leave History",
       href: "/tl/leave-history",
       icon: FileSpreadsheet,
-      badge: null,
-    },
-    {
-      name: "Settings",
-      href: "/tl/settings",
-      icon: Settings,
       badge: null,
     },
   ];

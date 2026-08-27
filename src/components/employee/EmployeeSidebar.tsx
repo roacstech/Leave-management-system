@@ -9,7 +9,6 @@ import {
   PieChart,
   CalendarDays,
   Clock3,
-  Settings,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
@@ -53,11 +52,6 @@ export default function EmployeeSidebar({
       name: "My Leaves",
       href: "/employee/my-leaves",
       icon: CalendarCheck2,
-    },
-    {
-      name: "Settings",
-      href: "/employee/settings",
-      icon: Settings,
     },
   ];
 
