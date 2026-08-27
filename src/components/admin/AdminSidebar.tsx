@@ -15,6 +15,8 @@ import {
   Sparkles,
   ChevronLeft,
   ChevronRight,
+  Layers,
+  ChevronDown,
 } from "lucide-react";
 import { getSession } from "next-auth/react";
 
@@ -35,6 +37,7 @@ export default function AdminSidebar({
   const [userName, setUserName] = useState("Admin User");
   const [userRole, setUserRole] = useState("Administrator");
   const [userInitial, setUserInitial] = useState("A");
+  const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     getSession().then((session) => {
@@ -75,28 +78,22 @@ export default function AdminSidebar({
       badge: null,
     },
     {
-      name: "Employees",
-      href: "/admin/employees",
-      icon: Users,
-      badge: null,
-    },
-    {
       name: "Leave Requests",
       href: "/admin/leaves",
       icon: CalendarCheck2,
       badge: effectiveCount > 0 ? `${effectiveCount}` : null,
     },
     {
-      name: "Leave Types",
-      href: "/admin/leave-types",
-      icon: FileSpreadsheet,
+      name: "Master",
+      icon: Layers,
       badge: null,
-    },
-    {
-      name: "Holidays",
-      href: "/admin/holidays",
-      icon: CalendarDays,
-      badge: null,
+      subItems: [
+        { name: "Departments", href: "/admin/departments" },
+        { name: "Roles", href: "/admin/roles" },
+        { name: "Employees", href: "/admin/employees" },
+        { name: "Leave Types", href: "/admin/leave-types" },
+        { name: "Holidays", href: "/admin/holidays" },
+      ],
     },
     {
       name: "Settings",
@@ -143,6 +140,63 @@ export default function AdminSidebar({
 
           {navItems.map((item) => {
             const Icon = item.icon;
+            
+            if (item.subItems) {
+              const isAnyChildActive = item.subItems.some(sub => pathname?.startsWith(sub.href));
+              const isOpen = openMenus[item.name] !== undefined ? openMenus[item.name] : isAnyChildActive;
+
+              return (
+                <div key={item.name} className="space-y-1">
+                  <button
+                    onClick={() => {
+                      if (isMinimized) setIsMinimized(false);
+                      setOpenMenus(prev => ({ ...prev, [item.name]: !isOpen }));
+                    }}
+                    className={`w-full group flex items-center ${isMinimized ? 'justify-center' : 'justify-between'} px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-150 cursor-pointer active:scale-[0.98] ${
+                      isAnyChildActive
+                        ? "bg-indigo-50 text-indigo-700"
+                        : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80"
+                    }`}
+                    title={isMinimized ? item.name : undefined}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Icon
+                        className={`w-4 h-4 transition-colors ${
+                          isAnyChildActive ? "text-indigo-600" : "text-slate-400 group-hover:text-slate-700"
+                        }`}
+                      />
+                      {!isMinimized && <span>{item.name}</span>}
+                    </div>
+                    {!isMinimized && (
+                      <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                    )}
+                  </button>
+
+                  {!isMinimized && isOpen && (
+                    <div className="pl-9 pr-3 space-y-1 mt-1">
+                      {item.subItems.map((sub) => {
+                        const isSubActive = pathname?.startsWith(sub.href);
+                        return (
+                          <Link
+                            key={sub.name}
+                            href={sub.href}
+                            onClick={onCloseMobile}
+                            className={`block px-3 py-2 rounded-lg text-[11px] font-medium transition-colors ${
+                              isSubActive
+                                ? "bg-indigo-600 text-white shadow-xs"
+                                : "text-slate-500 hover:text-slate-900 hover:bg-slate-100"
+                            }`}
+                          >
+                            {sub.name}
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            }
+
             const isActive =
               item.href === "/admin/my-leave"
                 ? pathname === "/admin/my-leave" || pathname === "/admin/my-leaves"
