@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 export async function GET(request: NextRequest) {
   try {
     const session = await auth();
-    if (!session?.user || session.user.role !== "EMPLOYEE") {
+    if (!session?.user) {
       return NextResponse.json(
         { success: false, error: "Unauthorized access" },
         { status: 401 }
@@ -26,7 +26,11 @@ export async function GET(request: NextRequest) {
     const startOfMonth = new Date(year, month - 1, 1, 0, 0, 0, 0);
     const endOfMonth = new Date(year, month, 0, 23, 59, 59, 999);
 
-    const [records, attendanceList, holidays] = await Promise.all([
+    const page = parseInt(searchParams.get("page") || "1", 10);
+    const limit = parseInt(searchParams.get("limit") || "5", 10);
+    const skip = (page - 1) * limit;
+
+    const [records, totalRecords, attendanceList, holidays] = await Promise.all([
       prisma.overtimeRecord.findMany({
         where: {
           userId,
@@ -37,6 +41,17 @@ export async function GET(request: NextRequest) {
         },
         orderBy: {
           date: "desc",
+        },
+        skip,
+        take: limit,
+      }),
+      prisma.overtimeRecord.count({
+        where: {
+          userId,
+          date: {
+            gte: startOfMonth,
+            lte: endOfMonth,
+          },
         },
       }),
       prisma.attendance.findMany({
@@ -165,6 +180,12 @@ export async function GET(request: NextRequest) {
         totalCreditedCompOffDays,
         pendingCount,
       },
+      pagination: {
+        total: totalRecords,
+        page,
+        limit,
+        totalPages: Math.ceil(totalRecords / limit),
+      },
     });
   } catch (error: any) {
     console.error("Employee overtime fetch error:", error);
@@ -179,7 +200,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const session = await auth();
-    if (!session?.user || session.user.role !== "EMPLOYEE") {
+    if (!session?.user) {
       return NextResponse.json(
         { success: false, error: "Unauthorized access" },
         { status: 401 }

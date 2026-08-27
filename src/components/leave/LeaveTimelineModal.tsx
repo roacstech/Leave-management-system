@@ -52,10 +52,10 @@ export default function LeaveTimelineModal({
   const timelineSteps: TimelineStep[] = steps || [
     {
       title: "Application Submitted",
-      subtitle: "Employee Request Filed",
+      subtitle: "Officer Request Filed",
       status: "COMPLETED",
       date: leaveDetails.startDate,
-      actorName: leaveDetails.applicantName || "Employee (Self)",
+      // actorName: leaveDetails.applicantName || "Employee (Self)",
     },
     {
       title: "Reporting Manager Review",
@@ -66,7 +66,7 @@ export default function LeaveTimelineModal({
         : "Under Review by Reporting Officer",
       status: isApproved ? "COMPLETED" : isRejected ? "REJECTED" : "CURRENT",
       date: isApproved ? leaveDetails.startDate : null,
-      actorName: "Team Lead / Manager",
+      // actorName: "Team Lead / Manager",
     },
     {
       title: "HR & System Finalization",
@@ -77,7 +77,7 @@ export default function LeaveTimelineModal({
         : "Pending Manager Clearance",
       status: isApproved ? "COMPLETED" : isRejected ? "SKIPPED" : "PENDING",
       date: isApproved ? leaveDetails.startDate : null,
-      actorName: "System Administration",
+      // actorName: "System Administration",
     },
   ];
 
@@ -131,7 +131,7 @@ export default function LeaveTimelineModal({
             <div className="flex items-center justify-between">
               <span className="text-slate-500 font-medium">Leave Period:</span>
               <span className="font-semibold text-slate-800 font-mono text-[11px]">
-                {leaveDetails.startDate} → {leaveDetails.endDate}
+                {leaveDetails.startDate} to {leaveDetails.endDate}
               </span>
             </div>
             <div className="flex items-center justify-between">
@@ -145,7 +145,9 @@ export default function LeaveTimelineModal({
                     : "bg-amber-50 text-amber-700 border-amber-200"
                 }`}
               >
-                {leaveDetails.status}
+                {leaveDetails.status.toUpperCase().includes("PENDING")
+                  ? "Pending for Approval"
+                  : leaveDetails.status}
               </span>
             </div>
             {leaveDetails.reason && (
