@@ -46,7 +46,11 @@ export async function GET(request: NextRequest) {
       ];
     }
 
-    const [total, departments, activeCount, inactiveCount] = await Promise.all([
+    const page = searchParams.has("page") ? Math.max(1, parseInt(searchParams.get("page") || "1", 10)) : 1;
+    const limit = searchParams.has("limit") ? Math.max(1, parseInt(searchParams.get("limit") || "10", 10)) : 10;
+    const skip = (page - 1) * limit;
+
+    const [totalFiltered, departments, totalAll, activeCount, inactiveCount] = await Promise.all([
       prisma.team.count({ where: whereClause }),
       prisma.team.findMany({
         where: whereClause,
@@ -67,16 +71,25 @@ export async function GET(request: NextRequest) {
         orderBy: {
           name: "asc",
         },
+        skip: searchParams.get("all") === "true" ? undefined : skip,
+        take: searchParams.get("all") === "true" ? undefined : limit,
       }),
+      prisma.team.count(),
       prisma.team.count({ where: { isActive: true } }),
       prisma.team.count({ where: { isActive: false } }),
     ]);
+
+    const totalPages = Math.ceil(totalFiltered / limit) || 1;
 
     return NextResponse.json({
       success: true,
       departments,
       pagination: {
-        total,
+        total: totalAll,
+        totalFiltered,
+        totalPages,
+        page,
+        limit,
         activeCount,
         inactiveCount,
       },
