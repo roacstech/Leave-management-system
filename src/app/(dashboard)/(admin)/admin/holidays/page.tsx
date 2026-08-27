@@ -433,7 +433,7 @@ export default function HolidaysPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs animate-fadeIn">
           <form
             onSubmit={handleSubmit}
-            className="w-full max-w-md bg-white border border-slate-200 rounded-2xl p-6 shadow-2xl space-y-4 relative"
+            className="w-full max-w-md bg-white border border-slate-200 rounded-2xl p-6 shadow-2xl space-y-4 relative max-h-[90vh] overflow-y-auto"
           >
             {isSaving && (
               <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/50 backdrop-blur-xs rounded-2xl">

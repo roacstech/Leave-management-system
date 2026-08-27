@@ -259,6 +259,62 @@ export function validateLeaveApplication({
   return { isValid: true };
 }
 
+/**
+ * Calculate actual working days between startDate and endDate excluding weekly offs (Sundays) and official public holidays.
+ */
+export function calculateWorkingDays({
+  startDate,
+  endDate,
+  isHalfDay = false,
+  holidays = [],
+}: {
+  startDate: Date | string;
+  endDate: Date | string;
+  isHalfDay?: boolean;
+  holidays?: Array<{ fromDate?: Date | string | null; toDate?: Date | string | null; date?: Date | string | null }>;
+}): number {
+  if (isHalfDay) return 0.5;
+
+  const start = typeof startDate === "string" ? new Date(startDate) : new Date(startDate.getTime());
+  const end = typeof endDate === "string" ? new Date(endDate) : new Date(endDate.getTime());
+  start.setHours(0, 0, 0, 0);
+  end.setHours(0, 0, 0, 0);
+
+  if (end < start) return 0;
+
+  // Build a set of holiday date strings (YYYY-MM-DD)
+  const holidayDateSet = new Set<string>();
+  for (const h of holidays) {
+    const hFrom = h.fromDate || h.date;
+    const hTo = h.toDate || h.date || hFrom;
+    if (hFrom && hTo) {
+      const curH = new Date(hFrom);
+      const endH = new Date(hTo);
+      curH.setHours(0, 0, 0, 0);
+      endH.setHours(0, 0, 0, 0);
+      while (curH <= endH) {
+        holidayDateSet.add(curH.toISOString().split("T")[0]);
+        curH.setDate(curH.getDate() + 1);
+      }
+    }
+  }
+
+  let count = 0;
+  const cur = new Date(start);
+  while (cur <= end) {
+    const dateStr = cur.toISOString().split("T")[0];
+    const isSunday = cur.getDay() === 0;
+    const isHoliday = holidayDateSet.has(dateStr);
+
+    if (!isSunday && !isHoliday) {
+      count++;
+    }
+    cur.setDate(cur.getDate() + 1);
+  }
+
+  return Math.max(1, count);
+}
+
 // ─── Notification Business Logic Helpers ─────────────────────────────────────
 
 export function canSendNotification(

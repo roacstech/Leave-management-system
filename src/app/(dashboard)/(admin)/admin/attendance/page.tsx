@@ -753,7 +753,7 @@ export default function AttendanceAdminPage() {
               </div>
 
               {/* Export + Reset */}
-              <div className="flex items-center gap-2 ml-auto">
+              <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end sm:ml-auto">
                 <div className="flex items-center gap-1">
                   <button onClick={exportCSV} title="Export CSV" className="flex items-center gap-1.5 px-2.5 py-2 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 text-xs font-medium transition-all">
                     <Download className="w-3.5 h-3.5" /> CSV

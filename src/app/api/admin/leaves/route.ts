@@ -5,6 +5,7 @@ import {
   getSystemSettings,
   formatDateWithPattern,
   validateLeaveApplication,
+  calculateWorkingDays,
 } from "@/lib/settings";
 import { sendLeaveAppliedEmail, sendLeaveDecisionEmail } from "@/lib/mail";
 import { createNotification, resolveEmployeeTeamLead } from "@/lib/notifications";
@@ -21,7 +22,9 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get("limit") || "10", 10);
     const skip = (page - 1) * limit;
 
-    const whereClause: any = {};
+    const whereClause: any = {
+      user: { role: { notIn: ["ADMIN", "CEO"] } },
+    };
 
     if (status && status !== "ALL") {
       if (status === "PENDING" || status === "PENDING_ADMIN") {
@@ -40,6 +43,8 @@ export async function GET(request: NextRequest) {
       ];
     }
 
+    const baseWhere = { user: { role: { notIn: ["ADMIN", "CEO"] } } };
+
     const [
       pendingAdminCount,
       escalatedCount,
@@ -49,10 +54,10 @@ export async function GET(request: NextRequest) {
       leaveRequests,
     ] = await Promise.all([
       // Only count PENDING_ADMIN for Admin pending metric
-      prisma.leaveRequest.count({ where: { status: "PENDING_ADMIN" } }),
-      prisma.leaveRequest.count({ where: { status: "PENDING_ADMIN", escalatedById: { not: null } } }),
-      prisma.leaveRequest.count({ where: { status: "APPROVED" } }),
-      prisma.leaveRequest.count({ where: { status: "REJECTED" } }),
+      prisma.leaveRequest.count({ where: { ...baseWhere, status: "PENDING_ADMIN" } }),
+      prisma.leaveRequest.count({ where: { ...baseWhere, status: "PENDING_ADMIN", escalatedById: { not: null } } }),
+      prisma.leaveRequest.count({ where: { ...baseWhere, status: "APPROVED" } }),
+      prisma.leaveRequest.count({ where: { ...baseWhere, status: "REJECTED" } }),
       prisma.leaveRequest.count({ where: whereClause }),
       prisma.leaveRequest.findMany({
         where: whereClause,
@@ -388,13 +393,22 @@ export async function PATCH(request: NextRequest) {
     const formattedStart = formatDateWithPattern(existing.startDate, settings.dateFormat, settings.timezone);
     const formattedEnd = formatDateWithPattern(existing.endDate, settings.dateFormat, settings.timezone);
 
-    const daysDiff = Math.max(
-      1,
-      Math.round(
-        (new Date(existing.endDate).getTime() - new Date(existing.startDate).getTime()) /
-          (1000 * 60 * 60 * 24)
-      ) + 1
-    );
+    const holidays = await prisma.holiday.findMany({
+      where: {
+        OR: [
+          { fromDate: { lte: existing.endDate }, toDate: { gte: existing.startDate } },
+          { date: { gte: existing.startDate, lte: existing.endDate } },
+        ],
+      },
+    });
+
+    const isHalfDay = existing.reason?.toLowerCase().includes("[half day]") || false;
+    const daysDiff = calculateWorkingDays({
+      startDate: existing.startDate,
+      endDate: existing.endDate,
+      isHalfDay,
+      holidays,
+    });
     const leaveYear = new Date(existing.startDate).getFullYear();
 
     if (status === "APPROVED") {

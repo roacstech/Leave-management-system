@@ -5,6 +5,7 @@ import {
   getSystemSettings,
   canSendNotification,
   formatDateWithPattern,
+  calculateWorkingDays,
 } from "@/lib/settings";
 import { sendLeaveDecisionEmail } from "@/lib/mail";
 import { createNotification } from "@/lib/notifications";
@@ -197,8 +198,22 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ success: false, error: "Leave request not found" }, { status: 404 });
     }
 
-    const diffMs = new Date(leaveRequest.endDate).getTime() - new Date(leaveRequest.startDate).getTime();
-    const duration = Math.max(1, Math.round(diffMs / (1000 * 60 * 60 * 24)) + 1);
+    const holidays = await prisma.holiday.findMany({
+      where: {
+        OR: [
+          { fromDate: { lte: leaveRequest.endDate }, toDate: { gte: leaveRequest.startDate } },
+          { date: { gte: leaveRequest.startDate, lte: leaveRequest.endDate } },
+        ],
+      },
+    });
+
+    const isHalfDay = leaveRequest.reason?.toLowerCase().includes("[half day]") || false;
+    const duration = calculateWorkingDays({
+      startDate: leaveRequest.startDate,
+      endDate: leaveRequest.endDate,
+      isHalfDay,
+      holidays,
+    });
 
     const settings = await getSystemSettings();
     const formattedStart = formatDateWithPattern(leaveRequest.startDate, settings.dateFormat, settings.timezone);

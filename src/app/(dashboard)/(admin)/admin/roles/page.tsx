@@ -592,7 +592,7 @@ export default function RolesManagementPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/30 backdrop-blur-2xs animate-fadeIn">
           <form
             onSubmit={handleCreateRole}
-            className="w-full max-w-md bg-white border border-slate-200 rounded-xl p-5 shadow-lg space-y-3.5"
+            className="w-full max-w-md bg-white border border-slate-200 rounded-xl p-5 shadow-lg space-y-3.5 max-h-[90vh] overflow-y-auto"
           >
             <div className="flex items-center justify-between pb-2.5 border-b border-slate-100">
               <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
@@ -693,7 +693,7 @@ export default function RolesManagementPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/30 backdrop-blur-2xs animate-fadeIn">
           <form
             onSubmit={handleEditRole}
-            className="w-full max-w-md bg-white border border-slate-200 rounded-xl p-5 shadow-lg space-y-3.5"
+            className="w-full max-w-md bg-white border border-slate-200 rounded-xl p-5 shadow-lg space-y-3.5 max-h-[90vh] overflow-y-auto"
           >
             <div className="flex items-center justify-between pb-2.5 border-b border-slate-100">
               <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
@@ -799,7 +799,7 @@ export default function RolesManagementPage() {
       {/* DELETE CONFIRMATION MODAL */}
       {deleteModalOpen && selectedRole && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/30 backdrop-blur-2xs animate-fadeIn">
-          <div className="w-full max-w-sm bg-white border border-slate-200 rounded-xl p-5 shadow-lg space-y-3">
+          <div className="w-full max-w-sm bg-white border border-slate-200 rounded-xl p-5 shadow-lg space-y-3 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-2 border-b border-slate-100">
               <h3 className="text-sm font-bold text-rose-600 flex items-center gap-1.5">
                 <Trash2 className="w-4 h-4" />

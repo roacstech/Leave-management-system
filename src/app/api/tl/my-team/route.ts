@@ -44,10 +44,23 @@ export async function GET(request: NextRequest) {
     const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
     const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
 
-    // 2. Build where clause — show only employees explicitly assigned to this TL
-    const whereClause: any = {
+    // 2. Fetch all teams led by this TL
+    const tlTeams = await prisma.team.findMany({
+      where: { tlId },
+      select: { id: true },
+    });
+    const tlTeamIds = tlTeams.map((t) => t.id);
+
+    const baseTeamFilter = {
       role: "EMPLOYEE",
-      reportingToId: tlId,
+      OR: [
+        { reportingToId: tlId },
+        ...(tlTeamIds.length > 0 ? [{ teamId: { in: tlTeamIds } }] : []),
+      ],
+    };
+
+    const whereClause: any = {
+      ...baseTeamFilter,
     };
 
     if (statusFilter === "ACTIVE") {
@@ -65,21 +78,24 @@ export async function GET(request: NextRequest) {
     }
 
     if (search) {
-      whereClause.OR = [
-        { name: { contains: search } },
-        { email: { contains: search } },
+      whereClause.AND = [
+        {
+          OR: [
+            { name: { contains: search } },
+            { email: { contains: search } },
+          ],
+        },
       ];
     }
 
     // 3. Count total and summary counts for tabs
     const [totalFiltered, totalMembers, activeMembers, onLeaveToday] = await Promise.all([
       prisma.user.count({ where: whereClause }),
-      prisma.user.count({ where: { role: "EMPLOYEE", reportingToId: tlId } }),
-      prisma.user.count({ where: { role: "EMPLOYEE", reportingToId: tlId, isActive: true } }),
+      prisma.user.count({ where: baseTeamFilter }),
+      prisma.user.count({ where: { ...baseTeamFilter, isActive: true } }),
       prisma.user.count({
         where: {
-          role: "EMPLOYEE",
-          reportingToId: tlId,
+          ...baseTeamFilter,
           leaveRequests: {
             some: {
               status: "APPROVED",

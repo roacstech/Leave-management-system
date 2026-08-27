@@ -33,10 +33,19 @@ export async function GET() {
     }
 
     // 2. Identify Assigned Team Members
+    const tlTeams = await prisma.team.findMany({
+      where: { tlId },
+      select: { id: true },
+    });
+    const tlTeamIds = tlTeams.map((t) => t.id);
+
     const teamWhereClause: any = {
       role: "EMPLOYEE",
-      reportingToId: tlId,
       isActive: true,
+      OR: [
+        { reportingToId: tlId },
+        ...(tlTeamIds.length > 0 ? [{ teamId: { in: tlTeamIds } }] : []),
+      ],
     };
 
     const teamMembers = await prisma.user.findMany({

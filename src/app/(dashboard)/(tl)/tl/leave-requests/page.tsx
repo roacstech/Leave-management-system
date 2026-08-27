@@ -586,7 +586,7 @@ export default function TLLeaveRequestsPage() {
       {/* 5. ACTION MODAL (APPROVE / REJECT / ESCALATE) */}
       {actionModal.open && actionModal.request && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
-          <div className="w-full max-w-md bg-white rounded-2xl border border-slate-200 shadow-xl overflow-hidden animate-in fade-in zoom-in-95">
+          <div className="w-full max-w-md bg-white rounded-2xl border border-slate-200 shadow-xl overflow-hidden animate-in fade-in zoom-in-95 max-h-[90vh] overflow-y-auto">
             {/* Header */}
             <div
               className={`p-5 border-b flex items-center justify-between ${

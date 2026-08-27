@@ -677,7 +677,7 @@ export default function LeavesAdminPage() {
       {/* Action Modal (Approve / Reject) */}
       {modalState.isOpen && modalState.request && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4 animate-in fade-in duration-150">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-md w-full p-6 space-y-4">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-md w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between">
               <h3 className="text-base font-bold text-slate-900">
                 {modalState.type === "APPROVE" ? "Approve Leave Request" : "Reject Leave Request"}
