@@ -32,7 +32,7 @@ const navItems: NavItem[] = [
     icon: CalendarCheck2,
   },
   {
-    name: "Employee Roster",
+    name: "Officer Roster",
     href: "/ceo/employees",
     icon: Users,
   },

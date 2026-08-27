@@ -385,22 +385,7 @@ export default function CEOLeaveRequestsPage() {
         </div>
 
         {/* Filter Controls Row */}
-        <div className="pt-4 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5">
-          {/* Search */}
-          <div className="relative">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              placeholder="Search applicant name or email..."
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setPage(1);
-              }}
-              className="w-full pl-9 pr-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-slate-400 focus:bg-white"
-            />
-          </div>
-
+        <div className="pt-4 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-3 gap-2.5">
           {/* Department/Team Filter */}
           <div>
             <ThemedSelect
@@ -719,7 +704,17 @@ export default function CEOLeaveRequestsPage() {
                 </div>
                 <div>
                   <span className="text-slate-400 block text-[10px] uppercase font-bold">Current Status</span>
-                  <span className="font-bold text-slate-900">{selectedLeave.status}</span>
+                  <span className="font-bold text-slate-900">
+                    {selectedLeave.status === "PENDING_ADMIN" || selectedLeave.status === "PENDING" || selectedLeave.status === "PENDING_TL"
+                      ? "Pending for Approval"
+                      : selectedLeave.status === "APPROVED"
+                      ? "Approved"
+                      : selectedLeave.status === "REJECTED"
+                      ? "Rejected"
+                      : selectedLeave.status === "CANCELLED"
+                      ? "Cancelled"
+                      : selectedLeave.status}
+                  </span>
                 </div>
               </div>
 
