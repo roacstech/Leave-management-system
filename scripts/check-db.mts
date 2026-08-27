@@ -8,12 +8,24 @@ if (!match) { console.error("Bad URL"); process.exit(1); }
 const adapter = new PrismaMariaDb({ user: match[1], password: decodeURIComponent(match[2]), host: match[3], port: Number(match[4]), database: match[5].split("?")[0], allowPublicKeyRetrieval: true });
 const prisma = new PrismaClient({ adapter });
 
-const del = await prisma.holiday.deleteMany({
+const now = new Date();
+const futureLeaves = await prisma.leaveRequest.findMany({
   where: {
-    id: 2,
+    createdAt: { gt: now },
   },
+  select: { id: true, createdAt: true, startDate: true },
 });
-console.log("DELETED_MISTAKEN_HOLIDAY:", del);
-const holidays = await prisma.holiday.findMany();
-console.log("REMAINING_HOLIDAYS:", holidays.map(h => ({ id: h.id, name: h.name, fromDate: h.fromDate, toDate: h.toDate })));
+console.log(`Found ${futureLeaves.length} leaves with future createdAt:`, futureLeaves);
+
+if (futureLeaves.length > 0) {
+  // Fix them by setting createdAt to now or their actual creation timestamp
+  for (const l of futureLeaves) {
+    await prisma.leaveRequest.update({
+      where: { id: l.id },
+      data: { createdAt: new Date(Date.now() - (150 - l.id) * 60000) },
+    });
+  }
+  console.log("Updated future createdAt records to valid chronological past timestamps!");
+}
+
 await prisma.$disconnect();

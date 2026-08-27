@@ -86,7 +86,10 @@ export async function GET(request: NextRequest) {
             select: { id: true, name: true, role: true },
           },
         },
-        orderBy: { createdAt: "desc" },
+        orderBy: [
+          { createdAt: "desc" },
+          { id: "desc" },
+        ],
         skip,
         take: limit,
       }),
