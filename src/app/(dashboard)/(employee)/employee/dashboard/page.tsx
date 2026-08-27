@@ -46,6 +46,7 @@ interface LeaveBalance {
     name: string;
     code: string;
     isPaid: boolean;
+    requiresAttachment?: boolean;
   };
 }
 
@@ -222,6 +223,7 @@ export default function EmployeeDashboardPage() {
     code: b.leaveType.code,
     balance: b.remaining,
     availed: b.used,
+    requiresAttachment: Boolean(b.leaveType.requiresAttachment),
   }));
 
   const getLeavesForDate = (dateObj: Date) => {

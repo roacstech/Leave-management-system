@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useEffect, useState, useCallback } from "react";
 import UnifiedLeavePortal, { LeaveRecord } from "@/components/leave/UnifiedLeavePortal";
@@ -35,6 +35,7 @@ export default function EmployeeMyLeavesPage() {
               code: b.leaveType?.code || b.code || "LV",
               balance: b.remaining ?? (b.total - b.used),
               availed: b.used ?? 0,
+              requiresAttachment: Boolean(b.leaveType?.requiresAttachment ?? b.requiresAttachment),
             }))
           );
         }

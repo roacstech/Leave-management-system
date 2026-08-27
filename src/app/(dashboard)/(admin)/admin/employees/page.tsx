@@ -53,7 +53,7 @@ interface RoleOption {
 }
 
 const DEFAULT_ROLES: RoleOption[] = [
-  { name: "Employee", code: "EMPLOYEE", accessLevel: "STANDARD", isSystem: true },
+  { name: "Officer", code: "EMPLOYEE", accessLevel: "STANDARD", isSystem: true },
   { name: "Manager", code: "TL", accessLevel: "LEAD", isSystem: true },
   { name: "Admin", code: "ADMIN", accessLevel: "ADMIN", isSystem: true },
 ];
@@ -182,7 +182,7 @@ export default function EmployeesPage() {
           });
         }
       } else {
-        showToast(data.error || "Failed to load employees", "error");
+        showToast(data.error || "Failed to load officers", "error");
       }
     } catch {
       showToast("Error connecting to server", "error");
@@ -423,7 +423,7 @@ export default function EmployeesPage() {
     const isEmployeeRole = formData.role === "EMPLOYEE" || currentRoleObj?.accessLevel === "STANDARD";
 
     if (isEmployeeRole && !formData.reportingToId) {
-      showToast("Please select a Reporting Manager for this employee", "error");
+      showToast("Please select a Reporting Manager for this officer", "error");
       return;
     }
 
@@ -454,21 +454,21 @@ export default function EmployeesPage() {
       const data = await res.json();
 
       if (data.success) {
-        showToast(data.message || "Employee created successfully!");
+        showToast(data.message || "Officer created successfully!");
         setCreateModalOpen(false);
         resetForm();
         fetchEmployees();
       } else {
-        showToast(data.error || "Failed to create employee", "error");
+        showToast(data.error || "Failed to create officer", "error");
       }
-    } catch {
-      showToast("Network error creating employee", "error");
+    } catch (error) {
+      showToast("Network error creating officer", "error");
     } finally {
       setSubmitting(false);
     }
   };
 
-  // Handle Edit Employee
+  // Handle Edit Officer
   const handleEditEmployee = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedEmployee) return;
@@ -477,7 +477,7 @@ export default function EmployeesPage() {
     const isEmployeeRole = formData.role === "EMPLOYEE" || currentRoleObj?.accessLevel === "STANDARD";
 
     if (isEmployeeRole && !formData.reportingToId) {
-      showToast("Please select a Reporting Manager for this employee", "error");
+      showToast("Please select a Reporting Manager for this officer", "error");
       return;
     }
 
@@ -508,22 +508,22 @@ export default function EmployeesPage() {
       const data = await res.json();
 
       if (data.success) {
-        showToast(data.message || "Employee updated successfully!");
+        showToast(data.message || "Officer updated successfully!");
         setEditModalOpen(false);
         setSelectedEmployee(null);
         resetForm();
         fetchEmployees();
       } else {
-        showToast(data.error || "Failed to update employee", "error");
+        showToast(data.error || "Failed to update officer", "error");
       }
-    } catch {
-      showToast("Network error updating employee", "error");
+    } catch (error) {
+      showToast("Network error updating officer", "error");
     } finally {
       setSubmitting(false);
     }
   };
 
-  // Handle Delete Employee
+  // Handle Delete Officer
   const handleDeleteEmployee = async () => {
     if (!selectedEmployee) return;
 
@@ -535,15 +535,15 @@ export default function EmployeesPage() {
       const data = await res.json();
 
       if (data.success) {
-        showToast(data.message || "Employee deleted successfully!");
+        showToast(data.message || "Officer deleted successfully!");
         setDeleteModalOpen(false);
         setSelectedEmployee(null);
         fetchEmployees();
       } else {
-        showToast(data.error || "Failed to delete employee", "error");
+        showToast(data.error || "Failed to delete officer", "error");
       }
-    } catch {
-      showToast("Network error deleting employee", "error");
+    } catch (error) {
+      showToast("Network error deleting officer", "error");
     } finally {
       setSubmitting(false);
     }
@@ -661,10 +661,10 @@ export default function EmployeesPage() {
         {/* Left Section: Title & Description */}
         <div>
           <h1 className="text-xl font-extrabold text-slate-900 tracking-tight">
-            Employees Management
+            Officers Management
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
-            Manage organization staff, Managers, departments, and active statuses.
+            Manage organization officers, Managers, departments, and active statuses.
           </p>
         </div>
 
@@ -728,18 +728,18 @@ export default function EmployeesPage() {
             className="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-xs transition-all active:scale-95 cursor-pointer shrink-0"
           >
             <UserPlus className="w-4 h-4" />
-            <span>Create New Employee</span>
+            <span>Create New Officer</span>
           </button>
         </div>
       </div>
 
-      {/* EMPLOYEES TABLE UI */}
+      {/* OFFICERS TABLE UI */}
       <div className="rounded-2xl bg-white border border-slate-200 overflow-hidden shadow-xs">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-slate-100 bg-slate-50/80 text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                <th className="py-3 px-4">Employee</th>
+                <th className="py-3 px-4">Officer</th>
                 <th className="py-3 px-3">Role</th>
                 <th className="py-3 px-3">Department / Team</th>
                 <th className="py-3 px-3">Joined Date</th>
@@ -752,16 +752,16 @@ export default function EmployeesPage() {
                 <tr>
                   <td colSpan={6} className="py-12 text-center text-slate-400">
                     <Loader2 className="w-5 h-5 animate-spin mx-auto mb-1 text-slate-400" />
-                    <span>Loading employees (page {currentPage})...</span>
+                    <span>Loading officers (page {currentPage})...</span>
                   </td>
                 </tr>
               ) : employees.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="py-12 text-center text-slate-400">
                     <Users className="w-8 h-8 mx-auto mb-2 text-slate-300" />
-                    <p className="font-semibold text-slate-700">No employees found.</p>
+                    <p className="font-semibold text-slate-700">No officers found.</p>
                     <p className="text-[11px] text-slate-400 mt-0.5">
-                      Click &quot;Create New Employee&quot; to add organization members.
+                      Click &quot;Create New Officer&quot; to add organization members.
                     </p>
                   </td>
                 </tr>
@@ -905,10 +905,10 @@ export default function EmployeesPage() {
               <span>
                 Showing <strong className="text-slate-800">{startIndex}</strong> to{" "}
                 <strong className="text-slate-800">{endIndex}</strong> of{" "}
-                <strong className="text-slate-800">{paginationInfo.total}</strong> employees
+                <strong className="text-slate-800">{paginationInfo.total}</strong> officers
               </span>
             ) : (
-              <span>0 employees</span>
+              <span>0 officers</span>
             )}
           </div>
 
@@ -964,9 +964,9 @@ export default function EmployeesPage() {
                   <UserPlus className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900">Create New Employee</h3>
+                  <h3 className="text-sm font-bold text-slate-900">Create New Officer</h3>
                   <p className="text-[11px] text-slate-500">
-                    Add employee profile, credentials, organization role, and department.
+                    Add officer profile, credentials, organization role, and department.
                   </p>
                 </div>
               </div>
@@ -1149,7 +1149,7 @@ export default function EmployeesPage() {
                     Reporting Manager (Team Lead / Admin) <span className="text-rose-500">*</span>
                   </label>
                   <p className="text-[11px] text-slate-500 mb-1.5">
-                    Leave requests submitted by this employee will be routed to this manager.
+                    Leave requests submitted by this officer will be routed to this manager.
                   </p>
                   <ThemedSelect
                     value={formData.reportingToId}
@@ -1182,7 +1182,7 @@ export default function EmployeesPage() {
                   className="flex items-center gap-1.5 px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold disabled:opacity-50 shadow-xs cursor-pointer transition-all active:scale-95"
                 >
                   {submitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                  <span>Create Employee</span>
+                  <span>Create Officer</span>
                 </button>
               </div>
             </form>
@@ -1204,7 +1204,7 @@ export default function EmployeesPage() {
                 </div>
                 <div>
                   <h3 className="text-sm font-bold text-slate-900">
-                    Edit Employee: {selectedEmployee.name}
+                    Edit Officer: {selectedEmployee.name}
                   </h3>
                   <p className="text-[11px] text-slate-500">
                     Update profile info, department, role, reporting manager, or password.
@@ -1386,7 +1386,7 @@ export default function EmployeesPage() {
                     Reporting Manager (Team Lead / Admin) <span className="text-rose-500">*</span>
                   </label>
                   <p className="text-[11px] text-slate-500 mb-1.5">
-                    Leave requests submitted by this employee will be routed to this manager.
+                    Leave requests submitted by this officer will be routed to this manager.
                   </p>
                   <ThemedSelect
                     value={formData.reportingToId}
@@ -1408,7 +1408,7 @@ export default function EmployeesPage() {
                 <div>
                   <span className="text-xs font-bold text-slate-800">Account Status</span>
                   <p className="text-[11px] text-slate-500">
-                    Active employees can log in and submit leave requests.
+                    Active officers can log in and submit leave requests.
                   </p>
                 </div>
                 <button
@@ -1458,7 +1458,7 @@ export default function EmployeesPage() {
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <h3 className="text-sm font-bold text-rose-600 flex items-center gap-2">
                 <Trash2 className="w-4 h-4" />
-                <span>Delete Employee</span>
+                <span>Delete Officer</span>
               </h3>
               <button
                 onClick={() => setDeleteModalOpen(false)}
@@ -1471,7 +1471,7 @@ export default function EmployeesPage() {
             <p className="text-xs text-slate-600 leading-relaxed">
               Are you sure you want to delete{" "}
               <strong className="text-slate-900">&quot;{selectedEmployee.name}&quot;</strong>?
-              This action cannot be undone and will remove employee records from the system.
+              This action cannot be undone and will remove officer records from the system.
             </p>
 
             <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-100">
@@ -1584,7 +1584,7 @@ export default function EmployeesPage() {
                         value={newRoleAccessLevel}
                         onChange={(val) => setNewRoleAccessLevel(val)}
                         options={[
-                          { value: "STANDARD", label: "Standard Employee" },
+                          { value: "STANDARD", label: "Standard Officer" },
                           { value: "LEAD", label: "Team Lead / Manager" },
                           { value: "ADMIN", label: "System Administrator" },
                         ]}

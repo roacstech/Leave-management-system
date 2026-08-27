@@ -35,6 +35,7 @@ export default function AdminMyLeavesPage() {
               code: b.leaveType?.code || b.code || "LV",
               balance: b.remaining ?? (b.total - b.used),
               availed: b.used ?? 0,
+              requiresAttachment: Boolean(b.leaveType?.requiresAttachment ?? b.requiresAttachment),
             }))
           );
         }

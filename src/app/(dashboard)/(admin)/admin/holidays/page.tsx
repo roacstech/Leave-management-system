@@ -65,6 +65,28 @@ export default function HolidaysPage() {
     return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
   };
 
+  const formatDayString = (fromStr: string, toStr: string) => {
+    if (!fromStr) return "";
+    const fromDate = new Date(fromStr);
+    const fromDay = fromDate.toLocaleDateString("en-US", { weekday: "long" });
+
+    if (!toStr) return fromDay;
+
+    const toDate = new Date(toStr);
+    const toDay = toDate.toLocaleDateString("en-US", { weekday: "long" });
+
+    const isSameDay =
+      fromDate.getFullYear() === toDate.getFullYear() &&
+      fromDate.getMonth() === toDate.getMonth() &&
+      fromDate.getDate() === toDate.getDate();
+
+    if (isSameDay || fromDay === toDay) {
+      return fromDay;
+    }
+
+    return `${fromDay} – ${toDay}`;
+  };
+
   const formatInputDate = (dateStr: string) => {
     if (!dateStr) return "";
     const date = new Date(dateStr);
@@ -284,7 +306,7 @@ export default function HolidaysPage() {
                 <th className="py-3.5 px-5">Holiday Name</th>
                 <th className="py-3.5 px-4">From Date</th>
                 <th className="py-3.5 px-4">To Date</th>
-                <th className="py-3.5 px-4">Duration</th>
+                <th className="py-3.5 px-4">Day</th>
                 <th className="py-3.5 px-5 text-right">Actions</th>
               </tr>
             </thead>
@@ -297,7 +319,6 @@ export default function HolidaysPage() {
                 </tr>
               ) : (
                 holidays.map((h) => {
-                  const days = getDaysCount(h.fromDate, h.toDate);
                   return (
                     <tr
                       key={h.id}
@@ -321,7 +342,7 @@ export default function HolidaysPage() {
                       </td>
                       <td className="py-3.5 px-4">
                         <span className="inline-block px-2.5 py-0.5 rounded-lg bg-slate-100 text-slate-700 text-[11px] font-semibold border border-slate-200 whitespace-nowrap">
-                          {days} {days === 1 ? "Day" : "Days"}
+                          {formatDayString(h.fromDate, h.toDate)}
                         </span>
                       </td>
                       <td className="py-3.5 px-5 text-right">

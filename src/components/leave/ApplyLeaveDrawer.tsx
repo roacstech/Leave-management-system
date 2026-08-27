@@ -46,7 +46,7 @@ export default function ApplyLeaveDrawer({
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [reason, setReason] = useState("");
-  const [attachmentName, setAttachmentName] = useState("");
+  const [attachments, setAttachments] = useState<string[]>([]);
   const [totalDays, setTotalDays] = useState(0);
 
   // Form states for Comp-off
@@ -57,17 +57,44 @@ export default function ApplyLeaveDrawer({
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [fetchedTypes, setFetchedTypes] = useState<LeaveTypeOption[]>([]);
 
-  // Default fallback leave types if none passed
-  const availableTypes: LeaveTypeOption[] = leaveTypes.length > 0
-    ? leaveTypes
-    : [
-        { id: 1, name: "Casual Leave", code: "CL", balance: 5 },
-        { id: 2, name: "Sick Day", code: "SL", availed: 9.5 },
-        { id: 3, name: "Vacation Leave", code: "VL", balance: 32 },
-        { id: 4, name: "Loss Of Pay", code: "LOP", availed: 0 },
-        { id: 5, name: "Comp Off", code: "CO", balance: 0 },
-      ];
+  // Auto-fetch fresh leave types and balance policies on drawer open
+  useEffect(() => {
+    if (isOpen) {
+      fetch("/api/employee/dashboard")
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && Array.isArray(data.leaveBalances)) {
+            setFetchedTypes(
+              data.leaveBalances.map((b: any) => ({
+                id: b.leaveType?.id || b.id,
+                name: b.leaveType?.name || b.name || "Leave",
+                code: b.leaveType?.code || b.code || "LV",
+                balance: b.remaining ?? (b.total - b.used),
+                availed: b.used ?? 0,
+                requiresAttachment: Boolean(b.leaveType?.requiresAttachment ?? b.requiresAttachment),
+              }))
+            );
+          }
+        })
+        .catch(() => {});
+    }
+  }, [isOpen]);
+
+  // Use passed leaveTypes if available, otherwise fetched types
+  const availableTypes: LeaveTypeOption[] =
+    leaveTypes.length > 0
+      ? leaveTypes
+      : fetchedTypes.length > 0
+      ? fetchedTypes
+      : [
+          { id: 1, name: "Casual Leave", code: "CL", balance: 5, requiresAttachment: false },
+          { id: 2, name: "Sick Day", code: "SL", availed: 9.5, requiresAttachment: true },
+          { id: 3, name: "Vacation Leave", code: "VL", balance: 32, requiresAttachment: false },
+          { id: 4, name: "Loss Of Pay", code: "LOP", availed: 0, requiresAttachment: false },
+          { id: 5, name: "Comp Off", code: "CO", balance: 0, requiresAttachment: false },
+        ];
 
   // Auto-select first leave type
   useEffect(() => {
@@ -105,7 +132,7 @@ export default function ApplyLeaveDrawer({
     setFromDate("");
     setToDate("");
     setReason("");
-    setAttachmentName("");
+    setAttachments([]);
     setWorkedDate("");
     setHoursWorked(8);
     setCompOffReason("");
@@ -136,16 +163,16 @@ export default function ApplyLeaveDrawer({
         return;
       }
       const selectedType = availableTypes.find((t) => t.id === Number(selectedLeaveTypeId));
-      if (selectedType?.requiresAttachment && !attachmentName.trim()) {
-        setErrorMessage(`Document attachment is mandatory for ${selectedType.name}. Please upload proof.`);
+      if (selectedType?.requiresAttachment && attachments.length === 0) {
+        setErrorMessage(`Document attachment is mandatory for ${selectedType.name}. Please attach supporting document(s).`);
         return;
       }
 
       setSubmitting(true);
       try {
         let finalReason = reason.trim();
-        if (attachmentName.trim()) {
-          finalReason = `${finalReason} [Attachment: ${attachmentName.trim()}]`;
+        if (attachments.length > 0) {
+          finalReason = `${finalReason} [Attachments: ${attachments.join(", ")}]`;
         }
 
         const res = await fetch("/api/employee/leaves", {
@@ -157,7 +184,8 @@ export default function ApplyLeaveDrawer({
             startDate: fromDate,
             endDate: toDate,
             reason: finalReason,
-            attachmentName: attachmentName.trim() || undefined,
+            attachmentName: attachments.join(", ") || undefined,
+            attachments,
           }),
         });
 
@@ -397,62 +425,54 @@ export default function ApplyLeaveDrawer({
                 const currentSelected = availableTypes.find((t) => t.id === Number(selectedLeaveTypeId));
                 const isMandatory = Boolean(currentSelected?.requiresAttachment);
                 return (
-                  <div
-                    className={`p-3.5 rounded-xl border transition-all space-y-1.5 ${
-                      isMandatory
-                        ? "bg-amber-50/60 border-amber-300"
-                        : "bg-gray-50 border-gray-200"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <label className="text-xs font-semibold text-gray-800 flex items-center gap-1.5">
-                        <span>Supporting Document</span>
-                        {isMandatory ? (
-                          <span className="text-rose-500 font-bold">* Mandatory</span>
-                        ) : (
-                          <span className="text-gray-400 font-normal">(Optional)</span>
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-semibold text-gray-700">
+                      Supporting Documents {isMandatory ? <span className="text-rose-500">*</span> : <span className="text-gray-400 font-normal">(Optional)</span>}
+                    </label>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2.5">
+                        <label className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 text-xs font-semibold cursor-pointer shadow-2xs transition-all">
+                          <Paperclip className="w-3.5 h-3.5 text-indigo-600" />
+                          <span>{attachments.length > 0 ? "Add More Files" : "Choose Documents"}</span>
+                          <input
+                            type="file"
+                            multiple
+                            className="hidden"
+                            onChange={(e) => {
+                              const files = e.target.files;
+                              if (files && files.length > 0) {
+                                const names = Array.from(files).map((f) => f.name);
+                                setAttachments((prev) => Array.from(new Set([...prev, ...names])));
+                              }
+                              e.target.value = "";
+                            }}
+                          />
+                        </label>
+                        {attachments.length === 0 && (
+                          <span className="text-[11px] text-gray-400">No documents selected (select one or more files)</span>
                         )}
-                      </label>
-                      {isMandatory && (
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-100 text-rose-700 border border-rose-200">
-                          Proof Required
-                        </span>
-                      )}
-                    </div>
-                    {isMandatory && (
-                      <p className="text-[11px] text-gray-500">
-                        A doctor's slip or official certificate must be attached for this leave category.
-                      </p>
-                    )}
-                    <div className="flex items-center gap-2 pt-1">
-                      <label className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-gray-200 hover:bg-gray-100 text-gray-700 text-xs font-semibold cursor-pointer shadow-2xs transition-all">
-                        <Paperclip className="w-3.5 h-3.5 text-indigo-600" />
-                        <span>{attachmentName ? "Change File" : "Choose Document"}</span>
-                        <input
-                          type="file"
-                          className="hidden"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                              setAttachmentName(file.name);
-                            }
-                          }}
-                        />
-                      </label>
-                      {attachmentName ? (
-                        <div className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-medium">
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                          <span className="truncate max-w-[180px]">{attachmentName}</span>
-                          <button
-                            type="button"
-                            onClick={() => setAttachmentName("")}
-                            className="text-gray-400 hover:text-rose-600 ml-1 cursor-pointer"
-                          >
-                            <X className="w-3.5 h-3.5" />
-                          </button>
+                      </div>
+
+                      {attachments.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 pt-0.5">
+                          {attachments.map((file, idx) => (
+                            <div
+                              key={`${file}-${idx}`}
+                              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gray-50 text-gray-700 border border-gray-200 text-xs font-medium"
+                            >
+                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                              <span className="truncate max-w-[180px]">{file}</span>
+                              <button
+                                type="button"
+                                onClick={() => setAttachments((prev) => prev.filter((_, i) => i !== idx))}
+                                className="text-gray-400 hover:text-rose-600 ml-0.5 cursor-pointer"
+                                title="Remove file"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          ))}
                         </div>
-                      ) : (
-                        <span className="text-[11px] text-gray-400">No document selected</span>
                       )}
                     </div>
                   </div>

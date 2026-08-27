@@ -138,12 +138,15 @@ export async function POST(request: NextRequest) {
     }
 
     if (balance?.leaveType.requiresAttachment) {
-      const hasAttachment = body.attachmentName || (reason && reason.includes("[Attachment:"));
+      const hasAttachment =
+        body.attachmentName ||
+        (Array.isArray(body.attachments) && body.attachments.length > 0) ||
+        (reason && (reason.includes("[Attachment:") || reason.includes("[Attachments:")));
       if (!hasAttachment) {
         return NextResponse.json(
           {
             success: false,
-            error: `Document attachment is strictly mandatory for '${balance.leaveType.name}'. Please attach a supporting document.`,
+            error: `Document attachment is strictly mandatory for '${balance.leaveType.name}'. Please attach supporting document(s).`,
           },
           { status: 400 }
         );

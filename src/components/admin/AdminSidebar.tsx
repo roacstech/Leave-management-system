@@ -89,7 +89,7 @@ export default function AdminSidebar({
       subItems: [
         { name: "Departments", href: "/admin/departments" },
         { name: "Roles", href: "/admin/roles" },
-        { name: "Employees", href: "/admin/employees" },
+        { name: "Officers", href: "/admin/employees" },
         { name: "Leave Types", href: "/admin/leave-types" },
         { name: "Holidays", href: "/admin/holidays" },
       ],

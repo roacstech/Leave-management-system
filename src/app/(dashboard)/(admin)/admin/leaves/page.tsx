@@ -337,7 +337,7 @@ export default function LeavesAdminPage() {
                       {/* Role */}
                       <td className="px-5 py-3.5">
                         <span className="text-slate-700 font-medium text-xs whitespace-nowrap">
-                          {req.user.role === "TL" ? "Team Lead" : req.user.role === "ADMIN" ? "Admin" : "Employee"}
+                          {req.user.role === "TL" ? "Team Lead" : req.user.role === "ADMIN" ? "Admin" : "Officer"}
                         </span>
                       </td>
 
@@ -581,7 +581,7 @@ export default function LeavesAdminPage() {
                 <div className="flex items-center justify-between text-xs font-bold text-slate-800">
                   <span className="flex items-center gap-1.5">
                     <FileText className="w-3.5 h-3.5 text-indigo-600" />
-                    <span>Employee Stated Reason</span>
+                    <span>Officer Stated Reason</span>
                   </span>
                 </div>
                 <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 leading-relaxed font-normal max-h-52 overflow-y-auto whitespace-pre-wrap break-words [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-slate-300 [&::-webkit-scrollbar-thumb]:rounded-full">
@@ -679,7 +679,7 @@ export default function LeavesAdminPage() {
 
             <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200/80 space-y-2 text-xs">
               <div className="flex justify-between">
-                <span className="text-slate-500 font-medium">Employee:</span>
+                <span className="text-slate-500 font-medium">Officer:</span>
                 <span className="font-semibold text-slate-900">{modalState.request.user.name}</span>
               </div>
               <div className="flex justify-between">
