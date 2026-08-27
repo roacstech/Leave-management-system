@@ -152,7 +152,10 @@ interface PendingRequest {
 interface Holiday {
   id: number;
   name: string;
-  date: string;
+  date?: string;
+  fromDate?: string;
+  toDate?: string;
+  description?: string | null;
 }
 
 interface StaffOnLeave {
@@ -358,7 +361,7 @@ export default function AdminDashboardPage() {
     const list = leavesByDate.get(selectedDateKey) || [];
     const userMap = new Map<string, PendingRequest>();
     list.forEach((item) => {
-      const userKey = item.user?.id || item.user?.name || item.id;
+      const userKey = String(item.user?.id || item.user?.name || item.id);
       if (!userMap.has(userKey)) {
         userMap.set(userKey, item);
       }

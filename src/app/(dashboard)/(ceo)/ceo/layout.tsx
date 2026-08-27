@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import CEOSidebar from "@/components/ceo/CEOSidebar";
 import {
   Menu,
@@ -11,7 +11,7 @@ import {
 import Link from "next/link";
 import WeatherWidget from "@/components/ui/WeatherWidget";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
-import { signOut } from "next-auth/react";
+import { signOut, getSession } from "next-auth/react";
 
 export default function CEOLayout({
   children,
@@ -20,6 +20,17 @@ export default function CEOLayout({
 }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const [userName, setUserName] = useState("Mr. Yashas Ravi");
+  const [userInitials, setUserInitials] = useState("Y");
+
+  useEffect(() => {
+    getSession().then((session) => {
+      if (session?.user?.name) {
+        setUserName(session.user.name);
+        setUserInitials(session.user.name.charAt(0).toUpperCase());
+      }
+    });
+  }, []);
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col lg:flex-row antialiased text-slate-800">
@@ -75,13 +86,13 @@ export default function CEOLayout({
                 className="flex items-center gap-2 pl-1 pr-1 p-1.5 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer text-left"
               >
                 <div className="w-8 h-8 rounded-full bg-indigo-600 text-white font-bold text-xs flex items-center justify-center shadow-xs ring-2 ring-indigo-200 uppercase">
-                  C
+                  {userInitials}
                 </div>
                 <div className="hidden md:block text-left">
                   <div className="text-xs font-bold text-slate-900 leading-tight">
-                    Chief Executive Officer
+                    {userName}
                   </div>
-                  <div className="text-[10px] text-slate-500 font-medium">Executive Admin</div>
+                  <div className="text-[10px] text-slate-500 font-medium">Head Of Chancery</div>
                 </div>
               </button>
 

@@ -1,7 +1,7 @@
 import { NotificationsCenter } from "@/components/notifications/NotificationsCenter";
 
 export const metadata = {
-  title: "Notifications | Executive CEO Suite",
+  title: "Notifications | Head Of Chancery Suite",
 };
 
 export default function CEONotificationsPage() {
