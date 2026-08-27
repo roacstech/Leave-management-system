@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useCallback, useMemo } from "react";
 import Link from "next/link";
+import { getSession } from "next-auth/react";
 import {
   Users,
   Clock,
@@ -22,7 +23,95 @@ import {
   BarChart3,
   TrendingUp,
   Activity,
+  Globe2,
 } from "lucide-react";
+
+// US Flag Miniature SVG
+function USFlagIcon({ className = "w-4 h-3 shrink-0 rounded-xs shadow-2xs" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 741 390" className={className}>
+      <rect width="741" height="390" fill="#B22234" />
+      <path d="M0,30h741v30H0zM0,90h741v30H0zM0,150h741v30H0zM0,210h741v30H0zM0,270h741v30H0zM0,330h741v30H0z" fill="#FFFFFF" />
+      <rect width="296.4" height="210" fill="#3C3B6E" />
+      <g fill="#FFFFFF">
+        {[
+          [24.7, 17.5], [74.1, 17.5], [123.5, 17.5], [172.9, 17.5], [222.3, 17.5], [271.7, 17.5],
+          [49.4, 35], [98.8, 35], [148.2, 35], [197.6, 35], [247, 35],
+          [24.7, 52.5], [74.1, 52.5], [123.5, 52.5], [172.9, 52.5], [222.3, 52.5], [271.7, 52.5],
+          [49.4, 70], [98.8, 70], [148.2, 70], [197.6, 70], [247, 70],
+          [24.7, 87.5], [74.1, 87.5], [123.5, 87.5], [172.9, 87.5], [222.3, 87.5], [271.7, 87.5],
+          [49.4, 105], [98.8, 105], [148.2, 105], [197.6, 105], [247, 105],
+          [24.7, 122.5], [74.1, 122.5], [123.5, 122.5], [172.9, 122.5], [222.3, 122.5], [271.7, 122.5],
+          [49.4, 140], [98.8, 140], [148.2, 140], [197.6, 140], [247, 140],
+          [24.7, 157.5], [74.1, 157.5], [123.5, 157.5], [172.9, 157.5], [222.3, 157.5], [271.7, 157.5],
+          [49.4, 175], [98.8, 175], [148.2, 175], [197.6, 175], [247, 175],
+          [24.7, 192.5], [74.1, 192.5], [123.5, 192.5], [172.9, 192.5], [222.3, 192.5], [271.7, 192.5],
+        ].map(([cx, cy], idx) => (
+          <circle key={idx} cx={cx} cy={cy} r="6" />
+        ))}
+      </g>
+    </svg>
+  );
+}
+
+// India Flag Miniature SVG
+function IndiaFlagIcon({ className = "w-4 h-3 shrink-0 rounded-xs shadow-2xs" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 900 600" className={className}>
+      <rect width="900" height="200" fill="#FF9933" />
+      <rect y="200" width="900" height="200" fill="#FFFFFF" />
+      <rect y="400" width="900" height="200" fill="#128807" />
+      <circle cx="450" cy="300" r="60" fill="none" stroke="#000088" strokeWidth="6" />
+      <circle cx="450" cy="300" r="12" fill="#000088" />
+      <g stroke="#000088" strokeWidth="2">
+        {Array.from({ length: 24 }).map((_, i) => (
+          <line
+            key={i}
+            x1="450"
+            y1="300"
+            x2={450 + 60 * Math.cos((i * 15 * Math.PI) / 180)}
+            y2={300 + 60 * Math.sin((i * 15 * Math.PI) / 180)}
+          />
+        ))}
+      </g>
+    </svg>
+  );
+}
+
+// Formatter matching Indian Embassy website format: "Thu, 27 Aug 2026, 3:23:46 am EDT"
+function formatEmbassyTime(date: Date, timeZone: string, zoneAbbr?: string) {
+  try {
+    const parts = new Intl.DateTimeFormat("en-GB", {
+      timeZone,
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: true,
+    }).formatToParts(date);
+
+    const map: Record<string, string> = {};
+    parts.forEach((p) => {
+      map[p.type] = p.value;
+    });
+
+    const dayPeriod = (map.dayPeriod || "").toLowerCase();
+    const abbr = zoneAbbr ? ` ${zoneAbbr}` : "";
+    return `${map.weekday}, ${map.day} ${map.month} ${map.year}, ${map.hour}:${map.minute}:${map.second} ${dayPeriod}${abbr}`;
+  } catch {
+    return date.toLocaleTimeString("en-US");
+  }
+}
+
+function getGreeting(date: Date) {
+  const hour = date.getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 17) return "Good afternoon";
+  return "Good evening";
+}
 
 interface MonthlyTrend {
   month: string;
@@ -108,12 +197,34 @@ interface TeamStat {
 export default function AdminDashboardPage() {
   const [loading, setLoading] = useState(true);
 
+  // Live Dual Time (EDT & IST) & Session States
+  const [mounted, setMounted] = useState(false);
+  const [currentTime, setCurrentTime] = useState<Date>(new Date());
+  const [adminName, setAdminName] = useState("LMS Admin");
+
+  useEffect(() => {
+    setMounted(true);
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    getSession().then((session) => {
+      if (session?.user?.name) {
+        setAdminName(session.user.name);
+      }
+    });
+  }, []);
+
   // Dashboard Data States
   const [allRequests, setAllRequests] = useState<PendingRequest[]>([]);
   const [recentRequests, setRecentRequests] = useState<PendingRequest[]>([]);
   const [holidays, setHolidays] = useState<Holiday[]>([]);
   const [onLeaveToday, setOnLeaveToday] = useState<StaffOnLeave[]>([]);
   const [leaveTypeStats, setLeaveTypeStats] = useState<LeaveTypeStat[]>([]);
+  const [hoveredLeaveTypeIndex, setHoveredLeaveTypeIndex] = useState<number | null>(null);
   const [teams, setTeams] = useState<TeamStat[]>([]);
   const [monthlyTrends, setMonthlyTrends] = useState<MonthlyTrend[]>([]);
   const [selectedTrendIndex, setSelectedTrendIndex] = useState<number | null>(null);
@@ -196,9 +307,10 @@ export default function AdminDashboardPage() {
     setSelectedDate(now);
   };
 
-  // Map of date string "YYYY-MM-DD" -> List of approved leave requests on that date
+  // Map of date string "YYYY-MM-DD" -> List of approved leave requests on that date (deduplicated)
   const leavesByDate = useMemo(() => {
     const map = new Map<string, PendingRequest[]>();
+    const seen = new Set<string>();
     allRequests
       .filter((r) => r.status === "APPROVED")
       .forEach((r) => {
@@ -207,25 +319,60 @@ export default function AdminDashboardPage() {
         const cur = new Date(start);
         while (cur <= end) {
           const key = `${cur.getFullYear()}-${String(cur.getMonth() + 1).padStart(2, "0")}-${String(cur.getDate()).padStart(2, "0")}`;
-          if (!map.has(key)) map.set(key, []);
-          map.get(key)!.push(r);
+          const uniqueKey = `${key}-${r.id}-${r.user?.id || r.user?.name}`;
+          if (!seen.has(uniqueKey)) {
+            seen.add(uniqueKey);
+            if (!map.has(key)) map.set(key, []);
+            map.get(key)!.push(r);
+          }
           cur.setDate(cur.getDate() + 1);
         }
       });
     return map;
   }, [allRequests]);
 
+  // Map of date string "YYYY-MM-DD" -> Holiday
+  const holidaysByDate = useMemo(() => {
+    const map = new Map<string, Holiday>();
+    holidays.forEach((h) => {
+      const rawStart = h.fromDate || h.date || h.toDate;
+      if (!rawStart) return;
+      const start = new Date(rawStart);
+      const rawEnd = h.toDate || h.fromDate || h.date;
+      const end = rawEnd ? new Date(rawEnd) : start;
+      const cur = new Date(start);
+      while (cur <= end) {
+        const key = `${cur.getFullYear()}-${String(cur.getMonth() + 1).padStart(2, "0")}-${String(cur.getDate()).padStart(2, "0")}`;
+        map.set(key, h);
+        cur.setDate(cur.getDate() + 1);
+      }
+    });
+    return map;
+  }, [holidays]);
+
   const selectedDateKey = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, "0")}-${String(selectedDate.getDate()).padStart(2, "0")}`;
   const staffOnLeaveForSelectedDate = leavesByDate.get(selectedDateKey) || [];
 
-  // Filter only Team Leads and Managers (exclude employees)
-  const isManagerRole = (role?: string) => {
-    const r = (role || "").toUpperCase();
-    return r === "TL" || r === "MANAGER" || r === "ADMIN" || r === "CEO";
-  };
-  const managersOnLeaveForSelectedDate = staffOnLeaveForSelectedDate.filter((item) =>
-    isManagerRole(item.user?.role)
-  );
+  // Deduplicate officers on leave (1 row per officer)
+  const uniqueStaffOnLeaveForSelectedDate = useMemo(() => {
+    const list = leavesByDate.get(selectedDateKey) || [];
+    const userMap = new Map<string, PendingRequest>();
+    list.forEach((item) => {
+      const userKey = item.user?.id || item.user?.name || item.id;
+      if (!userMap.has(userKey)) {
+        userMap.set(userKey, item);
+      }
+    });
+    return Array.from(userMap.values());
+  }, [leavesByDate, selectedDateKey]);
+
+  // Check if selected date is an Embassy Holiday
+  const holidayOnSelectedDate = holidaysByDate.get(selectedDateKey);
+
+  const onDutyCountForSelectedDate = Math.max(0, (stats.totalStaff || 0) - staffOnLeaveForSelectedDate.length);
+  const dutyPercentageForSelectedDate = (stats.totalStaff || 0) > 0
+    ? Math.round((onDutyCountForSelectedDate / (stats.totalStaff || 1)) * 100)
+    : 100;
 
   const selectedDateFormatted = selectedDate.toLocaleDateString("en-US", {
     weekday: "long",
@@ -284,27 +431,27 @@ export default function AdminDashboardPage() {
   return (
     <div className="space-y-5 pb-16 animate-in fade-in duration-200">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-            Manager Dashboard
+            Welcome, Admin
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
-            Executive overview of workforce capacity, pending approvals, and schedule management.
+            Executive overview of officer leave allocations, embassy wing duties, and dual-timezone schedule workflows.
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5 shrink-0">
           <Link
             href="/admin/my-leave"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 shadow-2xs transition-colors"
+            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 shadow-2xs transition-colors"
           >
             <span>My Leave Records</span>
             <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
           </Link>
           <Link
             href="/admin/leaves"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-2xs hover:shadow-xs transition-all"
+            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-2xs hover:shadow-xs transition-all"
           >
             <span>Leave Requests Hub</span>
             <ArrowUpRight className="w-3.5 h-3.5 text-white/80" />
@@ -312,120 +459,101 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
-      {/* 1. TOP ROW: 2 KPI CARDS (Left) + WORKFORCE ATTENDANCE CHART CARD (Right) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
-        {/* Left 7 Cols: 2 Primary KPI Cards */}
-        <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {/* Card 1: Total Workforce */}
-          <Link
-            href="/admin/employees"
-            className="bg-white border border-slate-200/90 border-l-4 border-l-indigo-600 rounded-2xl p-5 shadow-2xs hover:border-indigo-400 hover:shadow-xs transition-all group flex flex-col justify-between"
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-500 group-hover:text-indigo-600 transition-colors">
-                Total Workforce
-              </span>
-              <div className="w-8 h-8 rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-600 flex items-center justify-center">
-                <Users className="w-4 h-4" />
-              </div>
+      {/* 1. TOP ROW: 3 BALANCED KPI & TIMEZONE CARDS (Zero Dead Whitespace, Responsive on All Screens) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 items-stretch">
+        {/* Card 1: Total Officers */}
+        <Link
+          href="/admin/employees"
+          className="lg:col-span-3 md:col-span-6 bg-white border border-slate-200/90 border-l-4 border-l-indigo-600 rounded-2xl p-4 sm:p-4.5 shadow-2xs hover:border-indigo-400 hover:shadow-xs transition-all group flex flex-col justify-between"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 group-hover:text-indigo-600 transition-colors">
+              Total Officers
+            </span>
+            <div className="w-7 h-7 rounded-lg bg-indigo-50 border border-indigo-100 text-indigo-600 flex items-center justify-center">
+              <Users className="w-3.5 h-3.5" />
             </div>
-            <div className="mt-3">
-              <div className="text-2xl font-black text-slate-900 tracking-tight">
-                {stats.totalStaff} Staff
-              </div>
-              <p className="text-xs text-slate-500 font-medium mt-0.5">
-                {stats.employeeCount} Members • {stats.managerCount} Leads
-              </p>
+          </div>
+          <div className="mt-3">
+            <div className="text-2xl font-black text-slate-900 tracking-tight">
+              {stats.totalStaff} Officers
             </div>
-          </Link>
+            <p className="text-xs text-slate-500 font-medium mt-1">
+              {stats.employeeCount} Officers • {stats.managerCount} Leads
+            </p>
+          </div>
+        </Link>
 
-          {/* Card 2: Pending Approvals */}
-          <Link
-            href="/admin/leaves"
-            className="bg-white border border-slate-200/90 border-l-4 border-l-indigo-600 rounded-2xl p-5 shadow-2xs hover:border-indigo-400 hover:shadow-xs transition-all group flex flex-col justify-between"
-            title="Open Leave Requests Hub"
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-500 group-hover:text-indigo-600 transition-colors">
-                Pending Approvals
-              </span>
-              <div className="w-8 h-8 rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-600 flex items-center justify-center">
-                <Clock className="w-4 h-4" />
+        {/* Card 2: Pending Approvals (Clean, minimal, zero redundant tags) */}
+        <Link
+          href="/admin/leaves"
+          className="lg:col-span-3 md:col-span-6 bg-white border border-slate-200/90 border-l-4 border-l-indigo-600 rounded-2xl p-4 sm:p-4.5 shadow-2xs hover:border-indigo-400 hover:shadow-xs transition-all group flex flex-col justify-between"
+          title="Open Leave Requests Hub"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 group-hover:text-indigo-600 transition-colors">
+              Pending Approvals
+            </span>
+            <div className="w-7 h-7 rounded-lg bg-indigo-50 border border-indigo-100 text-indigo-600 flex items-center justify-center">
+              <Clock className="w-3.5 h-3.5" />
+            </div>
+          </div>
+          <div className="mt-3">
+            <div className="text-2xl font-black text-slate-900 tracking-tight">
+              {stats.pendingLeaves} In Queue
+            </div>
+            <p className="text-xs text-slate-500 font-medium mt-1">
+              {stats.pendingLeaves > 0 ? `${stats.pendingLeaves} awaiting review` : "All requests reviewed"}
+            </p>
+          </div>
+        </Link>
+
+        {/* Card 3: Dual Timezone (EDT & IST) + Officer Attendance (Clean, No Repetitions) */}
+        <div className="lg:col-span-6 md:col-span-12 bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-4.5 shadow-2xs flex flex-col justify-between gap-3">
+          {/* Top of Card: Live Dual Timezone (EDT & IST) */}
+          <div className="pb-2.5 border-b border-slate-100 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            {/* USA EDT Time */}
+            <div className="px-3 py-2 rounded-xl bg-slate-50 border border-slate-200/80 text-slate-700">
+              <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                <USFlagIcon className="w-4 h-2.5 rounded-xs shadow-2xs shrink-0" />
+                <span>USA (EDT)</span>
+              </div>
+              <div className="font-mono text-xs font-bold text-slate-900 mt-1 whitespace-nowrap">
+                {mounted ? formatEmbassyTime(currentTime, "America/New_York") : "--"}
               </div>
             </div>
-            <div className="mt-3">
-              <div className="text-2xl font-black text-slate-900 tracking-tight flex items-center justify-between">
-                <span>{stats.pendingLeaves} In Queue</span>
-                <span className="text-xs font-semibold text-indigo-600 group-hover:translate-x-0.5 transition-transform flex items-center gap-1">
-                  Review <ArrowRight className="w-3.5 h-3.5" />
-                </span>
+
+            {/* IND IST Time */}
+            <div className="px-3 py-2 rounded-xl bg-slate-50 border border-slate-200/80 text-slate-700">
+              <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                <IndiaFlagIcon className="w-4 h-2.5 rounded-xs shadow-2xs shrink-0" />
+                <span>IND (IST)</span>
               </div>
-              <p className="text-xs text-slate-500 font-medium mt-0.5">
-                Requires administrative action
-              </p>
-            </div>
-          </Link>
-        </div>
-
-        {/* Right 5 Cols: Workforce Attendance & Presence Donut Card */}
-        <div className="lg:col-span-5 bg-white border border-slate-200/90 rounded-2xl p-4.5 shadow-2xs flex items-center justify-between gap-4">
-          {/* SVG Donut Ring */}
-          <div className="relative w-20 h-20 shrink-0 flex items-center justify-center">
-            <svg className="w-full h-full -rotate-90" viewBox="0 0 88 88">
-              {/* Background / Leave Arc */}
-              <circle
-                cx="44"
-                cy="44"
-                r={topDonutRadius}
-                stroke="#fed7aa"
-                strokeWidth="8"
-                fill="transparent"
-              />
-              {/* Foreground / Present Arc */}
-              <circle
-                cx="44"
-                cy="44"
-                r={topDonutRadius}
-                stroke="#10b981"
-                strokeWidth="8"
-                strokeDasharray={`${topPresentDash} ${topDonutCircumference}`}
-                strokeDashoffset={0}
-                strokeLinecap="round"
-                fill="transparent"
-                className="transition-all duration-700 ease-out"
-              />
-            </svg>
-
-            {/* Center Percentage */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-              <span className="text-sm font-black text-slate-900 leading-tight">
-                {presentPercentage}%
-              </span>
-              <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">
-                Present
-              </span>
+              <div className="font-mono text-xs font-bold text-slate-900 mt-1 whitespace-nowrap">
+                {mounted ? formatEmbassyTime(currentTime, "Asia/Kolkata") : "--"}
+              </div>
             </div>
           </div>
 
-          {/* Breakdown Stats */}
-          <div className="flex-1 space-y-1.5 text-xs">
-            <div className="flex items-center justify-between">
-              <span className="text-slate-500 flex items-center gap-1.5 text-[11px]">
-                <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                Present Today:
+          {/* Bottom of Card: Clean Attendance Summary (No repetitive labels, no giant void) */}
+          <div className="flex items-center gap-3 text-xs flex-wrap">
+            <div className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+              <strong className="text-slate-900 font-bold">
+                {presentPercentage}% Present
+              </strong>
+              <span className="text-slate-500 text-xs">
+                ({presentTodayCount} of {stats.totalStaff || 1} Officers)
               </span>
-              <strong className="text-slate-900 font-bold">{presentTodayCount} ({presentPercentage}%)</strong>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-slate-500 flex items-center gap-1.5 text-[11px]">
-                <span className="w-2 h-2 rounded-full bg-amber-500" />
-                On Leave Today:
-              </span>
-              <strong className="text-amber-700 font-bold">{onLeaveTodayCount} ({leavePercentage}%)</strong>
-            </div>
-            <div className="pt-1 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
-              <span>Total Workforce:</span>
-              <strong className="text-slate-700 font-semibold">{stats.totalStaff} Staff</strong>
+
+            <span className="text-slate-300 hidden sm:inline">•</span>
+
+            <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
+              <span>On Leave Today:</span>
+              <strong className={onLeaveTodayCount > 0 ? "text-amber-700 font-bold" : "text-slate-800 font-bold"}>
+                {onLeaveTodayCount}
+              </strong>
             </div>
           </div>
         </div>
@@ -594,22 +722,19 @@ export default function AdminDashboardPage() {
           </div>
         </div>
 
-        {/* Right 5 Cols: LEAVE POLICY UTILIZATION (Clean Donut + Legend, Zero Redundant Bars) */}
+        {/* Right 5 Cols: LEAVE UTILIZATION (Full Round Circular Ring + Clean Spacious Legend) */}
         <div className="lg:col-span-5 bg-white border border-slate-200/90 rounded-2xl p-5 shadow-2xs flex flex-col justify-between space-y-4">
           <div>
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div>
                 <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
                   <PieChart className="w-4 h-4 text-indigo-600" />
-                  <span>Leave Policy Utilization</span>
+                  <span>Leaves by Category</span>
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Approved claims distributed by leave policy.
+                  Shows which types of leave officers take most frequently.
                 </p>
               </div>
-              <Link href="/admin/leave-types" className="text-xs font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-0.5">
-                Policies <ArrowRight className="w-3 h-3" />
-              </Link>
             </div>
 
             {leaveTypeStats.length === 0 || stats.approvedLeaves === 0 ? (
@@ -621,34 +746,40 @@ export default function AdminDashboardPage() {
             ) : (
               (() => {
                 const totalApproved = stats.approvedLeaves || 1;
-                const radius = 40;
+                const radius = 42;
                 const circumference = 2 * Math.PI * radius;
                 const colorPalette = [
-                  { bg: "#4f46e5", label: "text-indigo-600", dot: "bg-indigo-600" },
-                  { bg: "#10b981", label: "text-emerald-600", dot: "bg-emerald-500" },
-                  { bg: "#f43f5e", label: "text-rose-600", dot: "bg-rose-500" },
-                  { bg: "#f59e0b", label: "text-amber-600", dot: "bg-amber-500" },
-                  { bg: "#8b5cf6", label: "text-purple-600", dot: "bg-purple-500" },
-                  { bg: "#64748b", label: "text-slate-600", dot: "bg-slate-500" },
+                  { bg: "#4f46e5", dot: "bg-indigo-600", text: "text-indigo-600" },
+                  { bg: "#10b981", dot: "bg-emerald-500", text: "text-emerald-600" },
+                  { bg: "#f43f5e", dot: "bg-rose-500", text: "text-rose-600" },
+                  { bg: "#f59e0b", dot: "bg-amber-500", text: "text-amber-600" },
+                  { bg: "#8b5cf6", dot: "bg-purple-500", text: "text-purple-600" },
+                  { bg: "#06b6d4", dot: "bg-cyan-500", text: "text-cyan-600" },
+                  { bg: "#64748b", dot: "bg-slate-400", text: "text-slate-600" },
                 ];
+
+                const activeItem = hoveredLeaveTypeIndex !== null ? leaveTypeStats[hoveredLeaveTypeIndex] : null;
+                const activeCount = activeItem ? (activeItem._count?.leaveRequests || 0) : stats.approvedLeaves;
+                const activePct = activeItem ? Math.round((activeCount / totalApproved) * 100) : 100;
+                const activePalette = hoveredLeaveTypeIndex !== null ? colorPalette[hoveredLeaveTypeIndex % colorPalette.length] : null;
 
                 let accumulatedOffset = 0;
 
                 return (
-                  <div className="pt-3 flex flex-col sm:flex-row items-center gap-5">
-                    {/* SVG Multi-Segment Donut Chart */}
-                    <div className="relative w-28 h-28 shrink-0 flex items-center justify-center">
+                  <div className="pt-3 flex flex-col sm:flex-row items-center gap-6">
+                    {/* Full Round Ring / Circular Donut Chart (Static Display) */}
+                    <div className="relative w-32 h-32 shrink-0 flex items-center justify-center pointer-events-none">
                       <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
                         {/* Background Base Ring */}
                         <circle
                           cx="50"
                           cy="50"
                           r={radius}
-                          stroke="#e2e8f0"
-                          strokeWidth="10"
+                          stroke="#f1f5f9"
+                          strokeWidth="11"
                           fill="transparent"
                         />
-                        {/* Dynamic Colored Segments */}
+                        {/* Colored Segments */}
                         {leaveTypeStats.map((lt, idx) => {
                           const count = lt._count?.leaveRequests || 0;
                           if (count === 0) return null;
@@ -658,6 +789,8 @@ export default function AdminDashboardPage() {
                           const strokeDashoffset = -accumulatedOffset;
                           accumulatedOffset += share * circumference;
                           const color = colorPalette[idx % colorPalette.length].bg;
+                          const isHovered = hoveredLeaveTypeIndex === idx;
+                          const isOtherHovered = hoveredLeaveTypeIndex !== null && !isHovered;
 
                           return (
                             <circle
@@ -666,48 +799,67 @@ export default function AdminDashboardPage() {
                               cy="50"
                               r={radius}
                               stroke={color}
-                              strokeWidth="10"
+                              strokeWidth="11"
                               strokeDasharray={strokeDasharray}
                               strokeDashoffset={strokeDashoffset}
                               fill="transparent"
-                              className="transition-all duration-500"
+                              className={`transition-opacity duration-200 ${
+                                isOtherHovered ? "opacity-25" : "opacity-100"
+                              }`}
                             />
                           );
                         })}
                       </svg>
 
-                      {/* Center Total Count */}
-                      <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                        <span className="text-lg font-black text-slate-900 leading-tight">
-                          {stats.approvedLeaves}
+                      {/* Center Metrics (Dynamically Updates Only on Text Hover, Stable Layout) */}
+                      <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-1">
+                        <span
+                          className={`text-xl font-black tracking-tight leading-none transition-colors duration-150 ${
+                            activePalette ? activePalette.text : "text-slate-900"
+                          }`}
+                        >
+                          {activeCount}
                         </span>
-                        <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">
-                          Approved
+                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-1 truncate max-w-[85px]">
+                          {activeItem ? `${activePct}%` : "Approved"}
                         </span>
                       </div>
                     </div>
 
-                    {/* Breakdown Policy Legend Cards */}
-                    <div className="flex-1 w-full space-y-1.5">
-                      {leaveTypeStats.slice(0, 4).map((lt, idx) => {
+                    {/* Breakdown List (Smooth hover, Zero text shaking or jitter) */}
+                    <div
+                      className="flex-1 w-full space-y-1"
+                      onMouseLeave={() => setHoveredLeaveTypeIndex(null)}
+                    >
+                      {leaveTypeStats.map((lt, idx) => {
                         const count = lt._count?.leaveRequests || 0;
                         const pct = Math.round((count / totalApproved) * 100);
                         const palette = colorPalette[idx % colorPalette.length];
+                        const isHovered = hoveredLeaveTypeIndex === idx;
 
                         return (
                           <div
                             key={lt.id}
-                            className="flex items-center justify-between p-2 rounded-xl bg-slate-50/70 border border-slate-100 hover:bg-slate-100/60 transition-colors"
+                            onMouseEnter={() => setHoveredLeaveTypeIndex(idx)}
+                            className={`flex items-center justify-between text-xs py-1.5 px-2.5 rounded-xl cursor-pointer transition-colors duration-150 ${
+                              isHovered
+                                ? "bg-slate-100/90 text-slate-900"
+                                : "text-slate-700 hover:bg-slate-50"
+                            }`}
                           >
                             <div className="flex items-center gap-2 min-w-0">
-                              <span className={`w-2.5 h-2.5 rounded-full ${palette.dot} shrink-0`} />
-                              <span className="text-xs font-semibold text-slate-800 truncate" title={lt.name}>
+                              <span
+                                className={`w-2.5 h-2.5 rounded-full ${palette.dot} shrink-0`}
+                              />
+                              <span className="font-semibold text-slate-800 truncate">
                                 {lt.name}
                               </span>
                             </div>
-                            <div className="flex items-center gap-1.5 shrink-0 ml-2">
-                              <span className="text-xs font-black text-slate-900">{count}</span>
-                              <span className="text-[10px] font-semibold text-slate-400">({pct}%)</span>
+                            <div className="flex items-center gap-1.5 font-mono shrink-0 ml-2">
+                              <span className={`font-bold transition-colors duration-150 ${isHovered ? palette.text : "text-slate-900"}`}>
+                                {count}
+                              </span>
+                              <span className="text-slate-400 font-sans text-[11px] font-medium">({pct}%)</span>
                             </div>
                           </div>
                         );
@@ -721,7 +873,7 @@ export default function AdminDashboardPage() {
 
           {/* Summary Status Box */}
           <div className="p-3 bg-slate-50/80 rounded-xl border border-slate-100 flex items-center justify-between text-xs mt-auto">
-            <span className="text-slate-500 font-medium">Total Approved Claims:</span>
+            <span className="text-slate-500 font-medium">Approved Leaves:</span>
             <strong className="text-slate-900 font-black">{stats.approvedLeaves} Requests</strong>
           </div>
         </div>
@@ -790,7 +942,8 @@ export default function AdminDashboardPage() {
                 const isToday = dateKey === todayKey;
                 const isSelected = dateKey === selectedDateKey;
                 const staffLeaves = leavesByDate.get(dateKey) || [];
-                const leaveCount = staffLeaves.length;
+                const hasLeave = staffLeaves.length > 0;
+                const hasHoliday = holidaysByDate.has(dateKey);
 
                 return (
                   <button
@@ -806,12 +959,25 @@ export default function AdminDashboardPage() {
                     }`}
                   >
                     <span className="text-xs leading-none">{dayNum}</span>
-                    {leaveCount > 0 && (
-                      <span
-                        className={`w-1.5 h-1.5 rounded-full mt-0.5 ${
-                          isSelected ? "bg-white" : "bg-indigo-600"
-                        }`}
-                      />
+                    {(hasLeave || hasHoliday) && (
+                      <div className="flex items-center gap-0.5 mt-0.5">
+                        {hasLeave && (
+                          <span
+                            className={`w-1.5 h-1.5 rounded-full ${
+                              isSelected ? "bg-amber-300" : "bg-amber-500"
+                            }`}
+                            title="Officer Leave"
+                          />
+                        )}
+                        {hasHoliday && (
+                          <span
+                            className={`w-1.5 h-1.5 rounded-full ${
+                              isSelected ? "bg-purple-300" : "bg-purple-500"
+                            }`}
+                            title="Public Holiday"
+                          />
+                        )}
+                      </div>
                     )}
                   </button>
                 );
@@ -819,65 +985,115 @@ export default function AdminDashboardPage() {
             </div>
           </div>
 
-          {/* Calendar Legend */}
-          <div className="flex items-center justify-between text-xs text-slate-500 pt-3 border-t border-slate-100 mt-auto">
+          {/* Calendar Legend (Simple, Professional, International Standard) */}
+          <div className="flex items-center justify-between text-xs pt-3 border-t border-slate-100 mt-auto px-1">
             <div className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-md bg-indigo-600 inline-block" />
-              <span className="text-[11px] font-medium">Selected Date</span>
+              <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
+              <span className="text-[11px] font-medium text-slate-600">Officer Leave</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-indigo-600 inline-block" />
-              <span className="text-[11px] font-medium">Scheduled Leave</span>
+              <span className="w-2 h-2 rounded-full bg-purple-500 shrink-0" />
+              <span className="text-[11px] font-medium text-slate-600">Public Holiday</span>
             </div>
           </div>
         </div>
 
-        {/* Col 2: MANAGER AVAILABILITY TRACKER (SHOWS ONLY MANAGERS / TLS) */}
+        {/* Col 2: OFFICER SCHEDULE (Clean, Minimal, No Repetitive Tags) */}
         <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-2xs space-y-4 h-full flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div>
                 <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
-                  Manager Availability
+                  Officer Schedule
                 </span>
                 <h3 className="text-sm font-bold text-slate-900 mt-0.5">
                   {selectedDateFormatted}
                 </h3>
               </div>
 
-              <span
-                className={`text-xs font-bold px-2.5 py-0.5 rounded-full border ${
-                  managersOnLeaveForSelectedDate.length === 0
-                    ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                    : "bg-amber-50 text-amber-700 border-amber-200"
-                }`}
-              >
-                {managersOnLeaveForSelectedDate.length === 0
-                  ? "All Present"
-                  : `${managersOnLeaveForSelectedDate.length} Manager${managersOnLeaveForSelectedDate.length > 1 ? "s" : ""} on Leave`}
-              </span>
+              {holidayOnSelectedDate ? (
+                <span className="text-xs font-bold px-2.5 py-0.5 rounded-full border bg-purple-50 text-purple-700 border-purple-200">
+                  Embassy Holiday
+                </span>
+              ) : uniqueStaffOnLeaveForSelectedDate.length === 0 ? (
+                <span className="text-xs font-bold px-2.5 py-0.5 rounded-full border bg-emerald-50 text-emerald-700 border-emerald-200">
+                  All Present
+                </span>
+              ) : (
+                <span className="text-xs font-bold px-2.5 py-0.5 rounded-full border bg-amber-50 text-amber-700 border-amber-200">
+                  {uniqueStaffOnLeaveForSelectedDate.length} on Leave
+                </span>
+              )}
             </div>
 
-            {/* Attendance Details on Date (Managers Only) */}
-            <div className="pt-3">
-              {managersOnLeaveForSelectedDate.length === 0 ? (
+            {/* Roster Details for Selected Date */}
+            <div className="pt-3 space-y-2.5">
+              {holidayOnSelectedDate ? (
+                <div className="space-y-3">
+                  <div className="py-7 px-4 rounded-xl bg-purple-50/80 border border-purple-200/80 text-center flex flex-col items-center justify-center">
+                    <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-700 border border-purple-200 flex items-center justify-center mb-2 text-lg">
+                      🏛️
+                    </div>
+                    <h4 className="text-sm font-bold text-purple-950">
+                      {holidayOnSelectedDate.name}
+                    </h4>
+                    <p className="text-xs text-purple-700 mt-1 max-w-[260px]">
+                      {holidayOnSelectedDate.description || "Official Embassy Public Holiday. All Chancery and Consular offices closed."}
+                    </p>
+                  </div>
+
+                  {uniqueStaffOnLeaveForSelectedDate.length > 0 && (
+                    <div className="space-y-2 max-h-44 overflow-y-auto pr-1">
+                      {uniqueStaffOnLeaveForSelectedDate.map((item) => (
+                        <div
+                          key={item.id}
+                          className="p-2.5 rounded-xl bg-slate-50/80 border border-slate-200/80 flex items-center justify-between gap-2.5 text-xs"
+                        >
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <div className="w-7 h-7 rounded-full bg-indigo-100 text-indigo-700 font-bold text-xs flex items-center justify-center shrink-0">
+                              {item.user.name.charAt(0)}
+                            </div>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-1.5">
+                                <p className="font-bold text-slate-900 leading-tight truncate">
+                                  {item.user.name}
+                                </p>
+                                <span className="text-[9px] font-semibold px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 border border-slate-200/70">
+                                  {item.user.role === "TL" ? "Lead" : "Officer"}
+                                </span>
+                              </div>
+                              <p className="text-[10px] text-slate-500 truncate mt-0.5">
+                                {item.user.team?.name || "Embassy Chancery"}
+                              </p>
+                            </div>
+                          </div>
+
+                          <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-100 shrink-0">
+                            {item.leaveType?.name || "Leave"}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : uniqueStaffOnLeaveForSelectedDate.length === 0 ? (
                 <div className="py-8 px-4 rounded-xl bg-slate-50/70 border border-slate-100 text-center flex flex-col items-center justify-center">
                   <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center mb-2">
                     <CheckCircle2 className="w-5 h-5" />
                   </div>
                   <p className="text-xs font-bold text-slate-900">
-                    All Managers Available
+                    All Officers Present
                   </p>
-                  <p className="text-[11px] text-slate-500 mt-0.5">
-                    No team leads or managers scheduled on leave on this date.
+                  <p className="text-[11px] text-slate-500 mt-0.5 max-w-[220px]">
+                    No officers scheduled on leave for this date.
                   </p>
                 </div>
               ) : (
-                <div className="space-y-2.5 max-h-56 overflow-y-auto">
-                  {managersOnLeaveForSelectedDate.map((item) => (
+                <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+                  {uniqueStaffOnLeaveForSelectedDate.map((item) => (
                     <div
                       key={item.id}
-                      className="p-3 rounded-xl bg-slate-50/80 border border-slate-200/80 flex items-center justify-between gap-3 text-xs"
+                      className="p-2.5 rounded-xl bg-slate-50/80 border border-slate-200/80 flex items-center justify-between gap-2.5 text-xs"
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
                         <div className="w-7 h-7 rounded-full bg-indigo-100 text-indigo-700 font-bold text-xs flex items-center justify-center shrink-0">
@@ -888,18 +1104,18 @@ export default function AdminDashboardPage() {
                             <p className="font-bold text-slate-900 leading-tight truncate">
                               {item.user.name}
                             </p>
-                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-100">
-                              {item.user.role === "TL" ? "Team Lead" : item.user.role}
+                            <span className="text-[9px] font-semibold px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 border border-slate-200/70">
+                              {item.user.role === "TL" ? "Lead" : "Officer"}
                             </span>
                           </div>
                           <p className="text-[10px] text-slate-500 truncate mt-0.5">
-                            {item.leaveType.name} {item.user.team ? `• ${item.user.team.name}` : ""}
+                            {item.user.team?.name || "Embassy Chancery"}
                           </p>
                         </div>
                       </div>
 
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 shrink-0">
-                        On Leave
+                      <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-100 shrink-0">
+                        {item.leaveType?.name || "Leave"}
                       </span>
                     </div>
                   ))}
@@ -907,142 +1123,130 @@ export default function AdminDashboardPage() {
               )}
             </div>
           </div>
-
-          {/* Quick Helper Note */}
-          <div className="pt-2 text-[11px] text-slate-400 border-t border-slate-100 flex items-center gap-1.5 mt-auto">
-            <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
-            <span>Showing Team Leads & Management availability on date.</span>
-          </div>
         </div>
 
-        {/* Col 3: DEPARTMENT DISTRIBUTION (ROUND DONUT CHART & BALANCED HEIGHT) */}
+        {/* Col 3: DEPARTMENT PRESENCE (CLEAN ROUND DONUT & DIRECT STATUS) */}
         <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-2xs space-y-4 h-full flex flex-col justify-between">
           <div>
-            {/* Header */}
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <div>
-                <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                  <Briefcase className="w-4 h-4 text-indigo-600" />
-                  <span>Department Distribution</span>
-                </h3>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Workforce allocation across active teams.
-                </p>
-              </div>
-              <Link href="/admin/departments" className="text-xs font-semibold text-indigo-600 hover:underline">
-                Teams
-              </Link>
+            {/* Header (Clean, Simple, Obvious) */}
+            <div className="pb-3 border-b border-slate-100">
+              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <Briefcase className="w-4 h-4 text-indigo-600" />
+                <span>Department Presence</span>
+              </h3>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Today&apos;s officer availability by department.
+              </p>
             </div>
 
-            {/* Department Multi-Segment Donut Chart */}
+            {/* Department Multi-Segment Donut Chart & Direct Status */}
             {(() => {
+              // Normalize team names for demo display
+              const formatTeamName = (name: string) => {
+                const lower = name.toLowerCase();
+                if (lower === "dev" || lower === "developer" || lower === "development") return "Developer";
+                if (lower === "hr" || lower === "human resources") return "Human Resources";
+                if (lower.includes("sales")) return "Sales & Marketing";
+                return name;
+              };
+
               const activeTeams = teams.filter((t) => t.totalMembers > 0);
-              const displayTeams = activeTeams.length > 0 ? activeTeams : teams.slice(0, 3);
+              const displayTeams = (activeTeams.length > 0 ? activeTeams : teams.slice(0, 3)).map((t) => ({
+                ...t,
+                displayName: formatTeamName(t.name),
+              }));
+
               const totalDeptStaff = displayTeams.reduce((sum, t) => sum + t.totalMembers, 0) || 1;
 
               const radius = 34;
               const circumference = 2 * Math.PI * radius;
               const deptPalette = [
-                { bg: "#4f46e5", dot: "bg-indigo-600" },
-                { bg: "#10b981", dot: "bg-emerald-500" },
-                { bg: "#f59e0b", dot: "bg-amber-500" },
-                { bg: "#8b5cf6", dot: "bg-purple-500" },
-                { bg: "#06b6d4", dot: "bg-cyan-500" },
+                { bg: "#6366f1", dot: "bg-indigo-500", text: "text-indigo-600" },
+                { bg: "#10b981", dot: "bg-emerald-500", text: "text-emerald-600" },
+                { bg: "#f59e0b", dot: "bg-amber-500", text: "text-amber-600" },
+                { bg: "#8b5cf6", dot: "bg-purple-500", text: "text-purple-600" },
+                { bg: "#06b6d4", dot: "bg-cyan-500", text: "text-cyan-600" },
               ];
 
               let accumulatedOffset = 0;
 
               return (
-                <div className="pt-2 space-y-3">
-                  {/* Round Donut + Legend */}
-                  <div className="flex items-center gap-4 bg-slate-50/70 p-3.5 rounded-xl border border-slate-100">
-                    {/* SVG Donut */}
-                    <div className="relative w-20 h-20 shrink-0 flex items-center justify-center">
-                      <svg className="w-full h-full -rotate-90" viewBox="0 0 88 88">
-                        {/* Background Base Ring */}
-                        <circle
-                          cx="44"
-                          cy="44"
-                          r={radius}
-                          stroke="#e2e8f0"
-                          strokeWidth="8"
-                          fill="transparent"
-                        />
-                        {/* Dynamic Colored Segments */}
-                        {displayTeams.map((t, idx) => {
-                          const share = t.totalMembers / totalDeptStaff;
-                          const strokeDasharray = `${share * circumference} ${circumference}`;
-                          const strokeDashoffset = -accumulatedOffset;
-                          accumulatedOffset += share * circumference;
-                          const color = deptPalette[idx % deptPalette.length].bg;
-
-                          return (
-                            <circle
-                              key={t.id}
-                              cx="44"
-                              cy="44"
-                              r={radius}
-                              stroke={color}
-                              strokeWidth="8"
-                              strokeDasharray={strokeDasharray}
-                              strokeDashoffset={strokeDashoffset}
-                              fill="transparent"
-                              className="transition-all duration-500"
-                            />
-                          );
-                        })}
-                      </svg>
-
-                      {/* Center Total Count */}
-                      <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                        <span className="text-sm font-black text-slate-900 leading-tight">
-                          {totalDeptStaff}
-                        </span>
-                        <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">
-                          Staff
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Breakdown Legend */}
-                    <div className="flex-1 space-y-1.5 text-xs">
+                <div className="pt-3 flex flex-col sm:flex-row items-center gap-4">
+                  {/* SVG Round Donut */}
+                  <div className="relative w-24 h-24 shrink-0 flex items-center justify-center pointer-events-none">
+                    <svg className="w-full h-full -rotate-90" viewBox="0 0 88 88">
+                      {/* Background Base Ring */}
+                      <circle
+                        cx="44"
+                        cy="44"
+                        r={radius}
+                        stroke="#f1f5f9"
+                        strokeWidth="8"
+                        fill="transparent"
+                      />
+                      {/* Colored Segments */}
                       {displayTeams.map((t, idx) => {
-                        const pct = Math.round((t.totalMembers / totalDeptStaff) * 100);
-                        const palette = deptPalette[idx % deptPalette.length];
+                        const share = t.totalMembers / totalDeptStaff;
+                        const strokeDasharray = `${share * circumference} ${circumference}`;
+                        const strokeDashoffset = -accumulatedOffset;
+                        accumulatedOffset += share * circumference;
+                        const color = deptPalette[idx % deptPalette.length].bg;
 
                         return (
-                          <div key={t.id} className="flex items-center justify-between">
-                            <span className="text-slate-600 flex items-center gap-1.5 text-[11px] truncate max-w-[110px]" title={t.name}>
-                              <span className={`w-2 h-2 rounded-full ${palette.dot} shrink-0`} />
-                              <span className="truncate">{t.name}</span>
-                            </span>
-                            <span className="text-[11px] font-semibold text-slate-900">
-                              {t.totalMembers} <span className="text-slate-400 font-normal">({pct}%)</span>
-                            </span>
-                          </div>
+                          <circle
+                            key={t.id}
+                            cx="44"
+                            cy="44"
+                            r={radius}
+                            stroke={color}
+                            strokeWidth="8"
+                            strokeDasharray={strokeDasharray}
+                            strokeDashoffset={strokeDashoffset}
+                            fill="transparent"
+                            className="transition-all duration-300"
+                          />
                         );
                       })}
+                    </svg>
+
+                    {/* Center Total Count */}
+                    <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                      <span className="text-base font-black text-slate-900 leading-tight">
+                        {totalDeptStaff}
+                      </span>
+                      <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">
+                        Officers
+                      </span>
                     </div>
                   </div>
 
-                  {/* Team Progress Bars */}
-                  <div className="space-y-1.5 pt-1">
-                    {displayTeams.slice(0, 2).map((t, idx) => {
-                      const pct = Math.round((t.totalMembers / totalDeptStaff) * 100);
+                  {/* Clean Direct Department Status List */}
+                  <div className="flex-1 w-full space-y-2">
+                    {displayTeams.map((t, idx) => {
                       const palette = deptPalette[idx % deptPalette.length];
+                      const onLeave = t.onLeaveCount || 0;
 
                       return (
-                        <div key={t.id} className="space-y-0.5">
-                          <div className="flex items-center justify-between text-[10px]">
-                            <span className="font-semibold text-slate-600 truncate">{t.name}</span>
-                            <span className="text-slate-400 font-medium">{t.totalMembers} staff ({pct}%)</span>
+                        <div
+                          key={t.id}
+                          className="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-slate-50/80 border border-slate-100 text-xs"
+                        >
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className={`w-2.5 h-2.5 rounded-full ${palette.dot} shrink-0`} />
+                            <span className="font-semibold text-slate-800 truncate" title={t.displayName}>
+                              {t.displayName}
+                            </span>
                           </div>
-                          <div className="w-full bg-slate-100 h-1 rounded-full overflow-hidden">
-                            <div
-                              className="h-full rounded-full"
-                              style={{ width: `${pct}%`, backgroundColor: palette.bg }}
-                            />
-                          </div>
+
+                          {onLeave > 0 ? (
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 shrink-0">
+                              {onLeave} on Leave
+                            </span>
+                          ) : (
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
+                              All Present
+                            </span>
+                          )}
                         </div>
                       );
                     })}
@@ -1052,46 +1256,49 @@ export default function AdminDashboardPage() {
             })()}
           </div>
 
-          {/* Department Summary Status */}
-          <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between text-xs mt-auto">
-            <span className="text-slate-500">Active Departments:</span>
-            <strong className="text-slate-900 font-bold">{teams.filter((t) => t.totalMembers > 0).length || 2} Teams Configured</strong>
+          {/* Clean Department Summary Status */}
+          <div className="p-3 bg-slate-50/80 rounded-xl border border-slate-100 flex items-center justify-between text-xs mt-auto">
+            <span className="text-slate-500 font-medium">Active Departments:</span>
+            <strong className="text-slate-900 font-bold">{teams.filter((t) => t.totalMembers > 0).length || 3} Departments</strong>
           </div>
         </div>
       </div>
 
-      {/* 4. SEPARATE DEDICATED SECTION: UPCOMING PUBLIC HOLIDAYS */}
-      <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-2xs space-y-3.5">
-        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-          <div>
-            <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-              <CalendarDays className="w-4 h-4 text-indigo-600" />
-              <span>Upcoming Public Holidays & Official Observances</span>
-            </h3>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Official company-wide non-working days and national holidays.
-            </p>
-          </div>
-
-          <Link
-            href="/admin/holidays"
-            className="text-xs font-semibold text-indigo-600 hover:text-indigo-700 flex items-center gap-1"
-          >
-            <span>View Full Holiday Calendar ({holidays.length || 6})</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
+      {/* 4. SEPARATE DEDICATED SECTION: UPCOMING HOLIDAYS */}
+      <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-2xs space-y-3">
+        {/* Simple Header without links */}
+        <div className="pb-2.5 border-b border-slate-100">
+          <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+            <CalendarDays className="w-4 h-4 text-indigo-600" />
+            <span>Upcoming Holidays</span>
+          </h3>
         </div>
 
         {(() => {
-          const displayHolidays = holidays.length > 0
+          const now = new Date();
+          now.setHours(0, 0, 0, 0);
+
+          const upcomingList = holidays
+            .filter((h) => {
+              const raw = h.toDate || h.fromDate || h.date;
+              if (!raw) return false;
+              return new Date(raw) >= now;
+            })
+            .sort((a, b) => {
+              const da = new Date(a.fromDate || a.date || a.toDate || 0).getTime();
+              const db = new Date(b.fromDate || b.date || b.toDate || 0).getTime();
+              return da - db;
+            });
+
+          const displayHolidays = upcomingList.length > 0
+            ? upcomingList
+            : holidays.length > 0
             ? holidays
             : [
                 { id: 101, name: "Independence Day", date: "2026-08-15" },
                 { id: 102, name: "Ganesh Chaturthi", date: "2026-09-14" },
                 { id: 103, name: "Gandhi Jayanti", date: "2026-10-02" },
                 { id: 104, name: "Dussehra (Vijayadashami)", date: "2026-10-20" },
-                { id: 105, name: "Diwali (Deepavali)", date: "2026-11-08" },
-                { id: 106, name: "Christmas Day", date: "2026-12-25" },
               ];
 
           return (
@@ -1107,9 +1314,9 @@ export default function AdminDashboardPage() {
                 return (
                   <div
                     key={h.id}
-                    className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center gap-3 text-xs hover:border-indigo-200 hover:shadow-2xs transition-all"
+                    className="p-3 rounded-xl bg-slate-50/90 border border-slate-200/80 flex items-center gap-3 text-xs hover:border-indigo-200 hover:bg-slate-50 transition-all"
                   >
-                    {/* Calendar Badge */}
+                    {/* Calendar Date Badge */}
                     <div className="w-11 h-11 rounded-lg bg-white border border-slate-200 shadow-2xs flex flex-col items-center justify-center shrink-0 overflow-hidden">
                       <div className="w-full bg-indigo-600 text-white text-[8px] font-black text-center py-0.2 tracking-wider">
                         {monthShort}
@@ -1119,14 +1326,13 @@ export default function AdminDashboardPage() {
                       </span>
                     </div>
 
+                    {/* Holiday Info (Clean: Name & Date only) */}
                     <div className="min-w-0 flex-1">
-                      <p className="font-bold text-slate-900 truncate" title={h.name}>
+                      <p className="font-bold text-slate-900 truncate text-xs" title={h.name}>
                         {h.name}
                       </p>
-                      <p className="text-[11px] text-slate-500 mt-0.5 flex items-center gap-1.5">
-                        <span>{weekday}</span>
-                        {weekday && <span>•</span>}
-                        <span className="text-indigo-600 font-medium">Official Holiday</span>
+                      <p className="text-[11px] text-slate-500 mt-0.5">
+                        {weekday}, {monthShort} {dayNum}
                       </p>
                     </div>
                   </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useCallback, Suspense } from "react";
+import React, { useEffect, useState, useCallback, useMemo, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -23,6 +23,8 @@ import {
   HelpCircle,
   Gift,
   Award,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { useSettings } from "@/contexts/SettingsContext";
 import DatePicker from "@/components/ui/DatePicker";
@@ -52,6 +54,23 @@ interface EmployeeData {
   } | null;
 }
 
+interface Holiday {
+  id: number;
+  name: string;
+  fromDate?: string;
+  toDate?: string;
+  date?: string;
+  description?: string | null;
+}
+
+interface ExistingLeave {
+  id: number;
+  startDate: string;
+  endDate: string;
+  status: string;
+  leaveType?: { name: string };
+}
+
 function ApplyLeaveContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -61,6 +80,9 @@ function ApplyLeaveContent() {
 
   const [balances, setBalances] = useState<LeaveBalance[]>([]);
   const [employee, setEmployee] = useState<EmployeeData | null>(null);
+  const [holidays, setHolidays] = useState<Holiday[]>([]);
+  const [myLeaves, setMyLeaves] = useState<ExistingLeave[]>([]);
+  const [currentCalDate, setCurrentCalDate] = useState<Date>(new Date());
   const [loading, setLoading] = useState(true);
 
   const getTodayDateString = () => {
@@ -94,18 +116,29 @@ function ApplyLeaveContent() {
   const fetchBalances = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await fetch("/api/employee/dashboard");
-      const json = await res.json();
+      const [dashRes, holRes] = await Promise.all([
+        fetch("/api/employee/dashboard"),
+        fetch("/api/admin/holidays"),
+      ]);
 
+      const json = await dashRes.json();
       if (json.success) {
         const bals: LeaveBalance[] = json.leaveBalances || [];
         setBalances(bals);
         if (json.employee) setEmployee(json.employee);
+        if (json.recentRequests) setMyLeaves(json.recentRequests);
         if (bals.length > 0) {
           setLeaveTypeId((prev) => (prev ? prev : bals[0].leaveType.id.toString()));
         }
       } else {
         showToast(json.error || "Failed to load leave quotas", "error");
+      }
+
+      if (holRes.ok) {
+        const holJson = await holRes.json();
+        if (holJson.success && holJson.holidays) {
+          setHolidays(holJson.holidays);
+        }
       }
     } catch {
       showToast("Network error connecting to leave system", "error");
@@ -122,7 +155,61 @@ function ApplyLeaveContent() {
   const selectedBalance = balances.find((b) => b.leaveType.id.toString() === leaveTypeId);
   const isCompOffSelected = selectedBalance?.leaveType.code === "COMP" || selectedBalance?.leaveType.name.toLowerCase().includes("compensatory");
 
-  // Calculate requested working days (excluding Sundays)
+  // Map of date string "YYYY-MM-DD" -> Holiday
+  const holidaysByDate = useMemo(() => {
+    const map = new Map<string, Holiday>();
+    holidays.forEach((h) => {
+      const rawStart = h.fromDate || h.date || h.toDate;
+      if (!rawStart) return;
+      const start = new Date(rawStart);
+      const rawEnd = h.toDate || h.fromDate || h.date;
+      const end = rawEnd ? new Date(rawEnd) : start;
+      const cur = new Date(start);
+      while (cur <= end) {
+        const key = `${cur.getFullYear()}-${String(cur.getMonth() + 1).padStart(2, "0")}-${String(cur.getDate()).padStart(2, "0")}`;
+        map.set(key, h);
+        cur.setDate(cur.getDate() + 1);
+      }
+    });
+    return map;
+  }, [holidays]);
+
+  // Map of date string "YYYY-MM-DD" -> Existing Leave Request
+  const myLeavesByDate = useMemo(() => {
+    const map = new Map<string, ExistingLeave>();
+    myLeaves
+      .filter((l) => l.status === "APPROVED" || l.status.startsWith("PENDING"))
+      .forEach((l) => {
+        const start = new Date(l.startDate);
+        const end = new Date(l.endDate);
+        const cur = new Date(start);
+        while (cur <= end) {
+          const key = `${cur.getFullYear()}-${String(cur.getMonth() + 1).padStart(2, "0")}-${String(cur.getDate()).padStart(2, "0")}`;
+          map.set(key, l);
+          cur.setDate(cur.getDate() + 1);
+        }
+      });
+    return map;
+  }, [myLeaves]);
+
+  // List of public holidays that overlap with requested range
+  const overlappingHolidays = useMemo(() => {
+    if (!startDate || !endDate) return [];
+    const s = new Date(startDate);
+    const e = new Date(endDate);
+    if (isNaN(s.getTime()) || isNaN(e.getTime()) || e < s) return [];
+    const set = new Map<number, Holiday>();
+    const cur = new Date(s);
+    while (cur <= e) {
+      const key = `${cur.getFullYear()}-${String(cur.getMonth() + 1).padStart(2, "0")}-${String(cur.getDate()).padStart(2, "0")}`;
+      const hol = holidaysByDate.get(key);
+      if (hol) set.set(hol.id, hol);
+      cur.setDate(cur.getDate() + 1);
+    }
+    return Array.from(set.values());
+  }, [startDate, endDate, holidaysByDate]);
+
+  // Calculate requested working days (Excluding Sundays AND Official Public Holidays)
   const calculateDays = () => {
     if (!startDate || !endDate) return 0;
     const s = new Date(startDate);
@@ -133,7 +220,11 @@ function ApplyLeaveContent() {
     let workingDays = 0;
     const cur = new Date(s);
     while (cur <= e) {
-      if (cur.getDay() !== 0) {
+      const key = `${cur.getFullYear()}-${String(cur.getMonth() + 1).padStart(2, "0")}-${String(cur.getDate()).padStart(2, "0")}`;
+      const isSunday = cur.getDay() === 0;
+      const isHoliday = holidaysByDate.has(key);
+      // Exclude Sundays and official public holidays from deductible leave days
+      if (!isSunday && !isHoliday) {
         workingDays++;
       }
       cur.setDate(cur.getDate() + 1);
@@ -145,6 +236,38 @@ function ApplyLeaveContent() {
   const remainingAfter = selectedBalance ? selectedBalance.remaining - requestedDays : 0;
   const isInsufficientBalance = selectedBalance ? requestedDays > selectedBalance.remaining : false;
   const isInvalidDates = new Date(endDate) < new Date(startDate);
+
+  // Calendar Helpers for Mini Month Viewer
+  const calYear = currentCalDate.getFullYear();
+  const calMonth = currentCalDate.getMonth();
+  const calMonthName = currentCalDate.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+  const firstDayOfWeek = new Date(calYear, calMonth, 1).getDay();
+  const daysInCalMonth = new Date(calYear, calMonth + 1, 0).getDate();
+
+  const handlePrevCalMonth = () => {
+    setCurrentCalDate(new Date(calYear, calMonth - 1, 1));
+  };
+  const handleNextCalMonth = () => {
+    setCurrentCalDate(new Date(calYear, calMonth + 1, 1));
+  };
+  const handleTodayCalJump = () => {
+    setCurrentCalDate(new Date());
+  };
+
+  const handleCalendarDateClick = (dateStr: string) => {
+    // If clicked on an already selected single date or fresh start
+    if (!startDate || (startDate && endDate && startDate !== endDate)) {
+      setStartDate(dateStr);
+      setEndDate(dateStr);
+    } else if (startDate && (!endDate || startDate === endDate)) {
+      if (dateStr >= startDate) {
+        setEndDate(dateStr);
+      } else {
+        setStartDate(dateStr);
+        setEndDate(startDate);
+      }
+    }
+  };
 
   // Quick date shortcuts (skipping Sundays)
   const applyShortcut = (daysFromToday: number, durationDays: number = 1) => {
@@ -488,39 +611,72 @@ function ApplyLeaveContent() {
                 </div>
               </div>
 
-              {/* Date Inputs (Start & End) */}
-              <div className="space-y-1.5">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <DatePicker
-                    label="Start Date"
-                    required
-                    disableSundays={true}
-                    value={startDate}
-                    minDate={todayStr}
-                    onChange={(val) => {
-                      setStartDate(val);
-                      if (endDate && val > endDate) {
-                        setEndDate(val);
-                      }
-                    }}
-                  />
+                {/* Date Inputs (Start & End) */}
+                <div className="space-y-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <DatePicker
+                      label="Start Date"
+                      required
+                      disableSundays={true}
+                      value={startDate}
+                      minDate={todayStr}
+                      onChange={(val) => {
+                        setStartDate(val);
+                        if (endDate && val > endDate) {
+                          setEndDate(val);
+                        }
+                      }}
+                    />
 
-                  <DatePicker
-                    label="End Date"
-                    required
-                    align="right"
-                    disableSundays={true}
-                    value={endDate}
-                    minDate={startDate || todayStr}
-                    onChange={(val) => setEndDate(val)}
-                  />
-                </div>
+                    <DatePicker
+                      label="End Date"
+                      required
+                      align="right"
+                      disableSundays={true}
+                      value={endDate}
+                      minDate={startDate || todayStr}
+                      onChange={(val) => setEndDate(val)}
+                    />
+                  </div>
 
-                <div className="flex items-center gap-1.5 text-[11px] text-slate-400 pt-0.5">
-                  <Info className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                  <span>Choose today ({formatDate(new Date())}) or a future date.</span>
+                  {/* Proactive Holiday Detection & Overlap Notices */}
+                  {overlappingHolidays.length > 0 && (
+                    <div className="p-3 rounded-xl bg-purple-50/90 border border-purple-200 flex items-start gap-2.5 text-xs text-purple-900 animate-in fade-in">
+                      <span className="text-base leading-none">🏛️</span>
+                      <div className="space-y-0.5">
+                        <div className="font-bold flex items-center gap-2">
+                          <span>Official Embassy Holiday in Selected Range:</span>
+                          <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-purple-200/80 text-purple-800">
+                            Free Day
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-purple-700 leading-relaxed">
+                          {overlappingHolidays.map((h) => h.name).join(", ")} will <strong>NOT</strong> be deducted from your leave quota.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Single Day Official Holiday Warning */}
+                  {startDate === endDate && holidaysByDate.has(startDate) && (
+                    <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 flex items-start gap-2.5 text-xs text-amber-900 animate-in fade-in">
+                      <span className="text-base leading-none">⚠️</span>
+                      <div>
+                        <span className="font-bold">
+                          {holidaysByDate.get(startDate)?.name} is an Official Embassy Holiday
+                        </span>
+                        <p className="text-[11px] text-amber-700 mt-0.5">
+                          Mission and Consular offices are closed on this date. Applying for leave is not necessary.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-1.5 text-[11px] text-slate-400 pt-0.5">
+                    <Info className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                    <span>Choose today ({formatDate(new Date())}) or select directly from the calendar on the right.</span>
+                  </div>
                 </div>
-              </div>
 
               {/* Half-Day Option Checkbox */}
               <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2.5">
@@ -631,8 +787,145 @@ function ApplyLeaveContent() {
             </form>
           </div>
 
-          {/* Right Column (1 Col): Live Calculation Summary */}
+          {/* Right Column (1 Col): Interactive Calendar & Live Calculation Summary */}
           <div className="space-y-4">
+            {/* 🌟 INTERACTIVE MONTH & HOLIDAY CALENDAR */}
+            <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-4 sm:p-5 space-y-3.5">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
+                    <Calendar className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-xs text-[#1a2333]">
+                      {calMonthName}
+                    </h3>
+                    <p className="text-[10px] text-slate-400">Click dates to select range</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={handlePrevCalMonth}
+                    className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
+                    title="Previous Month"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleTodayCalJump}
+                    className="px-2 py-0.5 rounded-lg hover:bg-slate-100 text-slate-600 hover:text-slate-900 text-[10px] font-bold border border-slate-200 transition-colors cursor-pointer"
+                  >
+                    Today
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleNextCalMonth}
+                    className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
+                    title="Next Month"
+                  >
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+
+              {/* 7-Day Column Headers */}
+              <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-slate-400 uppercase">
+                <span className="text-rose-400">Su</span>
+                <span>Mo</span>
+                <span>Tu</span>
+                <span>We</span>
+                <span>Th</span>
+                <span>Fr</span>
+                <span>Sa</span>
+              </div>
+
+              {/* Month Grid */}
+              <div className="grid grid-cols-7 gap-1 text-xs">
+                {Array.from({ length: firstDayOfWeek }).map((_, i) => (
+                  <div key={`cal-pad-${i}`} className="h-8" />
+                ))}
+                {Array.from({ length: daysInCalMonth }).map((_, i) => {
+                  const day = i + 1;
+                  const dateKey = `${calYear}-${String(calMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+                  const isToday = dateKey === todayStr;
+                  const isSelected =
+                    (startDate && dateKey >= startDate && (!endDate || dateKey <= endDate)) ||
+                    dateKey === startDate;
+                  const holiday = holidaysByDate.get(dateKey);
+                  const myLeave = myLeavesByDate.get(dateKey);
+                  const dayOfWeek = (firstDayOfWeek + i) % 7;
+                  const isSunday = dayOfWeek === 0;
+
+                  let btnStyle = "relative h-8 w-full rounded-xl flex flex-col items-center justify-center font-semibold text-xs transition-all cursor-pointer ";
+                  if (isSelected) {
+                    btnStyle += "bg-indigo-600 text-white font-bold shadow-xs ";
+                  } else if (isToday) {
+                    btnStyle += "bg-slate-100 text-slate-900 font-bold ring-1.5 ring-slate-400 ";
+                  } else if (isSunday) {
+                    btnStyle += "text-rose-400 bg-rose-50/40 hover:bg-rose-100/60 ";
+                  } else {
+                    btnStyle += "text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 ";
+                  }
+
+                  return (
+                    <button
+                      key={dateKey}
+                      type="button"
+                      onClick={() => handleCalendarDateClick(dateKey)}
+                      title={
+                        holiday
+                          ? `🏛️ Official Embassy Holiday: ${holiday.name}`
+                          : myLeave
+                          ? `🟠 Scheduled Leave: ${myLeave.leaveType?.name || "Leave"}`
+                          : `Select ${dateKey}`
+                      }
+                      className={btnStyle}
+                    >
+                      <span className="leading-none text-[11px]">{day}</span>
+                      {/* Status Dots */}
+                      <div className="flex items-center gap-0.5 mt-0.5 pointer-events-none">
+                        {holiday && (
+                          <span
+                            className={`w-1.5 h-1.5 rounded-full ${
+                              isSelected ? "bg-amber-300 ring-1 ring-white" : "bg-purple-600"
+                            }`}
+                            title={`Holiday: ${holiday.name}`}
+                          />
+                        )}
+                        {myLeave && !holiday && (
+                          <span
+                            className={`w-1.5 h-1.5 rounded-full ${
+                              isSelected ? "bg-white" : "bg-amber-500"
+                            }`}
+                            title="Scheduled Leave"
+                          />
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Clean Legend */}
+              <div className="pt-2.5 border-t border-slate-100 flex flex-wrap items-center justify-between gap-1 text-[10px] text-slate-500">
+                <span className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-purple-600" />
+                  <span>Public Holiday</span>
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-amber-500" />
+                  <span>My Leave</span>
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-sm bg-indigo-600" />
+                  <span>Selected</span>
+                </span>
+              </div>
+            </div>
+
             {/* Live Calculation Card */}
             <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-5 space-y-4">
               <div className="flex items-center justify-between border-b border-slate-100 pb-3">
