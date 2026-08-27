@@ -61,6 +61,12 @@ interface DashboardData {
     code: string;
     daysTaken: number;
   }>;
+  dayBasedStats?: Array<{
+    day: string;
+    code: string;
+    shortName: string;
+    daysTaken: number;
+  }>;
   tlMetrics: Array<{
     id: number;
     name: string;
@@ -155,13 +161,13 @@ export default function CEODashboardPage() {
             <Sparkles className="w-3 h-3 text-indigo-600" />
             <span>Executive Business Overview</span>
           </div>
-          <h1 className="text-xl font-bold text-slate-900 tracking-tight">CEO Executive Dashboard</h1>
+          <h1 className="text-xl font-bold text-slate-900 tracking-tight">Head Of Chancery</h1>
           <p className="text-xs text-slate-500 mt-0.5 max-w-xl">
             Monitor real-time company workforce presence, departmental outage capacity, and review high-priority leave authorizations.
           </p>
         </div>
 
-        <div className="flex items-center gap-3 self-start md:self-auto">
+        {/* <div className="flex items-center gap-3 self-start md:self-auto">
           <Link
             href="/ceo/leave-requests"
             className="px-3.5 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer"
@@ -169,7 +175,7 @@ export default function CEODashboardPage() {
             <span>Review Pending Approvals</span>
             <ChevronRight className="w-3.5 h-3.5" />
           </Link>
-        </div>
+        </div> */}
       </div>
 
       {/* 2. Macro KPI Cards */}
@@ -432,29 +438,30 @@ export default function CEODashboardPage() {
           </div>
         </div>
 
-        {/* Leave Category Consumption Graph */}
+        {/* Day-Based Leave Consumption Graph */}
         <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden flex flex-col">
           <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
             <div className="flex items-center gap-2">
               <BarChart3 className="w-4 h-4 text-indigo-600" />
               <h2 className="font-bold text-xs text-slate-900">
-                Annual Leave Consumption Graph
+                Day-Based Leave Consumption Graph
               </h2>
             </div>
             <span className="px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 font-bold text-[10px] border border-indigo-200">
-              {data?.categoryStats.reduce((acc, c) => acc + c.daysTaken, 0) || 0} Total Days Utilized
+              {((data?.dayBasedStats || []).reduce((acc, c) => acc + c.daysTaken, 0) || (data?.categoryStats || []).reduce((acc, c) => acc + c.daysTaken, 0) || 0)} Total Days Utilized
             </span>
           </div>
 
           <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between">
             {loading ? (
-              <div className="p-12 text-center text-xs text-slate-400">Loading consumption graph...</div>
-            ) : !data?.categoryStats || data.categoryStats.length === 0 ? (
+              <div className="p-12 text-center text-xs text-slate-400">Loading day-based consumption graph...</div>
+            ) : !data?.dayBasedStats || data.dayBasedStats.length === 0 ? (
               <div className="p-12 text-center text-xs text-slate-400">No leave data available.</div>
             ) : (
               (() => {
-                const totalDays = data.categoryStats.reduce((acc, c) => acc + c.daysTaken, 0);
-                const maxVal = Math.max(...data.categoryStats.map((c) => c.daysTaken), 8);
+                const dayStats = data.dayBasedStats;
+                const totalDays = dayStats.reduce((acc, c) => acc + c.daysTaken, 0);
+                const maxVal = Math.max(...dayStats.map((c) => c.daysTaken), 8);
 
                 return (
                   <div className="space-y-4">
@@ -467,21 +474,21 @@ export default function CEODashboardPage() {
                         <div className="border-b border-dashed border-slate-200 w-full" />
                       </div>
 
-                      {/* Columns Container (Responsive Flex Row) */}
+                      {/* Columns Container (Mon - Sun) */}
                       <div className="relative z-10 flex items-end justify-between gap-1 sm:gap-2 w-full h-40">
-                        {data.categoryStats.map((cat) => {
-                          const heightPct = Math.round((cat.daysTaken / maxVal) * 100);
-                          const sharePct = totalDays > 0 ? Math.round((cat.daysTaken / totalDays) * 100) : 0;
-                          const isHighlighted = cat.daysTaken > 0;
+                        {dayStats.map((d) => {
+                          const heightPct = Math.round((d.daysTaken / maxVal) * 100);
+                          const sharePct = totalDays > 0 ? Math.round((d.daysTaken / totalDays) * 100) : 0;
+                          const isHighlighted = d.daysTaken > 0;
 
                           return (
                             <div
-                              key={cat.code}
+                              key={d.code}
                               className="group flex-1 min-w-0 flex flex-col items-center justify-end relative cursor-pointer"
                             >
                               {/* Hover Floating Tooltip */}
                               <div className="absolute -top-8 z-30 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none bg-slate-900 text-white text-[10px] font-semibold py-1 px-2 rounded-md shadow-lg whitespace-nowrap">
-                                {cat.name} ({cat.code}): {cat.daysTaken}d ({sharePct}%)
+                                {d.day}: {d.daysTaken}d ({sharePct}%)
                               </div>
 
                               {/* Days Label above bar */}
@@ -490,11 +497,11 @@ export default function CEODashboardPage() {
                                   isHighlighted ? "text-indigo-600 font-extrabold" : "text-slate-400"
                                 }`}
                               >
-                                {cat.daysTaken}d
+                                {d.daysTaken}d
                               </span>
 
                               {/* Bar Column Outer Track */}
-                              <div className="w-full max-w-[28px] sm:max-w-[34px] h-24 sm:h-28 bg-slate-100 rounded-xl flex items-end justify-center p-0.5 sm:p-1 overflow-hidden transition-all group-hover:bg-slate-200/70">
+                              <div className="w-full max-w-[32px] sm:max-w-[42px] h-24 sm:h-28 bg-slate-100 rounded-xl flex items-end justify-center p-0.5 sm:p-1 overflow-hidden transition-all group-hover:bg-slate-200/70">
                                 <div
                                   className={`w-full rounded-lg transition-all duration-700 ease-out ${
                                     isHighlighted
@@ -507,16 +514,16 @@ export default function CEODashboardPage() {
                                 />
                               </div>
 
-                              {/* Category Code Pill */}
+                              {/* Day Code Pill */}
                               <span
-                                className={`mt-1.5 font-mono text-[9px] sm:text-[10px] font-bold px-1 py-0.5 rounded text-center truncate max-w-full transition-colors ${
+                                className={`mt-1.5 font-mono text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded text-center truncate max-w-full transition-colors ${
                                   isHighlighted
                                     ? "bg-indigo-50 text-indigo-700 border border-indigo-200"
                                     : "bg-slate-100 text-slate-500"
                                 }`}
-                                title={cat.name}
+                                title={d.day}
                               >
-                                {cat.code}
+                                {d.code}
                               </span>
                             </div>
                           );
@@ -524,29 +531,34 @@ export default function CEODashboardPage() {
                       </div>
                     </div>
 
-                    {/* Category Share Legend Badges */}
+                    {/* Day Share Legend Badges */}
                     <div className="pt-3 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-3 gap-2">
-                      {data.categoryStats
-                        .filter((c) => c.daysTaken > 0)
-                        .map((cat) => {
-                          const share = totalDays > 0 ? Math.round((cat.daysTaken / totalDays) * 100) : 0;
+                      {dayStats
+                        .filter((d) => d.daysTaken > 0)
+                        .map((d) => {
+                          const share = totalDays > 0 ? Math.round((d.daysTaken / totalDays) * 100) : 0;
                           return (
                             <div
-                              key={cat.code}
+                              key={d.code}
                               className="p-2 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-between text-xs"
                             >
                               <div className="flex items-center gap-1.5 min-w-0">
                                 <span className="w-2 h-2 rounded-full bg-indigo-600 shrink-0" />
                                 <span className="font-semibold text-slate-800 truncate text-[11px]">
-                                  {cat.name}
+                                  {d.day}
                                 </span>
                               </div>
                               <span className="font-bold text-slate-900 shrink-0 text-[11px]">
-                                {cat.daysTaken}d ({share}%)
+                                {d.daysTaken}d ({share}%)
                               </span>
                             </div>
                           );
                         })}
+                      {dayStats.every((d) => d.daysTaken === 0) && (
+                        <div className="col-span-3 text-center py-2 text-xs text-slate-400">
+                          No leave days recorded for the active period.
+                        </div>
+                      )}
                     </div>
                   </div>
                 );
