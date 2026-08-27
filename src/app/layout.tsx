@@ -15,8 +15,11 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Leave Management System",
+  title: "Embassy of India Leave Management System",
   description: "Employee Leave Management System",
+  icons: {
+    icon: "/title_logo.png", // Replace with your actual logo path, e.g., "/logo.png" or "/logo.svg"
+  }
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
