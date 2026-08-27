@@ -137,6 +137,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (balance?.leaveType.requiresAttachment) {
+      const hasAttachment = body.attachmentName || (reason && reason.includes("[Attachment:"));
+      if (!hasAttachment) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: `Document attachment is strictly mandatory for '${balance.leaveType.name}'. Please attach a supporting document.`,
+          },
+          { status: 400 }
+        );
+      }
+    }
+
     // Create Leave Request in Prisma
     const newRequest = await prisma.leaveRequest.create({
       data: {

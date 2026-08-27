@@ -68,7 +68,7 @@ const APPROVAL_OPTIONS = [
 
 const ATTACHMENT_OPTIONS = [
   { value: "false", label: "No (Optional)" },
-  { value: "true", label: "Yes, Attachment Required" },
+  { value: "true", label: "Yes, Attachment Mandatory" },
 ];
 
 interface LeaveTypeItem {
@@ -116,6 +116,9 @@ export default function LeaveTypesPage() {
   const [filterCategory, setFilterCategory] = useState("ALL");
   const [filterStatus, setFilterStatus] = useState<"ALL" | "ACTIVE" | "INACTIVE">("ALL");
   const [filterPaid, setFilterPaid] = useState<"ALL" | "PAID" | "UNPAID">("ALL");
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
 
   // Action Menu state
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
@@ -127,6 +130,7 @@ export default function LeaveTypesPage() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedLeaveType, setSelectedLeaveType] = useState<LeaveTypeItem | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [modalError, setModalError] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   // Form state
@@ -137,7 +141,7 @@ export default function LeaveTypesPage() {
     category: "Annual",
     annualAllocation: 12,
     isPaid: true,
-    carryForward: false,
+    carryForward: true,
     maxCarryForwardDays: 0,
     maxConsecutiveDays: 14,
     requiresApproval: true,
@@ -168,11 +172,13 @@ export default function LeaveTypesPage() {
     try {
       setLoading(true);
       const params = new URLSearchParams({
-        search: search.trim(),
+        page: String(page),
+        limit: "10",
         category: filterCategory,
         status: filterStatus,
         paid: filterPaid,
       });
+      if (search.trim()) params.append("search", search.trim());
 
       const res = await fetch(`/api/admin/leave-types?${params.toString()}`);
       const data = await res.json();
@@ -180,6 +186,10 @@ export default function LeaveTypesPage() {
       if (data.success) {
         setLeaveTypes(data.leaveTypes || []);
         if (data.summary) setSummary(data.summary);
+        if (data.pagination) {
+          setTotalPages(data.pagination.totalPages || 1);
+          setTotalItems(data.pagination.totalFiltered ?? data.pagination.total ?? 0);
+        }
       } else {
         showToast(data.error || "Failed to load leave types", "error");
       }
@@ -188,7 +198,7 @@ export default function LeaveTypesPage() {
     } finally {
       setLoading(false);
     }
-  }, [search, filterCategory, filterStatus, filterPaid]);
+  }, [search, filterCategory, filterStatus, filterPaid, page]);
 
   useEffect(() => {
     fetchLeaveTypes();
@@ -197,7 +207,9 @@ export default function LeaveTypesPage() {
   // Create Leave Type
   const handleCreateLeaveType = async (e: React.FormEvent) => {
     e.preventDefault();
+    setModalError(null);
     if (!formData.name || !formData.code) {
+      setModalError("Leave Name and Code are required.");
       showToast("Leave Name and Code are required", "error");
       return;
     }
@@ -217,9 +229,12 @@ export default function LeaveTypesPage() {
         resetForm();
         fetchLeaveTypes();
       } else {
-        showToast(data.error || "Failed to create leave type", "error");
+        const errMsg = data.error || "Failed to create leave type";
+        setModalError(errMsg);
+        showToast(errMsg, "error");
       }
     } catch (err) {
+      setModalError("Network error connecting to server.");
       showToast("Network error creating leave type", "error");
     } finally {
       setSubmitting(false);
@@ -230,6 +245,7 @@ export default function LeaveTypesPage() {
   const handleEditLeaveType = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedLeaveType) return;
+    setModalError(null);
 
     try {
       setSubmitting(true);
@@ -246,9 +262,12 @@ export default function LeaveTypesPage() {
         setSelectedLeaveType(null);
         fetchLeaveTypes();
       } else {
-        showToast(data.error || "Failed to update leave policy", "error");
+        const errMsg = data.error || "Failed to update leave policy";
+        setModalError(errMsg);
+        showToast(errMsg, "error");
       }
     } catch (err) {
+      setModalError("Network error updating leave policy.");
       showToast("Network error updating leave policy", "error");
     } finally {
       setSubmitting(false);
@@ -312,6 +331,7 @@ export default function LeaveTypesPage() {
 
   const openEditModal = (lt: LeaveTypeItem) => {
     setSelectedLeaveType(lt);
+    setModalError(null);
     setFormData({
       name: lt.name,
       code: lt.code,
@@ -319,13 +339,13 @@ export default function LeaveTypesPage() {
       category: lt.category || "Annual",
       annualAllocation: lt.annualAllocation || 0,
       isPaid: lt.isPaid ?? true,
-      carryForward: lt.carryForward ?? false,
+      carryForward: lt.carryForward ?? true,
       maxCarryForwardDays: lt.maxCarryForwardDays || 0,
       maxConsecutiveDays: lt.maxConsecutiveDays || 14,
       requiresApproval: lt.requiresApproval ?? true,
       requiresAttachment: lt.requiresAttachment ?? false,
       minimumNoticeDays: lt.minimumNoticeDays || 0,
-      isActive: lt.isActive ?? true,
+      isActive: lt.isActive,
     });
     setEditModalOpen(true);
     setOpenMenuId(null);
@@ -345,7 +365,7 @@ export default function LeaveTypesPage() {
       category: "Annual",
       annualAllocation: 12,
       isPaid: true,
-      carryForward: false,
+      carryForward: true,
       maxCarryForwardDays: 0,
       maxConsecutiveDays: 14,
       requiresApproval: true,
@@ -364,7 +384,7 @@ export default function LeaveTypesPage() {
       {/* Toast Notification Alert */}
       {toastMessage && (
         <div
-          className={`fixed bottom-5 right-5 z-50 flex items-center gap-2.5 px-4 py-2.5 rounded-lg shadow-sm border text-xs font-medium ${
+          className={`fixed bottom-5 right-5 z-[9999] flex items-center gap-2.5 px-4 py-2.5 rounded-xl shadow-2xl border text-xs font-medium animate-in fade-in slide-in-from-bottom-3 ${
             toastMessage.type === "success"
               ? "bg-white text-slate-800 border-slate-200"
               : "bg-white text-rose-700 border-rose-200"
@@ -378,7 +398,7 @@ export default function LeaveTypesPage() {
           <span>{toastMessage.text}</span>
           <button
             onClick={() => setToastMessage(null)}
-            className="ml-1 text-slate-400 hover:text-slate-700"
+            className="ml-1 text-slate-400 hover:text-slate-700 cursor-pointer"
           >
             <X className="w-3.5 h-3.5" />
           </button>
@@ -386,7 +406,7 @@ export default function LeaveTypesPage() {
       )}
 
       {/* 1. PAGE HEADER */}
-      <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl font-bold text-slate-900 tracking-tight">
             Leave Types & Policies
@@ -396,114 +416,15 @@ export default function LeaveTypesPage() {
           </p>
         </div>
 
-        {/* Primary Create Button */}
-        <button
-          onClick={() => {
-            resetForm();
-            setCreateModalOpen(true);
-          }}
-          className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-xs transition-all active:scale-95 shrink-0 self-start sm:self-auto cursor-pointer"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Create Leave Type</span>
-        </button>
-      </div>
-
-      {/* 2. SUMMARY METRIC CARDS */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-        {/* Total Leave Types */}
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-              Total Leave Types
-            </span>
-            <FileSpreadsheet className="w-4 h-4 text-slate-400" />
-          </div>
-          <div className="mt-2.5">
-            <div className="text-2xl font-bold text-slate-900">
-              {loading ? "--" : summary.totalLeaveTypes}
-            </div>
-            <div className="text-[11px] text-slate-400 mt-0.5">
-              Defined policy categories
-            </div>
-          </div>
-        </div>
-
-        {/* Active Leave Types */}
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-              Active Leave Types
-            </span>
-            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-          </div>
-          <div className="mt-2.5">
-            <div className="text-2xl font-bold text-slate-900">
-              {loading ? "--" : summary.activeLeaveTypes}
-            </div>
-            <div className="text-[11px] text-emerald-600 font-medium mt-0.5">
-              Available for staff requests
-            </div>
-          </div>
-        </div>
-
-        {/* Inactive Leave Types */}
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-              Inactive Leave Types
-            </span>
-            <Power className="w-4 h-4 text-slate-400" />
-          </div>
-          <div className="mt-2.5">
-            <div className="text-2xl font-bold text-slate-900">
-              {loading ? "--" : summary.inactiveLeaveTypes}
-            </div>
-            <div className="text-[11px] text-slate-400 mt-0.5">
-              Disabled from request dropdowns
-            </div>
-          </div>
-        </div>
-
-        {/* Total Allocated Days */}
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-              Total Allocated Days
-            </span>
-            <Calendar className="w-4 h-4 text-slate-400" />
-          </div>
-          <div className="mt-2.5">
-            <div className="text-2xl font-bold text-slate-900">
-              {loading ? "--" : `${summary.totalAllocatedDays} Days`}
-            </div>
-            <div className="text-[11px] text-slate-400 mt-0.5">
-              Cumulative annual allowances
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* 3. UNIFIED SEARCH & FILTER BAR */}
-      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3">
-        {/* Search Input */}
-        <div className="relative flex-1 max-w-sm">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            placeholder="Search by code, name, description..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-slate-400 focus:bg-white"
-          />
-        </div>
-
-        {/* Filters Cluster */}
-        <div className="flex flex-wrap items-center gap-2">
+        {/* Right Controls: Filter Tabs + Dropdowns + Create Button */}
+        <div className="flex flex-wrap items-center gap-2.5">
           {/* Status Filter Tabs */}
           <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-xl text-xs font-medium border border-slate-200">
             <button
-              onClick={() => setFilterStatus("ALL")}
+              onClick={() => {
+                setFilterStatus("ALL");
+                setPage(1);
+              }}
               className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer font-semibold ${
                 filterStatus === "ALL"
                   ? "bg-indigo-600 text-white shadow-xs"
@@ -513,7 +434,10 @@ export default function LeaveTypesPage() {
               All ({summary.totalLeaveTypes})
             </button>
             <button
-              onClick={() => setFilterStatus("ACTIVE")}
+              onClick={() => {
+                setFilterStatus("ACTIVE");
+                setPage(1);
+              }}
               className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer font-semibold ${
                 filterStatus === "ACTIVE"
                   ? "bg-indigo-600 text-white shadow-xs"
@@ -523,7 +447,10 @@ export default function LeaveTypesPage() {
               Active ({summary.activeLeaveTypes})
             </button>
             <button
-              onClick={() => setFilterStatus("INACTIVE")}
+              onClick={() => {
+                setFilterStatus("INACTIVE");
+                setPage(1);
+              }}
               className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer font-semibold ${
                 filterStatus === "INACTIVE"
                   ? "bg-indigo-600 text-white shadow-xs"
@@ -537,7 +464,10 @@ export default function LeaveTypesPage() {
           {/* Paid / Unpaid Dropdown */}
           <ThemedSelect
             value={filterPaid}
-            onChange={(val) => setFilterPaid(val as any)}
+            onChange={(val) => {
+              setFilterPaid(val as any);
+              setPage(1);
+            }}
             options={PAID_FILTER_OPTIONS}
             size="xs"
             className="min-w-[140px]"
@@ -546,11 +476,27 @@ export default function LeaveTypesPage() {
           {/* Category Dropdown */}
           <ThemedSelect
             value={filterCategory}
-            onChange={(val) => setFilterCategory(val)}
+            onChange={(val) => {
+              setFilterCategory(val);
+              setPage(1);
+            }}
             options={CATEGORY_FILTER_OPTIONS}
             size="xs"
             className="min-w-[135px]"
           />
+
+          {/* Primary Create Button */}
+          <button
+            onClick={() => {
+              resetForm();
+              setModalError(null);
+              setCreateModalOpen(true);
+            }}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-xs transition-all active:scale-95 shrink-0 cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Create Leave Type</span>
+          </button>
         </div>
       </div>
 
@@ -701,6 +647,46 @@ export default function LeaveTypesPage() {
               })}
             </tbody>
           </table>
+
+          {/* Pagination Footer */}
+          <div className="flex items-center justify-between bg-white px-5 py-3.5 border-t border-slate-200/80 rounded-b-xl">
+            <div className="text-xs text-slate-500">
+              Showing <span className="font-semibold text-slate-700">{totalItems === 0 ? 0 : (page - 1) * 10 + 1}</span> to{" "}
+              <span className="font-semibold text-slate-700">{Math.min(page * 10, totalItems)}</span> of{" "}
+              <span className="font-semibold text-slate-700">{totalItems}</span> leave types
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page === 1}
+                className="px-3 py-1.5 text-xs font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
+              >
+                Previous
+              </button>
+              <div className="flex items-center gap-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                  <button
+                    key={p}
+                    onClick={() => setPage(p)}
+                    className={`w-7 h-7 flex items-center justify-center rounded-lg text-xs font-medium transition-colors cursor-pointer ${
+                      page === p
+                        ? "bg-indigo-600 text-white font-bold shadow-2xs"
+                        : "text-slate-600 hover:bg-slate-100"
+                    }`}
+                  >
+                    {p}
+                  </button>
+                ))}
+              </div>
+              <button
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page === totalPages || totalPages === 0}
+                className="px-3 py-1.5 text-xs font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
+              >
+                Next
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -718,12 +704,23 @@ export default function LeaveTypesPage() {
               </h3>
               <button
                 type="button"
-                onClick={() => setCreateModalOpen(false)}
+                onClick={() => {
+                  setModalError(null);
+                  setCreateModalOpen(false);
+                }}
                 className="text-slate-400 hover:text-slate-700 p-1 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
+
+            {/* In-Modal Error Alert Banner */}
+            {modalError && (
+              <div className="flex items-center gap-2 p-3 rounded-xl bg-rose-50 text-rose-700 border border-rose-200 text-xs font-semibold animate-in fade-in">
+                <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+                <span>{modalError}</span>
+              </div>
+            )}
 
             <div className="space-y-4">
               {/* SECTION: Basic Information */}
@@ -827,31 +824,7 @@ export default function LeaveTypesPage() {
                   Policy Rules & Restrictions
                 </h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Carry Forward to Next Year?
-                    </label>
-                    <ThemedSelect
-                      value={formData.carryForward ? "true" : "false"}
-                      onChange={(val) => setFormData({ ...formData, carryForward: val === "true" })}
-                      options={CARRY_FORWARD_OPTIONS}
-                    />
-                  </div>
 
-                  {formData.carryForward && (
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">
-                        Max Carry Forward Days
-                      </label>
-                      <input
-                        type="number"
-                        min="0"
-                        value={formData.maxCarryForwardDays}
-                        onChange={(e) => setFormData({ ...formData, maxCarryForwardDays: Number(e.target.value) })}
-                        className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-slate-400 focus:bg-white transition-all"
-                      />
-                    </div>
-                  )}
 
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 mb-1">
@@ -1076,12 +1049,23 @@ export default function LeaveTypesPage() {
               </h3>
               <button
                 type="button"
-                onClick={() => setEditModalOpen(false)}
+                onClick={() => {
+                  setModalError(null);
+                  setEditModalOpen(false);
+                }}
                 className="text-slate-400 hover:text-slate-700 p-1 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
+
+            {/* In-Modal Error Alert Banner */}
+            {modalError && (
+              <div className="flex items-center gap-2 p-3 rounded-xl bg-rose-50 text-rose-700 border border-rose-200 text-xs font-semibold animate-in fade-in">
+                <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+                <span>{modalError}</span>
+              </div>
+            )}
 
             <div className="space-y-4">
               {/* Basic Information */}
@@ -1192,31 +1176,7 @@ export default function LeaveTypesPage() {
                   Policy Rules & Restrictions
                 </h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Carry Forward to Next Year?
-                    </label>
-                    <ThemedSelect
-                      value={formData.carryForward ? "true" : "false"}
-                      onChange={(val) => setFormData({ ...formData, carryForward: val === "true" })}
-                      options={CARRY_FORWARD_OPTIONS}
-                    />
-                  </div>
 
-                  {formData.carryForward && (
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">
-                        Max Carry Forward Days
-                      </label>
-                      <input
-                        type="number"
-                        min="0"
-                        value={formData.maxCarryForwardDays}
-                        onChange={(e) => setFormData({ ...formData, maxCarryForwardDays: Number(e.target.value) })}
-                        className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-slate-400 focus:bg-white transition-all"
-                      />
-                    </div>
-                  )}
 
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 mb-1">

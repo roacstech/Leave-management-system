@@ -215,7 +215,7 @@ export default function LeavesAdminPage() {
       {/* Toast */}
       {toastMessage && (
         <div
-          className={`fixed bottom-5 right-5 z-50 px-4 py-2.5 rounded-xl border shadow-xl text-xs font-medium flex items-center gap-2.5 animate-in fade-in slide-in-from-bottom-3 duration-200 ${
+          className={`fixed bottom-5 right-5 z-[9999] px-4 py-2.5 rounded-xl border shadow-xl text-xs font-medium flex items-center gap-2.5 animate-in fade-in slide-in-from-bottom-3 duration-200 ${
             toastMessage.type === "success"
               ? "bg-emerald-600 text-white border-emerald-500"
               : "bg-rose-600 text-white border-rose-500"

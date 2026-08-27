@@ -23,6 +23,7 @@ import {
   HelpCircle,
   Gift,
   Award,
+  Paperclip,
 } from "lucide-react";
 import { useSettings } from "@/contexts/SettingsContext";
 import DatePicker from "@/components/ui/DatePicker";
@@ -38,6 +39,7 @@ interface LeaveBalance {
     name: string;
     code: string;
     isPaid: boolean;
+    requiresAttachment?: boolean;
   };
 }
 
@@ -81,6 +83,7 @@ function ApplyLeaveContent() {
   const [halfDaySession, setHalfDaySession] = useState<"FIRST_HALF" | "SECOND_HALF">("FIRST_HALF");
   const [reason, setReason] = useState("");
   const [emergencyContact, setEmergencyContact] = useState("");
+  const [attachmentName, setAttachmentName] = useState("");
 
   const [submitting, setSubmitting] = useState(false);
   const [toast, setToast] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -196,10 +199,18 @@ function ApplyLeaveContent() {
       return;
     }
 
-    // Build reason payload with comp-off reference if applicable
+    if (selectedBalance?.leaveType.requiresAttachment && !attachmentName.trim()) {
+      showToast(`Document attachment is mandatory for ${selectedBalance.leaveType.name}. Please attach proof or certificate.`, "error");
+      return;
+    }
+
+    // Build reason payload with comp-off reference or attachment if applicable
     let finalReason = reason.trim();
     if (isCompOffSelected && compOffReference !== "GENERAL_CREDIT") {
       finalReason = finalReason ? `${finalReason} [Comp-Off Ref: ${compOffReference}]` : `Comp-Off claimed for: ${compOffReference}`;
+    }
+    if (attachmentName.trim()) {
+      finalReason = finalReason ? `${finalReason} [Attachment: ${attachmentName.trim()}]` : `[Attachment: ${attachmentName.trim()}]`;
     }
 
     try {
@@ -212,6 +223,7 @@ function ApplyLeaveContent() {
           startDate,
           endDate,
           reason: finalReason || null,
+          attachmentName: attachmentName.trim() || undefined,
           isHalfDay,
           halfDaySession: isHalfDay ? halfDaySession : undefined,
           emergencyContact: emergencyContact.trim() || undefined,
@@ -601,6 +613,67 @@ function ApplyLeaveContent() {
                     placeholder="Phone number or alternate email during leave..."
                     className="w-full rounded-xl border border-slate-200 pl-9 pr-3 py-2 text-xs text-slate-900 bg-white outline-none focus:border-[#1e293b] shadow-2xs"
                   />
+                </div>
+              </div>
+
+              {/* Supporting Document Attachment */}
+              <div
+                className={`p-4 rounded-xl border transition-all ${
+                  selectedBalance?.leaveType.requiresAttachment
+                    ? "bg-amber-50/60 border-amber-300"
+                    : "bg-slate-50 border-slate-200/80"
+                }`}
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-bold text-[#1a2333]">
+                    Supporting Document / Attachment{" "}
+                    {selectedBalance?.leaveType.requiresAttachment ? (
+                      <span className="text-rose-500 font-bold">* Mandatory</span>
+                    ) : (
+                      <span className="text-slate-400 font-normal">(Optional)</span>
+                    )}
+                  </label>
+                  {selectedBalance?.leaveType.requiresAttachment && (
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 border border-rose-200">
+                      Proof Required
+                    </span>
+                  )}
+                </div>
+                <p className="text-[11px] text-slate-500 mb-2.5">
+                  {selectedBalance?.leaveType.requiresAttachment
+                    ? `Policy restriction: An official medical certificate or supporting document is strictly mandatory to apply for ${selectedBalance.leaveType.name}.`
+                    : "Upload any relevant documentation or medical proof if applicable."}
+                </p>
+                <div className="flex items-center gap-3">
+                  <label className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold cursor-pointer shadow-2xs transition-all">
+                    <Paperclip className="w-3.5 h-3.5 text-indigo-600" />
+                    <span>{attachmentName ? "Change File" : "Choose Document"}</span>
+                    <input
+                      type="file"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setAttachmentName(file.name);
+                        }
+                      }}
+                    />
+                  </label>
+                  {attachmentName ? (
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-medium">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                      <span className="truncate max-w-[200px]">{attachmentName}</span>
+                      <button
+                        type="button"
+                        onClick={() => setAttachmentName("")}
+                        className="text-slate-400 hover:text-rose-600 ml-1 cursor-pointer"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ) : (
+                    <span className="text-[11px] text-slate-400">No file chosen (PDF, PNG, JPG, DOC)</span>
+                  )}
                 </div>
               </div>
 

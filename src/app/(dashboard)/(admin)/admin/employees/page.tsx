@@ -637,7 +637,7 @@ export default function EmployeesPage() {
       {/* Toast Notification */}
       {toastMessage && (
         <div
-          className={`fixed bottom-5 right-5 z-50 flex items-center gap-2.5 px-4 py-2.5 rounded-xl shadow-lg border text-xs font-medium animate-in fade-in slide-in-from-bottom-3 ${
+          className={`fixed bottom-5 right-5 z-[9999] flex items-center gap-2.5 px-4 py-2.5 rounded-xl shadow-2xl border text-xs font-medium animate-in fade-in slide-in-from-bottom-3 ${
             toastMessage.type === "success"
               ? "bg-slate-900 text-white border-slate-800"
               : "bg-rose-900 text-white border-rose-800"

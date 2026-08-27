@@ -81,6 +81,7 @@ export async function GET() {
             name: true,
             code: true,
             isPaid: true,
+            requiresAttachment: true,
           },
         },
       },
@@ -93,18 +94,34 @@ export async function GET() {
 
     if (missingTypes.length > 0) {
       await Promise.all(
-        missingTypes.map((lt) =>
-          prisma.leaveBalance.create({
+        missingTypes.map(async (lt) => {
+          let carryOver = 0;
+          const prevYearBalance = await prisma.leaveBalance.findUnique({
+            where: {
+              userId_leaveTypeId_year: {
+                userId,
+                leaveTypeId: lt.id,
+                year: currentYear - 1,
+              },
+            },
+          });
+          if (prevYearBalance && prevYearBalance.remaining > 0) {
+            carryOver = prevYearBalance.remaining;
+          }
+
+          const totalQuota = (lt.annualAllocation || 0) + carryOver;
+
+          return prisma.leaveBalance.create({
             data: {
               userId,
               leaveTypeId: lt.id,
               year: currentYear,
-              total: lt.annualAllocation,
+              total: totalQuota,
               used: 0,
-              remaining: lt.annualAllocation,
+              remaining: totalQuota,
             },
-          })
-        )
+          });
+        })
       );
 
       // Re-fetch all updated balances
@@ -117,6 +134,7 @@ export async function GET() {
               name: true,
               code: true,
               isPaid: true,
+              requiresAttachment: true,
             },
           },
         },

@@ -39,17 +39,17 @@ export async function GET(request: NextRequest) {
       ];
     }
 
-    const [allTypes, filteredTypes] = await Promise.all([
+    const page = searchParams.has("page") ? Math.max(1, parseInt(searchParams.get("page") || "1", 10)) : 1;
+    const limit = searchParams.has("limit") ? Math.max(1, parseInt(searchParams.get("limit") || "10", 10)) : 10;
+    const skip = (page - 1) * limit;
+
+    const [allTypes, filteredTypes, totalFiltered] = await Promise.all([
       prisma.leaveType.findMany({
-        include: {
-          _count: {
-            select: {
-              leaveBalances: true,
-              leaveRequests: true,
-            },
-          },
+        select: {
+          id: true,
+          isActive: true,
+          annualAllocation: true,
         },
-        orderBy: { id: "asc" },
       }),
       prisma.leaveType.findMany({
         where: whereClause,
@@ -62,7 +62,10 @@ export async function GET(request: NextRequest) {
           },
         },
         orderBy: { id: "asc" },
+        skip: searchParams.get("all") === "true" ? undefined : skip,
+        take: searchParams.get("all") === "true" ? undefined : limit,
       }),
+      prisma.leaveType.count({ where: whereClause }),
     ]);
 
     // Summary calculations
@@ -73,6 +76,8 @@ export async function GET(request: NextRequest) {
       .filter((t) => t.isActive)
       .reduce((sum, t) => sum + (t.annualAllocation || 0), 0);
 
+    const totalPages = Math.ceil(totalFiltered / limit) || 1;
+
     return NextResponse.json({
       success: true,
       leaveTypes: filteredTypes,
@@ -81,6 +86,15 @@ export async function GET(request: NextRequest) {
         activeLeaveTypes,
         inactiveLeaveTypes,
         totalAllocatedDays,
+      },
+      pagination: {
+        total: totalLeaveTypes,
+        totalFiltered,
+        totalPages,
+        page,
+        limit,
+        activeCount: activeLeaveTypes,
+        inactiveCount: inactiveLeaveTypes,
       },
     });
   } catch (error: any) {

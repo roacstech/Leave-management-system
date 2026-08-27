@@ -9,6 +9,7 @@ import {
   CheckCircle2,
   AlertCircle,
   Briefcase,
+  Paperclip,
 } from "lucide-react";
 import ThemedSelect from "@/components/ui/ThemedSelect";
 import DatePicker from "@/components/ui/DatePicker";
@@ -19,6 +20,7 @@ export interface LeaveTypeOption {
   code: string;
   balance?: number;
   availed?: number;
+  requiresAttachment?: boolean;
 }
 
 interface ApplyLeaveDrawerProps {
@@ -44,6 +46,7 @@ export default function ApplyLeaveDrawer({
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [reason, setReason] = useState("");
+  const [attachmentName, setAttachmentName] = useState("");
   const [totalDays, setTotalDays] = useState(0);
 
   // Form states for Comp-off
@@ -102,6 +105,7 @@ export default function ApplyLeaveDrawer({
     setFromDate("");
     setToDate("");
     setReason("");
+    setAttachmentName("");
     setWorkedDate("");
     setHoursWorked(8);
     setCompOffReason("");
@@ -131,13 +135,19 @@ export default function ApplyLeaveDrawer({
         setErrorMessage("To Date cannot be earlier than From Date.");
         return;
       }
-      if (!reason.trim()) {
-        setErrorMessage("Please provide a reason for the leave.");
+      const selectedType = availableTypes.find((t) => t.id === Number(selectedLeaveTypeId));
+      if (selectedType?.requiresAttachment && !attachmentName.trim()) {
+        setErrorMessage(`Document attachment is mandatory for ${selectedType.name}. Please upload proof.`);
         return;
       }
 
       setSubmitting(true);
       try {
+        let finalReason = reason.trim();
+        if (attachmentName.trim()) {
+          finalReason = `${finalReason} [Attachment: ${attachmentName.trim()}]`;
+        }
+
         const res = await fetch("/api/employee/leaves", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -146,7 +156,8 @@ export default function ApplyLeaveDrawer({
             leaveOption,
             startDate: fromDate,
             endDate: toDate,
-            reason: reason.trim(),
+            reason: finalReason,
+            attachmentName: attachmentName.trim() || undefined,
           }),
         });
 
@@ -380,6 +391,73 @@ export default function ApplyLeaveDrawer({
                   required
                 />
               </div>
+
+              {/* Supporting Document / Attachment */}
+              {(() => {
+                const currentSelected = availableTypes.find((t) => t.id === Number(selectedLeaveTypeId));
+                const isMandatory = Boolean(currentSelected?.requiresAttachment);
+                return (
+                  <div
+                    className={`p-3.5 rounded-xl border transition-all space-y-1.5 ${
+                      isMandatory
+                        ? "bg-amber-50/60 border-amber-300"
+                        : "bg-gray-50 border-gray-200"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-semibold text-gray-800 flex items-center gap-1.5">
+                        <span>Supporting Document</span>
+                        {isMandatory ? (
+                          <span className="text-rose-500 font-bold">* Mandatory</span>
+                        ) : (
+                          <span className="text-gray-400 font-normal">(Optional)</span>
+                        )}
+                      </label>
+                      {isMandatory && (
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-100 text-rose-700 border border-rose-200">
+                          Proof Required
+                        </span>
+                      )}
+                    </div>
+                    {isMandatory && (
+                      <p className="text-[11px] text-gray-500">
+                        A doctor's slip or official certificate must be attached for this leave category.
+                      </p>
+                    )}
+                    <div className="flex items-center gap-2 pt-1">
+                      <label className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-gray-200 hover:bg-gray-100 text-gray-700 text-xs font-semibold cursor-pointer shadow-2xs transition-all">
+                        <Paperclip className="w-3.5 h-3.5 text-indigo-600" />
+                        <span>{attachmentName ? "Change File" : "Choose Document"}</span>
+                        <input
+                          type="file"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              setAttachmentName(file.name);
+                            }
+                          }}
+                        />
+                      </label>
+                      {attachmentName ? (
+                        <div className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-medium">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                          <span className="truncate max-w-[180px]">{attachmentName}</span>
+                          <button
+                            type="button"
+                            onClick={() => setAttachmentName("")}
+                            className="text-gray-400 hover:text-rose-600 ml-1 cursor-pointer"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="text-[11px] text-gray-400">No document selected</span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
             </>
           ) : (
             <>

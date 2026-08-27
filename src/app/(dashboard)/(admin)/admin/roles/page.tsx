@@ -289,10 +289,10 @@ export default function RolesManagementPage() {
       {/* Toast Notification */}
       {toastMessage && (
         <div
-          className={`fixed bottom-5 right-5 z-50 flex items-center gap-2.5 px-4 py-2.5 rounded-xl shadow-xl border text-xs font-medium animate-in fade-in slide-in-from-bottom-3 ${
+          className={`fixed bottom-5 right-5 z-[9999] flex items-center gap-2.5 px-4 py-2.5 rounded-xl shadow-2xl border text-xs font-medium animate-in fade-in slide-in-from-bottom-3 ${
             toastMessage.type === "success"
-              ? "bg-emerald-600 text-white border-emerald-500"
-              : "bg-rose-600 text-white border-rose-500"
+              ? "bg-slate-900 text-white border-slate-800"
+              : "bg-rose-900 text-white border-rose-800"
           }`}
         >
           {toastMessage.type === "success" ? (
