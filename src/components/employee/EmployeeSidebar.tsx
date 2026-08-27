@@ -7,7 +7,6 @@ import {
   LayoutDashboard,
   CalendarCheck2,
   PieChart,
-  PieChart,
   CalendarDays,
   Clock3,
   Settings,
