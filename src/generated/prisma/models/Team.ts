@@ -485,10 +485,6 @@ export type TeamUncheckedUpdateManyWithoutTlNestedInput = {
   deleteMany?: Prisma.TeamScalarWhereInput | Prisma.TeamScalarWhereInput[]
 }
 
-export type NullableStringFieldUpdateOperationsInput = {
-  set?: string | null
-}
-
 export type TeamCreateWithoutUsersInput = {
   name: string
   description?: string | null

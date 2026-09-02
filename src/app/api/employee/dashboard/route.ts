@@ -283,6 +283,28 @@ export async function GET() {
         })
       : [];
 
+    // Compute last leave return date (day after the most recent approved leave ended)
+    const lastApprovedLeave = await prisma.leaveRequest.findFirst({
+      where: {
+        userId,
+        status: "APPROVED",
+        endDate: { lte: endOfToday },
+      },
+      orderBy: {
+        endDate: "desc",
+      },
+    });
+
+    let lastLeaveReturnDate: string | null = null;
+    if (lastApprovedLeave) {
+      const returnDate = new Date(lastApprovedLeave.endDate);
+      returnDate.setDate(returnDate.getDate() + 1);
+      if (returnDate.getDay() === 0) {
+        returnDate.setDate(returnDate.getDate() + 1);
+      }
+      lastLeaveReturnDate = returnDate.toISOString().split("T")[0];
+    }
+
     // 7. Compute leave balances summary
     let totalDays = 0;
     let usedDays = 0;
@@ -303,6 +325,11 @@ export async function GET() {
         id: employee.id,
         name: employee.name,
         email: employee.email,
+        role: employee.role,
+        designation: employee.designation || (employee.role === "EMPLOYEE" ? "Local Staff / Assistant" : employee.role),
+        section: employee.section || employee.team?.name || "Administration & Consular",
+        joiningDate: employee.joiningDate ? employee.joiningDate.toISOString().split("T")[0] : employee.createdAt.toISOString().split("T")[0],
+        lastLeaveReturnDate,
         teamName: employee.team?.name || "General Team",
         teamLead: teamLead
           ? {

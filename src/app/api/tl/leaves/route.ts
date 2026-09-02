@@ -130,6 +130,9 @@ export async function GET(request: NextRequest) {
               id: true,
               name: true,
               email: true,
+              designation: true,
+              section: true,
+              joiningDate: true,
               team: {
                 select: { id: true, name: true },
               },

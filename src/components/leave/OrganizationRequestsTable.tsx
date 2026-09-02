@@ -25,12 +25,21 @@ export interface PendingLeaveRequest {
   applicantName: string;
   applicantEmail: string;
   applicantRole: string;
+  designation?: string | null;
+  section?: string | null;
   teamName?: string | null;
   leaveType: string;
   startDate: string;
   endDate: string;
   days: number;
   reason?: string | null;
+  leaveAddress?: string | null;
+  contactPhone?: string | null;
+  isStationLeave?: boolean;
+  stationLeaveDetails?: string | null;
+  lastLeaveReturnDate?: string | null;
+  holidaysCount?: number;
+  workingDaysCount?: number;
   status: "PENDING_TL" | "PENDING_ADMIN" | "APPROVED" | "REJECTED" | "CANCELLED";
   createdAt: string;
 }
@@ -254,7 +263,7 @@ export default function OrganizationRequestsTable({
                             {item.applicantName}
                           </p>
                           <p className="text-2xs text-base-content/60 font-medium">
-                            {item.applicantRole} {item.teamName ? `• ${item.teamName}` : ""}
+                            {item.designation || item.applicantRole} • {item.section || item.teamName || "General Section"}
                           </p>
                         </div>
                       </div>
@@ -266,11 +275,26 @@ export default function OrganizationRequestsTable({
                         {getLeaveIcon(item.leaveType)}
                         <span>{item.leaveType}</span>
                       </div>
+                      {item.isStationLeave && (
+                        <div className="mt-0.5">
+                          <span
+                            className="inline-flex items-center gap-1 px-1.5 py-0.2 text-[9px] font-bold rounded bg-indigo-50 text-indigo-700 border border-indigo-200"
+                            title={item.stationLeaveDetails ? `Station Leave: ${item.stationLeaveDetails}` : "Permission to leave station sought"}
+                          >
+                            ✈️ Station Leave
+                          </span>
+                        </div>
+                      )}
                     </td>
 
                     {/* Dates */}
                     <td className="text-base-content/80 font-medium whitespace-nowrap">
-                      {item.startDate} {item.startDate !== item.endDate ? `➔ ${item.endDate}` : ""}
+                      <div>{item.startDate} {item.startDate !== item.endDate ? `➔ ${item.endDate}` : ""}</div>
+                      {item.holidaysCount && item.holidaysCount > 0 ? (
+                        <span className="text-[10px] text-purple-600 font-semibold">
+                          ({item.holidaysCount} Mission {item.holidaysCount === 1 ? "Holiday" : "Holidays"})
+                        </span>
+                      ) : null}
                     </td>
 
                     {/* Days */}
@@ -279,8 +303,13 @@ export default function OrganizationRequestsTable({
                     </td>
 
                     {/* Reason */}
-                    <td className="max-w-xs truncate text-base-content/70" title={item.reason || ""}>
-                      {item.reason || "—"}
+                    <td className="max-w-xs text-base-content/70" title={item.reason || ""}>
+                      <div className="truncate">{item.reason || "—"}</div>
+                      {item.leaveAddress && (
+                        <div className="text-[10px] text-slate-500 truncate" title={`Address: ${item.leaveAddress}`}>
+                          📍 {item.leaveAddress}
+                        </div>
+                      )}
                     </td>
 
                     {/* Status */}

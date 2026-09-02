@@ -1265,6 +1265,9 @@ export const UserScalarFieldEnum = {
   email: 'email',
   password: 'password',
   role: 'role',
+  designation: 'designation',
+  section: 'section',
+  joiningDate: 'joiningDate',
   teamId: 'teamId',
   reportingToId: 'reportingToId',
   isActive: 'isActive',
@@ -1350,6 +1353,15 @@ export const LeaveRequestScalarFieldEnum = {
   reason: 'reason',
   status: 'status',
   rejectionReason: 'rejectionReason',
+  leaveAddress: 'leaveAddress',
+  contactPhone: 'contactPhone',
+  isStationLeave: 'isStationLeave',
+  stationLeaveDetails: 'stationLeaveDetails',
+  lastLeaveReturnDate: 'lastLeaveReturnDate',
+  holidaysCount: 'holidaysCount',
+  workingDaysCount: 'workingDaysCount',
+  isDiscretionaryHOM: 'isDiscretionaryHOM',
+  adminTitleNotes: 'adminTitleNotes',
   escalatedById: 'escalatedById',
   escalatedAt: 'escalatedAt',
   escalationReason: 'escalationReason',
@@ -1489,7 +1501,9 @@ export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
 export const UserOrderByRelevanceFieldEnum = {
   name: 'name',
   email: 'email',
-  password: 'password'
+  password: 'password',
+  designation: 'designation',
+  section: 'section'
 } as const
 
 export type UserOrderByRelevanceFieldEnum = (typeof UserOrderByRelevanceFieldEnum)[keyof typeof UserOrderByRelevanceFieldEnum]
@@ -1527,6 +1541,10 @@ export type RoleDefinitionOrderByRelevanceFieldEnum = (typeof RoleDefinitionOrde
 export const LeaveRequestOrderByRelevanceFieldEnum = {
   reason: 'reason',
   rejectionReason: 'rejectionReason',
+  leaveAddress: 'leaveAddress',
+  contactPhone: 'contactPhone',
+  stationLeaveDetails: 'stationLeaveDetails',
+  adminTitleNotes: 'adminTitleNotes',
   escalationReason: 'escalationReason',
   approverRole: 'approverRole'
 } as const
@@ -1619,16 +1637,16 @@ export type EnumRoleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel
 
 
 /**
- * Reference to a field of type 'Boolean'
+ * Reference to a field of type 'DateTime'
  */
-export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
+export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime'>
     
 
 
 /**
- * Reference to a field of type 'DateTime'
+ * Reference to a field of type 'Boolean'
  */
-export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime'>
+export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
     
 
 

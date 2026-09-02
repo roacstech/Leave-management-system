@@ -70,6 +70,9 @@ export async function GET(request: NextRequest) {
               name: true,
               email: true,
               role: true,
+              designation: true,
+              section: true,
+              joiningDate: true,
               team: {
                 select: {
                   id: true,

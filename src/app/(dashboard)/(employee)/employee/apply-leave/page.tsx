@@ -26,6 +26,12 @@ import {
   Paperclip,
   ChevronLeft,
   ChevronRight,
+  MapPin,
+  Plane,
+  FileText,
+  History,
+  Landmark,
+  ShieldAlert,
 } from "lucide-react";
 import { useSettings } from "@/contexts/SettingsContext";
 import DatePicker from "@/components/ui/DatePicker";
@@ -49,6 +55,11 @@ interface EmployeeData {
   id: number;
   name: string;
   email: string;
+  role?: string;
+  designation?: string;
+  section?: string;
+  joiningDate?: string;
+  lastLeaveReturnDate?: string | null;
   teamName: string;
   teamLead?: {
     name: string;
@@ -104,6 +115,10 @@ function ApplyLeaveContent() {
   const [isHalfDay, setIsHalfDay] = useState(false);
   const [halfDaySession, setHalfDaySession] = useState<"FIRST_HALF" | "SECOND_HALF">("FIRST_HALF");
   const [reason, setReason] = useState("");
+  const [leaveAddress, setLeaveAddress] = useState("");
+  const [contactPhone, setContactPhone] = useState("");
+  const [isStationLeave, setIsStationLeave] = useState(false);
+  const [stationLeaveDetails, setStationLeaveDetails] = useState("");
   const [emergencyContact, setEmergencyContact] = useState("");
   const [attachments, setAttachments] = useState<string[]>([]);
 
@@ -346,11 +361,18 @@ function ApplyLeaveContent() {
           startDate,
           endDate,
           reason: finalReason || null,
+          leaveAddress: leaveAddress.trim() || undefined,
+          contactPhone: contactPhone.trim() || emergencyContact.trim() || undefined,
+          isStationLeave,
+          stationLeaveDetails: isStationLeave ? stationLeaveDetails.trim() || undefined : undefined,
+          lastLeaveReturnDate: employee?.lastLeaveReturnDate || undefined,
+          holidaysCount: overlappingHolidays.length,
+          workingDaysCount: requestedDays,
           attachmentName: attachments.join(", ") || undefined,
           attachments,
           isHalfDay,
           halfDaySession: isHalfDay ? halfDaySession : undefined,
-          emergencyContact: emergencyContact.trim() || undefined,
+          emergencyContact: contactPhone.trim() || emergencyContact.trim() || undefined,
         }),
       });
 
@@ -395,37 +417,86 @@ function ApplyLeaveContent() {
         </div>
       )}
 
-      {/* 1. TOP BANNER */}
-      <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <div className="flex flex-wrap items-center gap-2 mb-1">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-slate-100 text-[#1e293b] border border-slate-200 text-[11px] font-semibold">
-              <Building2 className="w-3.5 h-3.5 text-slate-500" />
-              <span>{employee?.teamName || "General Team"}</span>
-            </span>
-            {employee?.teamLead && (
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-slate-50 text-slate-600 text-[11px] font-medium border border-slate-200">
-                <ShieldCheck className="w-3.5 h-3.5 text-slate-400" />
-                <span>Reviewer: {employee.teamLead.name}</span>
+      {/* 1. TOP BANNER: EMBASSY OF INDIA - LEAVE APPLICATION FOR LOCAL STAFF */}
+      <div className="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200/90 shadow-xs space-y-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-amber-50 text-amber-900 border border-amber-200/80 text-[11px] font-bold">
+                <Landmark className="w-3.5 h-3.5 text-amber-700" />
+                <span>Embassy of India, Washington DC</span>
               </span>
-            )}
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-slate-100 text-slate-700 border border-slate-200 text-[11px] font-semibold">
+                <Building2 className="w-3.5 h-3.5 text-slate-500" />
+                <span>Section: {employee?.section || employee?.teamName || "General Section"}</span>
+              </span>
+              {employee?.teamLead && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-slate-50 text-slate-600 text-[11px] font-medium border border-slate-200">
+                  <ShieldCheck className="w-3.5 h-3.5 text-slate-400" />
+                  <span>Reviewing Officer: {employee.teamLead.name}</span>
+                </span>
+              )}
+            </div>
+            <h1 className="text-xl sm:text-2xl font-bold text-[#1a2333] tracking-tight pt-1">
+              Leave Application for Local Staff
+            </h1>
+            <p className="text-xs text-slate-500">
+              Prescribed official form for local employees attached to the Mission/Chancery.
+            </p>
           </div>
-          <h1 className="text-xl sm:text-2xl font-bold text-[#1a2333] tracking-tight">
-            Apply for Leave
-          </h1>
-          <p className="text-xs text-slate-500 mt-1">
-            Submit a formal time-off request for annual, casual, sick, or compensatory off leave.
-          </p>
+
+          <div className="flex items-center gap-2.5 shrink-0">
+            <Link
+              href="/employee/my-leaves"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-[#1e293b] text-xs font-semibold shadow-2xs transition-all shrink-0"
+            >
+              <CalendarCheck2 className="w-4 h-4 text-slate-500" />
+              <span>My Applications</span>
+            </Link>
+          </div>
         </div>
 
-        <div className="flex items-center gap-2.5">
-          <Link
-            href="/employee/my-leaves"
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-[#1e293b] text-xs font-semibold shadow-2xs transition-all shrink-0"
-          >
-            <CalendarCheck2 className="w-4 h-4 text-slate-500" />
-            <span>My Applications</span>
-          </Link>
+        {/* 🌟 EMBASSY APPLICANT PROFILE SUMMARY CARDS */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-slate-100 text-xs">
+          <div className="p-3 rounded-xl bg-slate-50/80 border border-slate-200/70">
+            <div className="text-[10px] uppercase font-bold tracking-wider text-slate-400 flex items-center gap-1">
+              <User className="w-3 h-3 text-slate-400" />
+              <span>Staff Name</span>
+            </div>
+            <div className="font-bold text-slate-800 mt-1 truncate">
+              {employee?.name || "Local Staff Member"}
+            </div>
+          </div>
+
+          <div className="p-3 rounded-xl bg-slate-50/80 border border-slate-200/70">
+            <div className="text-[10px] uppercase font-bold tracking-wider text-slate-400 flex items-center gap-1">
+              <Building2 className="w-3 h-3 text-slate-400" />
+              <span>Designation & Section</span>
+            </div>
+            <div className="font-bold text-slate-800 mt-1 truncate">
+              {employee?.designation || "Local Staff"} ({employee?.section || employee?.teamName || "Mission"})
+            </div>
+          </div>
+
+          <div className="p-3 rounded-xl bg-slate-50/80 border border-slate-200/70">
+            <div className="text-[10px] uppercase font-bold tracking-wider text-slate-400 flex items-center gap-1">
+              <Clock className="w-3 h-3 text-slate-400" />
+              <span>Continuous Service Since</span>
+            </div>
+            <div className="font-semibold text-slate-700 mt-1">
+              {employee?.joiningDate ? formatDate(employee.joiningDate) : "On Record"}
+            </div>
+          </div>
+
+          <div className="p-3 rounded-xl bg-slate-50/80 border border-slate-200/70">
+            <div className="text-[10px] uppercase font-bold tracking-wider text-slate-400 flex items-center gap-1">
+              <History className="w-3 h-3 text-slate-400" />
+              <span>Returned from Last Leave</span>
+            </div>
+            <div className="font-semibold text-slate-700 mt-1">
+              {employee?.lastLeaveReturnDate ? formatDate(employee.lastLeaveReturnDate) : "None / First Leave"}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -441,24 +512,36 @@ function ApplyLeaveContent() {
               Leave Application Submitted!
             </h2>
             <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto leading-relaxed">
-              Your request has been routed to your Team Leader ({employee?.teamLead?.name || "Supervisor"}) for review. You will receive an in-app notification when a decision is made.
+              Your application has been logged and forwarded for recommendation to your Reviewing Officer ({employee?.teamLead?.name || "Office-in-Charge"}) and Sanctioning Authority.
             </p>
           </div>
 
           <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs text-left space-y-2">
             <div className="flex justify-between">
-              <span className="text-slate-500">Leave Type:</span>
+              <span className="text-slate-500">Nature of Leave:</span>
               <span className="font-bold text-[#1a2333]">{selectedBalance?.leaveType.name}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-500">Duration:</span>
+              <span className="text-slate-500">Period (Inclusive):</span>
               <span className="font-semibold text-slate-800">
                 {formatDate(startDate)} to {formatDate(endDate)} ({requestedDays} {requestedDays === 1 ? "day" : "days"})
               </span>
             </div>
+            {isStationLeave && (
+              <div className="flex justify-between text-indigo-700">
+                <span className="font-medium">Station Leave Permission:</span>
+                <span className="font-bold">Yes {stationLeaveDetails ? `(${stationLeaveDetails})` : ""}</span>
+              </div>
+            )}
+            {leaveAddress && (
+              <div className="flex justify-between">
+                <span className="text-slate-500">Leave Address:</span>
+                <span className="text-slate-800 font-medium truncate max-w-[240px]">{leaveAddress}</span>
+              </div>
+            )}
             {reason && (
               <div className="pt-1.5 border-t border-slate-200">
-                <span className="text-slate-500 block">Reason:</span>
+                <span className="text-slate-500 block">Grounds for Leave:</span>
                 <p className="text-slate-700 italic">"{reason}"</p>
               </div>
             )}
@@ -469,7 +552,12 @@ function ApplyLeaveContent() {
               onClick={() => {
                 setSubmittedSuccess(false);
                 setReason("");
+                setLeaveAddress("");
+                setContactPhone("");
+                setIsStationLeave(false);
+                setStationLeaveDetails("");
                 setEmergencyContact("");
+                setAttachments([]);
                 fetchBalances();
               }}
               className="px-4 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-2xs transition-all cursor-pointer"
@@ -493,94 +581,99 @@ function ApplyLeaveContent() {
           <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200/90 shadow-xs p-5 sm:p-6">
             <form onSubmit={handleSubmit} className="space-y-5 text-xs">
               
-              {/* 🌟 2-COLUMN DROPDOWNS: LEAVE TYPE + COMP-OFF DROPDOWN */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* 1. SELECT LEAVE TYPE DROPDOWN */}
-                <div>
-                  <label className="block text-xs font-bold text-base-content mb-1.5">
-                    Select Leave Type <span className="text-rose-500">*</span>
-                  </label>
-                  <ThemedSelect
-                    value={leaveTypeId}
-                    onChange={(val) => setLeaveTypeId(val)}
-                    disabled={loading || balances.length === 0}
-                    placeholder={
-                      loading
-                        ? "Loading leave types..."
-                        : balances.length === 0
-                        ? "No leave types found"
-                        : "Select Leave Type"
-                    }
-                    options={balances.map((bal) => ({
-                      value: bal.leaveType.id.toString(),
-                      label: `${bal.leaveType.name} (${bal.leaveType.code}) — ${bal.remaining} Days Available`,
-                    }))}
-                  />
-                  <div className="text-[11px] text-base-content/60 mt-1 flex items-center justify-between">
-                    <span>
-                      {selectedBalance?.leaveType.isPaid ? "Paid Leave" : "Unpaid / Loss of Pay"}
-                    </span>
-                    <span className="font-semibold text-emerald-600">
-                      Balance: {selectedBalance?.remaining ?? 0} Days
-                    </span>
-                  </div>
+              {/* NATURE OF LEAVE & COMP-OFF */}
+              <div>
+                <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+                  Period & Nature of Leave
                 </div>
-
-                {/* 2. COMP-OFF DROPDOWN (NEXT TO LEAVE TYPE) */}
-                <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <label className="text-xs font-bold text-base-content flex items-center gap-1.5">
-                      <span>Comp-Off Credit / Ref</span>
-                      {isCompOffSelected && (
-                        <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-amber-500/10 text-amber-600 border border-amber-500/20">
-                          Active
-                        </span>
-                      )}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Select Leave Type */}
+                  <div>
+                    <label className="block text-xs font-bold text-base-content mb-1.5">
+                      Nature of Leave <span className="text-rose-500">*</span>
                     </label>
+                    <ThemedSelect
+                      value={leaveTypeId}
+                      onChange={(val) => setLeaveTypeId(val)}
+                      disabled={loading || balances.length === 0}
+                      placeholder={
+                        loading
+                          ? "Loading leave types..."
+                          : balances.length === 0
+                          ? "No leave types found"
+                          : "Select Leave Type"
+                      }
+                      options={balances.map((bal) => ({
+                        value: bal.leaveType.id.toString(),
+                        label: `${bal.leaveType.name} (${bal.leaveType.code}) — ${bal.remaining} Days Available`,
+                      }))}
+                    />
+                    <div className="text-[11px] text-base-content/60 mt-1 flex items-center justify-between">
+                      <span>
+                        {selectedBalance?.leaveType.isPaid ? "Paid Leave" : "Unpaid / EOL (Loss of Pay)"}
+                      </span>
+                      <span className="font-semibold text-emerald-600">
+                        Balance: {selectedBalance?.remaining ?? 0} Days
+                      </span>
+                    </div>
                   </div>
 
-                  <ThemedSelect
-                    value={compOffReference}
-                    onChange={(val) => setCompOffReference(val)}
-                    disabled={!isCompOffSelected}
-                    placeholder="Select Comp-Off Credit"
-                    options={
-                      isCompOffSelected
-                        ? [
-                            {
-                              value: "GENERAL_CREDIT",
-                              label: `General Comp-Off Quota (${selectedBalance?.remaining || 5} Days in Balance)`,
-                            },
-                            {
-                              value: "WEEKEND_DUTY_EARNED",
-                              label: "Worked Weekend Shift (1.0 Day Credit Earned)",
-                            },
-                            {
-                              value: "PUBLIC_HOLIDAY_DUTY",
-                              label: "Worked Official Holiday Duty (1.0 Day Credit Earned)",
-                            },
-                            {
-                              value: "OVERTIME_EXTRA_HOURS",
-                              label: "Approved Overtime / Extra Shift Hours",
-                            },
-                          ]
-                        : [
-                            {
-                              value: "NOT_APPLICABLE",
-                              label: "Not Applicable (Select Comp-Off leave to activate)",
-                            },
-                          ]
-                    }
-                  />
+                  {/* Comp-Off Credit Selection */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="text-xs font-bold text-base-content flex items-center gap-1.5">
+                        <span>Comp-Off Credit Reference</span>
+                        {isCompOffSelected && (
+                          <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-amber-500/10 text-amber-600 border border-amber-500/20">
+                            Active
+                          </span>
+                        )}
+                      </label>
+                    </div>
 
-                  <div className="text-[11px] text-base-content/60 mt-1">
-                    {isCompOffSelected ? (
-                      <span className="text-amber-600 font-medium">
-                        Select the worked weekend / holiday credit being redeemed.
-                      </span>
-                    ) : (
-                      <span>Only applies when "Compensatory Off" is selected.</span>
-                    )}
+                    <ThemedSelect
+                      value={compOffReference}
+                      onChange={(val) => setCompOffReference(val)}
+                      disabled={!isCompOffSelected}
+                      placeholder="Select Comp-Off Credit"
+                      options={
+                        isCompOffSelected
+                          ? [
+                              {
+                                value: "GENERAL_CREDIT",
+                                label: `General Comp-Off Quota (${selectedBalance?.remaining || 5} Days in Balance)`,
+                              },
+                              {
+                                value: "WEEKEND_DUTY_EARNED",
+                                label: "Worked Weekend Shift (1.0 Day Credit Earned)",
+                              },
+                              {
+                                value: "PUBLIC_HOLIDAY_DUTY",
+                                label: "Worked Official Holiday Duty (1.0 Day Credit Earned)",
+                              },
+                              {
+                                value: "OVERTIME_EXTRA_HOURS",
+                                label: "Approved Overtime / Extra Shift Hours",
+                              },
+                            ]
+                          : [
+                              {
+                                value: "NOT_APPLICABLE",
+                                label: "Not Applicable (Select Comp-Off leave to activate)",
+                              },
+                            ]
+                      }
+                    />
+
+                    <div className="text-[11px] text-base-content/60 mt-1">
+                      {isCompOffSelected ? (
+                        <span className="text-amber-600 font-medium">
+                          Select the worked weekend / holiday credit being redeemed.
+                        </span>
+                      ) : (
+                        <span>Only applies when "Compensatory Off" is selected.</span>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -624,74 +717,54 @@ function ApplyLeaveContent() {
                 </div>
               </div>
 
-                {/* Date Inputs (Start & End) */}
-                <div className="space-y-2">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <DatePicker
-                      label="Start Date"
-                      required
-                      disableSundays={true}
-                      value={startDate}
-                      minDate={todayStr}
-                      onChange={(val) => {
-                        setStartDate(val);
-                        if (endDate && val > endDate) {
-                          setEndDate(val);
-                        }
-                      }}
-                    />
+              {/* Date Inputs (Start & End - Inclusive) */}
+              <div className="space-y-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <DatePicker
+                    label="From Date (Inclusive)"
+                    required
+                    disableSundays={true}
+                    value={startDate}
+                    minDate={todayStr}
+                    onChange={(val) => {
+                      setStartDate(val);
+                      if (endDate && val > endDate) {
+                        setEndDate(val);
+                      }
+                    }}
+                  />
 
-                    <DatePicker
-                      label="End Date"
-                      required
-                      align="right"
-                      disableSundays={true}
-                      value={endDate}
-                      minDate={startDate || todayStr}
-                      onChange={(val) => setEndDate(val)}
-                    />
-                  </div>
-
-                  {/* Proactive Holiday Detection & Overlap Notices */}
-                  {overlappingHolidays.length > 0 && (
-                    <div className="p-3 rounded-xl bg-purple-50/90 border border-purple-200 flex items-start gap-2.5 text-xs text-purple-900 animate-in fade-in">
-                      <span className="text-base leading-none">🏛️</span>
-                      <div className="space-y-0.5">
-                        <div className="font-bold flex items-center gap-2">
-                          <span>Official Embassy Holiday in Selected Range:</span>
-                          <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-purple-200/80 text-purple-800">
-                            Free Day
-                          </span>
-                        </div>
-                        <p className="text-[11px] text-purple-700 leading-relaxed">
-                          {overlappingHolidays.map((h) => h.name).join(", ")} will <strong>NOT</strong> be deducted from your leave quota.
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Single Day Official Holiday Warning */}
-                  {startDate === endDate && holidaysByDate.has(startDate) && (
-                    <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 flex items-start gap-2.5 text-xs text-amber-900 animate-in fade-in">
-                      <span className="text-base leading-none">⚠️</span>
-                      <div>
-                        <span className="font-bold">
-                          {holidaysByDate.get(startDate)?.name} is an Official Embassy Holiday
-                        </span>
-                        <p className="text-[11px] text-amber-700 mt-0.5">
-                          Mission and Consular offices are closed on this date. Applying for leave is not necessary.
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="flex items-center gap-1.5 text-[11px] text-slate-400 pt-0.5">
-                    <Info className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                    <span>Choose today ({formatDate(new Date())}) or select directly from the calendar on the right.</span>
-                  </div>
+                  <DatePicker
+                    label="To Date (Inclusive)"
+                    required
+                    align="right"
+                    disableSundays={true}
+                    value={endDate}
+                    minDate={startDate || todayStr}
+                    onChange={(val) => setEndDate(val)}
+                  />
                 </div>
 
-              {/* Half-Day Option Checkbox */}
+                {/* Holiday Breakdown Info */}
+                {overlappingHolidays.length > 0 && (
+                  <div className="p-3 rounded-xl bg-purple-50/90 border border-purple-200 flex items-start gap-2.5 text-xs text-purple-900 animate-in fade-in">
+                    <span className="text-base leading-none">🏛️</span>
+                    <div className="space-y-0.5">
+                      <div className="font-bold flex items-center gap-2">
+                        <span>Intervening / Official Embassy Holidays ({overlappingHolidays.length}):</span>
+                        <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-purple-200/80 text-purple-800">
+                          Not Deducted
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-purple-700 leading-relaxed">
+                        {overlappingHolidays.map((h) => h.name).join(", ")} will <strong>NOT</strong> be deducted from your leave quota.
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Half-Day Option */}
               <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2.5">
                 <div className="flex items-center justify-between">
                   <label className="flex items-center gap-2 cursor-pointer">
@@ -702,7 +775,7 @@ function ApplyLeaveContent() {
                       className="rounded text-[#1e293b] focus:ring-[#1e293b] w-4 h-4 cursor-pointer"
                     />
                     <span className="font-bold text-xs text-[#1a2333]">
-                      Apply as Half-Day Leave (0.5 Day)
+                      Apply as Half-Day Leave (0.5 Working Day)
                     </span>
                   </label>
 
@@ -741,36 +814,103 @@ function ApplyLeaveContent() {
                 )}
               </div>
 
-              {/* Reason For Leave */}
+              {/* REASON / GROUNDS FOR LEAVE */}
               <div>
                 <label className="block text-xs font-bold text-[#1a2333] mb-1.5">
-                  Reason for Leave <span className="text-rose-500">*</span>
+                  Reason / Grounds for Leave <span className="text-rose-500">*</span>
                 </label>
                 <textarea
                   rows={3}
                   required
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
-                  placeholder="Provide details about your planned leave (e.g. personal family event, medical appointment, out-of-town travel)..."
+                  placeholder="State the reasons/grounds for leave (e.g., family commitment, personal urgent matter, medical illness, travel)..."
                   className="w-full rounded-xl border border-slate-200 p-3 text-xs text-slate-900 bg-white outline-none focus:border-[#1e293b] focus:ring-1 focus:ring-[#1e293b]/20 resize-none shadow-2xs"
                 />
               </div>
 
-              {/* Emergency Contact */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                  Emergency Contact Details (Optional)
-                </label>
-                <div className="relative">
-                  <Phone className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
-                  <input
-                    type="text"
-                    value={emergencyContact}
-                    onChange={(e) => setEmergencyContact(e.target.value)}
-                    placeholder="Phone number or alternate email during leave..."
-                    className="w-full rounded-xl border border-slate-200 pl-9 pr-3 py-2 text-xs text-slate-900 bg-white outline-none focus:border-[#1e293b] shadow-2xs"
-                  />
+              {/* LEAVE ADDRESS & TELEPHONE NO. */}
+              <div className="space-y-3 p-4 rounded-xl bg-slate-50/70 border border-slate-200/80">
+                <div className="text-[11px] font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1.5">
+                  <MapPin className="w-3.5 h-3.5 text-slate-500" />
+                  <span>Leave Address & Contact Details</span>
                 </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                      Leave Address (Address during period of absence)
+                    </label>
+                    <input
+                      type="text"
+                      value={leaveAddress}
+                      onChange={(e) => setLeaveAddress(e.target.value)}
+                      placeholder="e.g., Residential address or out-of-town address..."
+                      className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-slate-900 bg-white outline-none focus:border-[#1e293b] shadow-2xs"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                      Telephone / Mobile No.
+                    </label>
+                    <div className="relative">
+                      <Phone className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
+                      <input
+                        type="text"
+                        value={contactPhone}
+                        onChange={(e) => {
+                          setContactPhone(e.target.value);
+                          setEmergencyContact(e.target.value);
+                        }}
+                        placeholder="+1 (xxx) xxx-xxxx"
+                        className="w-full rounded-xl border border-slate-200 pl-8 pr-3 py-2 text-xs text-slate-900 bg-white outline-none focus:border-[#1e293b] shadow-2xs"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* PERMISSION TO LEAVE STATION SOUGHT */}
+              <div className="p-4 rounded-xl bg-slate-50/70 border border-slate-200/80 space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={isStationLeave}
+                      onChange={(e) => setIsStationLeave(e.target.checked)}
+                      className="rounded text-indigo-600 focus:ring-indigo-600 w-4 h-4 cursor-pointer"
+                    />
+                    <span className="font-bold text-xs text-[#1a2333] flex items-center gap-1.5">
+                      <Plane className="w-3.5 h-3.5 text-indigo-600" />
+                      <span>Permission to Leave Station Sought (Station Leave)</span>
+                    </span>
+                  </label>
+
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${
+                    isStationLeave
+                      ? "bg-indigo-50 text-indigo-700 border-indigo-200"
+                      : "bg-slate-100 text-slate-500 border-slate-200"
+                  }`}>
+                    {isStationLeave ? "Station Leave: YES" : "Station Leave: NO"}
+                  </span>
+                </div>
+
+                {isStationLeave && (
+                  <div className="pl-6 animate-in fade-in space-y-1.5">
+                    <label className="block text-[11px] font-semibold text-slate-700">
+                      Destination / Out-of-Station Travel Details <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required={isStationLeave}
+                      value={stationLeaveDetails}
+                      onChange={(e) => setStationLeaveDetails(e.target.value)}
+                      placeholder="Specify destination city/state/country and mode of travel..."
+                      className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-slate-900 bg-white outline-none focus:border-[#1e293b] shadow-2xs"
+                    />
+                  </div>
+                )}
               </div>
 
               {/* Supporting Document Attachment */}
@@ -802,7 +942,7 @@ function ApplyLeaveContent() {
                       />
                     </label>
                     {attachments.length === 0 && (
-                      <span className="text-[11px] text-slate-400">No file chosen (select one or multiple files: PDF, PNG, JPG, DOC)</span>
+                      <span className="text-[11px] text-slate-400">No file chosen (PDF, PNG, JPG, DOC)</span>
                     )}
                   </div>
 
@@ -830,29 +970,47 @@ function ApplyLeaveContent() {
                 </div>
               </div>
 
-              {/* Submit Button */}
-              <div className="pt-2 border-t border-slate-100 flex items-center justify-end gap-3">
-                <Link
-                  href="/employee/dashboard"
-                  className="px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-2xs transition-all"
-                >
-                  Cancel
-                </Link>
+              {/* 🌟 FORMAL EMBASSY OF INDIA REGULATORY NOTE */}
+              <div className="p-3.5 rounded-xl bg-amber-50/80 border border-amber-200/90 text-[11px] text-amber-900 flex items-start gap-2.5">
+                <ShieldAlert className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
+                <div className="space-y-0.5">
+                  <span className="font-bold block text-amber-950">Statutory Notice for Local Staff:</span>
+                  <p className="text-amber-800 leading-relaxed italic">
+                    (Note: Any period of absence without a corresponding leave application will be without pay and will be treated as unauthorized absence which constitutes break).
+                  </p>
+                </div>
+              </div>
 
-                <button
-                  type="submit"
-                  disabled={submitting || isInsufficientBalance || isInvalidDates}
-                  className="px-5 py-2.5 rounded-xl bg-[#1e293b] hover:bg-[#28354c] text-white text-xs font-semibold shadow-xs transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                >
-                  {submitting ? (
-                    <span>Submitting Application...</span>
-                  ) : (
-                    <>
-                      <Check className="w-4 h-4" />
-                      <span>Submit Application</span>
-                    </>
-                  )}
-                </button>
+              {/* Submit & Digital Signature Button */}
+              <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
+                <div className="text-[11px] text-slate-400 flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>Authenticated Electronic Signature: <strong>{employee?.name}</strong></span>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <Link
+                    href="/employee/dashboard"
+                    className="px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-2xs transition-all"
+                  >
+                    Cancel
+                  </Link>
+
+                  <button
+                    type="submit"
+                    disabled={submitting || isInsufficientBalance || isInvalidDates}
+                    className="px-5 py-2.5 rounded-xl bg-[#1e293b] hover:bg-[#28354c] text-white text-xs font-semibold shadow-xs transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                  >
+                    {submitting ? (
+                      <span>Submitting Application...</span>
+                    ) : (
+                      <>
+                        <Check className="w-4 h-4" />
+                        <span>Submit Application</span>
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             </form>
           </div>

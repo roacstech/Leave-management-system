@@ -10,6 +10,11 @@ import {
   AlertCircle,
   Briefcase,
   Paperclip,
+  MapPin,
+  Phone,
+  Plane,
+  ShieldAlert,
+  Landmark,
 } from "lucide-react";
 import ThemedSelect from "@/components/ui/ThemedSelect";
 import DatePicker from "@/components/ui/DatePicker";
@@ -46,6 +51,10 @@ export default function ApplyLeaveDrawer({
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [reason, setReason] = useState("");
+  const [leaveAddress, setLeaveAddress] = useState("");
+  const [contactPhone, setContactPhone] = useState("");
+  const [isStationLeave, setIsStationLeave] = useState(false);
+  const [stationLeaveDetails, setStationLeaveDetails] = useState("");
   const [attachments, setAttachments] = useState<string[]>([]);
   const [totalDays, setTotalDays] = useState(0);
 
@@ -60,8 +69,6 @@ export default function ApplyLeaveDrawer({
 
   // Use real leave types from API
   const availableTypes: LeaveTypeOption[] = leaveTypes;
-
-
 
   // Reset form when drawer opens or closes
   useEffect(() => {
@@ -100,6 +107,11 @@ export default function ApplyLeaveDrawer({
     setFromDate("");
     setToDate("");
     setReason("");
+    setLeaveAddress("");
+    setContactPhone("");
+    setIsStationLeave(false);
+    setStationLeaveDetails("");
+    setAttachments([]);
     // Comp-Off reset
     setWorkedDate("");
     setHoursWorked("");
@@ -132,6 +144,10 @@ export default function ApplyLeaveDrawer({
         setErrorMessage("To Date cannot be earlier than From Date.");
         return;
       }
+      if (isStationLeave && !stationLeaveDetails.trim()) {
+        setErrorMessage("Please specify destination / station leave travel details.");
+        return;
+      }
       const selectedType = availableTypes.find((t) => t.id === Number(selectedLeaveTypeId));
       if (selectedType?.requiresAttachment && attachments.length === 0) {
         setErrorMessage(`Document attachment is mandatory for ${selectedType.name}. Please attach supporting document(s).`);
@@ -154,6 +170,10 @@ export default function ApplyLeaveDrawer({
             startDate: fromDate,
             endDate: toDate,
             reason: finalReason,
+            leaveAddress: leaveAddress.trim() || undefined,
+            contactPhone: contactPhone.trim() || undefined,
+            isStationLeave,
+            stationLeaveDetails: isStationLeave ? stationLeaveDetails.trim() || undefined : undefined,
             attachmentName: attachments.join(", ") || undefined,
             attachments,
           }),
@@ -391,6 +411,73 @@ export default function ApplyLeaveDrawer({
                 />
               </div>
 
+              {/* Leave Address & Contact Phone */}
+              <div className="p-3.5 rounded-xl bg-gray-50/80 border border-gray-200 space-y-2.5">
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-gray-600 flex items-center gap-1.5">
+                  <MapPin className="w-3.5 h-3.5 text-gray-500" />
+                  <span>Leave Address & Contact Details</span>
+                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <input
+                      type="text"
+                      value={leaveAddress}
+                      onChange={(e) => setLeaveAddress(e.target.value)}
+                      placeholder="Address during leave..."
+                      className="w-full px-3 py-2 rounded-xl bg-white border border-gray-200 text-xs text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600"
+                    />
+                  </div>
+                  <div>
+                    <input
+                      type="text"
+                      value={contactPhone}
+                      onChange={(e) => setContactPhone(e.target.value)}
+                      placeholder="Phone / Mobile No..."
+                      className="w-full px-3 py-2 rounded-xl bg-white border border-gray-200 text-xs text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Permission to Leave Station Sought (Station Leave) */}
+              <div className="p-3.5 rounded-xl bg-gray-50/80 border border-gray-200 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={isStationLeave}
+                      onChange={(e) => setIsStationLeave(e.target.checked)}
+                      className="rounded text-indigo-600 focus:ring-indigo-600 w-4 h-4 cursor-pointer"
+                    />
+                    <span className="font-semibold text-xs text-gray-800 flex items-center gap-1.5">
+                      <Plane className="w-3.5 h-3.5 text-indigo-600" />
+                      <span>Permission to Leave Station Sought?</span>
+                    </span>
+                  </label>
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${
+                    isStationLeave ? "bg-indigo-50 text-indigo-700 border-indigo-200" : "bg-gray-100 text-gray-500 border-gray-200"
+                  }`}>
+                    {isStationLeave ? "YES" : "NO"}
+                  </span>
+                </div>
+
+                {isStationLeave && (
+                  <div className="pt-1 animate-in fade-in space-y-1">
+                    <label className="block text-[11px] font-medium text-gray-600">
+                      Destination / Travel Details <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required={isStationLeave}
+                      value={stationLeaveDetails}
+                      onChange={(e) => setStationLeaveDetails(e.target.value)}
+                      placeholder="Destination city/country and travel mode..."
+                      className="w-full px-3 py-2 rounded-xl bg-white border border-gray-200 text-xs text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600"
+                    />
+                  </div>
+                )}
+              </div>
+
               {/* Supporting Document / Attachment */}
               {(() => {
                 const currentSelected = availableTypes.find((t) => t.id === Number(selectedLeaveTypeId));
@@ -449,6 +536,14 @@ export default function ApplyLeaveDrawer({
                   </div>
                 );
               })()}
+
+              {/* Embassy Policy Notice */}
+              <div className="p-3 rounded-xl bg-amber-50/90 border border-amber-200 text-[11px] text-amber-900 flex items-start gap-2">
+                <ShieldAlert className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
+                <p className="italic text-amber-800 leading-relaxed">
+                  (Note: Any period of absence without a corresponding leave application will be without pay and will be treated as unauthorized absence which constitutes break).
+                </p>
+              </div>
             </>
           ) : (
             <>

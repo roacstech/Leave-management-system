@@ -30,6 +30,8 @@ export type LeaveRequestAvgAggregateOutputType = {
   id: number | null
   userId: number | null
   leaveTypeId: number | null
+  holidaysCount: number | null
+  workingDaysCount: number | null
   escalatedById: number | null
   approverId: number | null
 }
@@ -38,6 +40,8 @@ export type LeaveRequestSumAggregateOutputType = {
   id: number | null
   userId: number | null
   leaveTypeId: number | null
+  holidaysCount: number | null
+  workingDaysCount: number | null
   escalatedById: number | null
   approverId: number | null
 }
@@ -51,6 +55,15 @@ export type LeaveRequestMinAggregateOutputType = {
   reason: string | null
   status: $Enums.LeaveStatus | null
   rejectionReason: string | null
+  leaveAddress: string | null
+  contactPhone: string | null
+  isStationLeave: boolean | null
+  stationLeaveDetails: string | null
+  lastLeaveReturnDate: Date | null
+  holidaysCount: number | null
+  workingDaysCount: number | null
+  isDiscretionaryHOM: boolean | null
+  adminTitleNotes: string | null
   escalatedById: number | null
   escalatedAt: Date | null
   escalationReason: string | null
@@ -71,6 +84,15 @@ export type LeaveRequestMaxAggregateOutputType = {
   reason: string | null
   status: $Enums.LeaveStatus | null
   rejectionReason: string | null
+  leaveAddress: string | null
+  contactPhone: string | null
+  isStationLeave: boolean | null
+  stationLeaveDetails: string | null
+  lastLeaveReturnDate: Date | null
+  holidaysCount: number | null
+  workingDaysCount: number | null
+  isDiscretionaryHOM: boolean | null
+  adminTitleNotes: string | null
   escalatedById: number | null
   escalatedAt: Date | null
   escalationReason: string | null
@@ -91,6 +113,15 @@ export type LeaveRequestCountAggregateOutputType = {
   reason: number
   status: number
   rejectionReason: number
+  leaveAddress: number
+  contactPhone: number
+  isStationLeave: number
+  stationLeaveDetails: number
+  lastLeaveReturnDate: number
+  holidaysCount: number
+  workingDaysCount: number
+  isDiscretionaryHOM: number
+  adminTitleNotes: number
   escalatedById: number
   escalatedAt: number
   escalationReason: number
@@ -108,6 +139,8 @@ export type LeaveRequestAvgAggregateInputType = {
   id?: true
   userId?: true
   leaveTypeId?: true
+  holidaysCount?: true
+  workingDaysCount?: true
   escalatedById?: true
   approverId?: true
 }
@@ -116,6 +149,8 @@ export type LeaveRequestSumAggregateInputType = {
   id?: true
   userId?: true
   leaveTypeId?: true
+  holidaysCount?: true
+  workingDaysCount?: true
   escalatedById?: true
   approverId?: true
 }
@@ -129,6 +164,15 @@ export type LeaveRequestMinAggregateInputType = {
   reason?: true
   status?: true
   rejectionReason?: true
+  leaveAddress?: true
+  contactPhone?: true
+  isStationLeave?: true
+  stationLeaveDetails?: true
+  lastLeaveReturnDate?: true
+  holidaysCount?: true
+  workingDaysCount?: true
+  isDiscretionaryHOM?: true
+  adminTitleNotes?: true
   escalatedById?: true
   escalatedAt?: true
   escalationReason?: true
@@ -149,6 +193,15 @@ export type LeaveRequestMaxAggregateInputType = {
   reason?: true
   status?: true
   rejectionReason?: true
+  leaveAddress?: true
+  contactPhone?: true
+  isStationLeave?: true
+  stationLeaveDetails?: true
+  lastLeaveReturnDate?: true
+  holidaysCount?: true
+  workingDaysCount?: true
+  isDiscretionaryHOM?: true
+  adminTitleNotes?: true
   escalatedById?: true
   escalatedAt?: true
   escalationReason?: true
@@ -169,6 +222,15 @@ export type LeaveRequestCountAggregateInputType = {
   reason?: true
   status?: true
   rejectionReason?: true
+  leaveAddress?: true
+  contactPhone?: true
+  isStationLeave?: true
+  stationLeaveDetails?: true
+  lastLeaveReturnDate?: true
+  holidaysCount?: true
+  workingDaysCount?: true
+  isDiscretionaryHOM?: true
+  adminTitleNotes?: true
   escalatedById?: true
   escalatedAt?: true
   escalationReason?: true
@@ -276,6 +338,15 @@ export type LeaveRequestGroupByOutputType = {
   reason: string | null
   status: $Enums.LeaveStatus
   rejectionReason: string | null
+  leaveAddress: string | null
+  contactPhone: string | null
+  isStationLeave: boolean
+  stationLeaveDetails: string | null
+  lastLeaveReturnDate: Date | null
+  holidaysCount: number
+  workingDaysCount: number
+  isDiscretionaryHOM: boolean
+  adminTitleNotes: string | null
   escalatedById: number | null
   escalatedAt: Date | null
   escalationReason: string | null
@@ -319,6 +390,15 @@ export type LeaveRequestWhereInput = {
   reason?: Prisma.StringNullableFilter<"LeaveRequest"> | string | null
   status?: Prisma.EnumLeaveStatusFilter<"LeaveRequest"> | $Enums.LeaveStatus
   rejectionReason?: Prisma.StringNullableFilter<"LeaveRequest"> | string | null
+  leaveAddress?: Prisma.StringNullableFilter<"LeaveRequest"> | string | null
+  contactPhone?: Prisma.StringNullableFilter<"LeaveRequest"> | string | null
+  isStationLeave?: Prisma.BoolFilter<"LeaveRequest"> | boolean
+  stationLeaveDetails?: Prisma.StringNullableFilter<"LeaveRequest"> | string | null
+  lastLeaveReturnDate?: Prisma.DateTimeNullableFilter<"LeaveRequest"> | Date | string | null
+  holidaysCount?: Prisma.IntFilter<"LeaveRequest"> | number
+  workingDaysCount?: Prisma.FloatFilter<"LeaveRequest"> | number
+  isDiscretionaryHOM?: Prisma.BoolFilter<"LeaveRequest"> | boolean
+  adminTitleNotes?: Prisma.StringNullableFilter<"LeaveRequest"> | string | null
   escalatedById?: Prisma.IntNullableFilter<"LeaveRequest"> | number | null
   escalatedAt?: Prisma.DateTimeNullableFilter<"LeaveRequest"> | Date | string | null
   escalationReason?: Prisma.StringNullableFilter<"LeaveRequest"> | string | null
@@ -343,6 +423,15 @@ export type LeaveRequestOrderByWithRelationInput = {
   reason?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   rejectionReason?: Prisma.SortOrderInput | Prisma.SortOrder
+  leaveAddress?: Prisma.SortOrderInput | Prisma.SortOrder
+  contactPhone?: Prisma.SortOrderInput | Prisma.SortOrder
+  isStationLeave?: Prisma.SortOrder
+  stationLeaveDetails?: Prisma.SortOrderInput | Prisma.SortOrder
+  lastLeaveReturnDate?: Prisma.SortOrderInput | Prisma.SortOrder
+  holidaysCount?: Prisma.SortOrder
+  workingDaysCount?: Prisma.SortOrder
+  isDiscretionaryHOM?: Prisma.SortOrder
+  adminTitleNotes?: Prisma.SortOrderInput | Prisma.SortOrder
   escalatedById?: Prisma.SortOrderInput | Prisma.SortOrder
   escalatedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   escalationReason?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -371,6 +460,15 @@ export type LeaveRequestWhereUniqueInput = Prisma.AtLeast<{
   reason?: Prisma.StringNullableFilter<"LeaveRequest"> | string | null
   status?: Prisma.EnumLeaveStatusFilter<"LeaveRequest"> | $Enums.LeaveStatus
   rejectionReason?: Prisma.StringNullableFilter<"LeaveRequest"> | string | null
+  leaveAddress?: Prisma.StringNullableFilter<"LeaveRequest"> | string | null
+  contactPhone?: Prisma.StringNullableFilter<"LeaveRequest"> | string | null
+  isStationLeave?: Prisma.BoolFilter<"LeaveRequest"> | boolean
+  stationLeaveDetails?: Prisma.StringNullableFilter<"LeaveRequest"> | string | null
+  lastLeaveReturnDate?: Prisma.DateTimeNullableFilter<"LeaveRequest"> | Date | string | null
+  holidaysCount?: Prisma.IntFilter<"LeaveRequest"> | number
+  workingDaysCount?: Prisma.FloatFilter<"LeaveRequest"> | number
+  isDiscretionaryHOM?: Prisma.BoolFilter<"LeaveRequest"> | boolean
+  adminTitleNotes?: Prisma.StringNullableFilter<"LeaveRequest"> | string | null
   escalatedById?: Prisma.IntNullableFilter<"LeaveRequest"> | number | null
   escalatedAt?: Prisma.DateTimeNullableFilter<"LeaveRequest"> | Date | string | null
   escalationReason?: Prisma.StringNullableFilter<"LeaveRequest"> | string | null
@@ -395,6 +493,15 @@ export type LeaveRequestOrderByWithAggregationInput = {
   reason?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   rejectionReason?: Prisma.SortOrderInput | Prisma.SortOrder
+  leaveAddress?: Prisma.SortOrderInput | Prisma.SortOrder
+  contactPhone?: Prisma.SortOrderInput | Prisma.SortOrder
+  isStationLeave?: Prisma.SortOrder
+  stationLeaveDetails?: Prisma.SortOrderInput | Prisma.SortOrder
+  lastLeaveReturnDate?: Prisma.SortOrderInput | Prisma.SortOrder
+  holidaysCount?: Prisma.SortOrder
+  workingDaysCount?: Prisma.SortOrder
+  isDiscretionaryHOM?: Prisma.SortOrder
+  adminTitleNotes?: Prisma.SortOrderInput | Prisma.SortOrder
   escalatedById?: Prisma.SortOrderInput | Prisma.SortOrder
   escalatedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   escalationReason?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -423,6 +530,15 @@ export type LeaveRequestScalarWhereWithAggregatesInput = {
   reason?: Prisma.StringNullableWithAggregatesFilter<"LeaveRequest"> | string | null
   status?: Prisma.EnumLeaveStatusWithAggregatesFilter<"LeaveRequest"> | $Enums.LeaveStatus
   rejectionReason?: Prisma.StringNullableWithAggregatesFilter<"LeaveRequest"> | string | null
+  leaveAddress?: Prisma.StringNullableWithAggregatesFilter<"LeaveRequest"> | string | null
+  contactPhone?: Prisma.StringNullableWithAggregatesFilter<"LeaveRequest"> | string | null
+  isStationLeave?: Prisma.BoolWithAggregatesFilter<"LeaveRequest"> | boolean
+  stationLeaveDetails?: Prisma.StringNullableWithAggregatesFilter<"LeaveRequest"> | string | null
+  lastLeaveReturnDate?: Prisma.DateTimeNullableWithAggregatesFilter<"LeaveRequest"> | Date | string | null
+  holidaysCount?: Prisma.IntWithAggregatesFilter<"LeaveRequest"> | number
+  workingDaysCount?: Prisma.FloatWithAggregatesFilter<"LeaveRequest"> | number
+  isDiscretionaryHOM?: Prisma.BoolWithAggregatesFilter<"LeaveRequest"> | boolean
+  adminTitleNotes?: Prisma.StringNullableWithAggregatesFilter<"LeaveRequest"> | string | null
   escalatedById?: Prisma.IntNullableWithAggregatesFilter<"LeaveRequest"> | number | null
   escalatedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"LeaveRequest"> | Date | string | null
   escalationReason?: Prisma.StringNullableWithAggregatesFilter<"LeaveRequest"> | string | null
@@ -440,6 +556,15 @@ export type LeaveRequestCreateInput = {
   reason?: string | null
   status?: $Enums.LeaveStatus
   rejectionReason?: string | null
+  leaveAddress?: string | null
+  contactPhone?: string | null
+  isStationLeave?: boolean
+  stationLeaveDetails?: string | null
+  lastLeaveReturnDate?: Date | string | null
+  holidaysCount?: number
+  workingDaysCount?: number
+  isDiscretionaryHOM?: boolean
+  adminTitleNotes?: string | null
   escalatedAt?: Date | string | null
   escalationReason?: string | null
   approverRole?: string | null
@@ -462,6 +587,15 @@ export type LeaveRequestUncheckedCreateInput = {
   reason?: string | null
   status?: $Enums.LeaveStatus
   rejectionReason?: string | null
+  leaveAddress?: string | null
+  contactPhone?: string | null
+  isStationLeave?: boolean
+  stationLeaveDetails?: string | null
+  lastLeaveReturnDate?: Date | string | null
+  holidaysCount?: number
+  workingDaysCount?: number
+  isDiscretionaryHOM?: boolean
+  adminTitleNotes?: string | null
   escalatedById?: number | null
   escalatedAt?: Date | string | null
   escalationReason?: string | null
@@ -479,6 +613,15 @@ export type LeaveRequestUpdateInput = {
   reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumLeaveStatusFieldUpdateOperationsInput | $Enums.LeaveStatus
   rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  leaveAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contactPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isStationLeave?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stationLeaveDetails?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastLeaveReturnDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  holidaysCount?: Prisma.IntFieldUpdateOperationsInput | number
+  workingDaysCount?: Prisma.FloatFieldUpdateOperationsInput | number
+  isDiscretionaryHOM?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adminTitleNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   escalatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   escalationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   approverRole?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -501,6 +644,15 @@ export type LeaveRequestUncheckedUpdateInput = {
   reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumLeaveStatusFieldUpdateOperationsInput | $Enums.LeaveStatus
   rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  leaveAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contactPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isStationLeave?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stationLeaveDetails?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastLeaveReturnDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  holidaysCount?: Prisma.IntFieldUpdateOperationsInput | number
+  workingDaysCount?: Prisma.FloatFieldUpdateOperationsInput | number
+  isDiscretionaryHOM?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adminTitleNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   escalatedById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   escalatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   escalationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -521,6 +673,15 @@ export type LeaveRequestCreateManyInput = {
   reason?: string | null
   status?: $Enums.LeaveStatus
   rejectionReason?: string | null
+  leaveAddress?: string | null
+  contactPhone?: string | null
+  isStationLeave?: boolean
+  stationLeaveDetails?: string | null
+  lastLeaveReturnDate?: Date | string | null
+  holidaysCount?: number
+  workingDaysCount?: number
+  isDiscretionaryHOM?: boolean
+  adminTitleNotes?: string | null
   escalatedById?: number | null
   escalatedAt?: Date | string | null
   escalationReason?: string | null
@@ -538,6 +699,15 @@ export type LeaveRequestUpdateManyMutationInput = {
   reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumLeaveStatusFieldUpdateOperationsInput | $Enums.LeaveStatus
   rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  leaveAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contactPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isStationLeave?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stationLeaveDetails?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastLeaveReturnDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  holidaysCount?: Prisma.IntFieldUpdateOperationsInput | number
+  workingDaysCount?: Prisma.FloatFieldUpdateOperationsInput | number
+  isDiscretionaryHOM?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adminTitleNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   escalatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   escalationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   approverRole?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -556,6 +726,15 @@ export type LeaveRequestUncheckedUpdateManyInput = {
   reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumLeaveStatusFieldUpdateOperationsInput | $Enums.LeaveStatus
   rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  leaveAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contactPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isStationLeave?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stationLeaveDetails?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastLeaveReturnDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  holidaysCount?: Prisma.IntFieldUpdateOperationsInput | number
+  workingDaysCount?: Prisma.FloatFieldUpdateOperationsInput | number
+  isDiscretionaryHOM?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adminTitleNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   escalatedById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   escalatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   escalationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -592,6 +771,15 @@ export type LeaveRequestCountOrderByAggregateInput = {
   reason?: Prisma.SortOrder
   status?: Prisma.SortOrder
   rejectionReason?: Prisma.SortOrder
+  leaveAddress?: Prisma.SortOrder
+  contactPhone?: Prisma.SortOrder
+  isStationLeave?: Prisma.SortOrder
+  stationLeaveDetails?: Prisma.SortOrder
+  lastLeaveReturnDate?: Prisma.SortOrder
+  holidaysCount?: Prisma.SortOrder
+  workingDaysCount?: Prisma.SortOrder
+  isDiscretionaryHOM?: Prisma.SortOrder
+  adminTitleNotes?: Prisma.SortOrder
   escalatedById?: Prisma.SortOrder
   escalatedAt?: Prisma.SortOrder
   escalationReason?: Prisma.SortOrder
@@ -607,6 +795,8 @@ export type LeaveRequestAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   leaveTypeId?: Prisma.SortOrder
+  holidaysCount?: Prisma.SortOrder
+  workingDaysCount?: Prisma.SortOrder
   escalatedById?: Prisma.SortOrder
   approverId?: Prisma.SortOrder
 }
@@ -620,6 +810,15 @@ export type LeaveRequestMaxOrderByAggregateInput = {
   reason?: Prisma.SortOrder
   status?: Prisma.SortOrder
   rejectionReason?: Prisma.SortOrder
+  leaveAddress?: Prisma.SortOrder
+  contactPhone?: Prisma.SortOrder
+  isStationLeave?: Prisma.SortOrder
+  stationLeaveDetails?: Prisma.SortOrder
+  lastLeaveReturnDate?: Prisma.SortOrder
+  holidaysCount?: Prisma.SortOrder
+  workingDaysCount?: Prisma.SortOrder
+  isDiscretionaryHOM?: Prisma.SortOrder
+  adminTitleNotes?: Prisma.SortOrder
   escalatedById?: Prisma.SortOrder
   escalatedAt?: Prisma.SortOrder
   escalationReason?: Prisma.SortOrder
@@ -640,6 +839,15 @@ export type LeaveRequestMinOrderByAggregateInput = {
   reason?: Prisma.SortOrder
   status?: Prisma.SortOrder
   rejectionReason?: Prisma.SortOrder
+  leaveAddress?: Prisma.SortOrder
+  contactPhone?: Prisma.SortOrder
+  isStationLeave?: Prisma.SortOrder
+  stationLeaveDetails?: Prisma.SortOrder
+  lastLeaveReturnDate?: Prisma.SortOrder
+  holidaysCount?: Prisma.SortOrder
+  workingDaysCount?: Prisma.SortOrder
+  isDiscretionaryHOM?: Prisma.SortOrder
+  adminTitleNotes?: Prisma.SortOrder
   escalatedById?: Prisma.SortOrder
   escalatedAt?: Prisma.SortOrder
   escalationReason?: Prisma.SortOrder
@@ -655,6 +863,8 @@ export type LeaveRequestSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   leaveTypeId?: Prisma.SortOrder
+  holidaysCount?: Prisma.SortOrder
+  workingDaysCount?: Prisma.SortOrder
   escalatedById?: Prisma.SortOrder
   approverId?: Prisma.SortOrder
 }
@@ -831,16 +1041,21 @@ export type EnumLeaveStatusFieldUpdateOperationsInput = {
   set?: $Enums.LeaveStatus
 }
 
-export type NullableDateTimeFieldUpdateOperationsInput = {
-  set?: Date | string | null
-}
-
 export type LeaveRequestCreateWithoutUserInput = {
   startDate: Date | string
   endDate: Date | string
   reason?: string | null
   status?: $Enums.LeaveStatus
   rejectionReason?: string | null
+  leaveAddress?: string | null
+  contactPhone?: string | null
+  isStationLeave?: boolean
+  stationLeaveDetails?: string | null
+  lastLeaveReturnDate?: Date | string | null
+  holidaysCount?: number
+  workingDaysCount?: number
+  isDiscretionaryHOM?: boolean
+  adminTitleNotes?: string | null
   escalatedAt?: Date | string | null
   escalationReason?: string | null
   approverRole?: string | null
@@ -861,6 +1076,15 @@ export type LeaveRequestUncheckedCreateWithoutUserInput = {
   reason?: string | null
   status?: $Enums.LeaveStatus
   rejectionReason?: string | null
+  leaveAddress?: string | null
+  contactPhone?: string | null
+  isStationLeave?: boolean
+  stationLeaveDetails?: string | null
+  lastLeaveReturnDate?: Date | string | null
+  holidaysCount?: number
+  workingDaysCount?: number
+  isDiscretionaryHOM?: boolean
+  adminTitleNotes?: string | null
   escalatedById?: number | null
   escalatedAt?: Date | string | null
   escalationReason?: string | null
@@ -888,6 +1112,15 @@ export type LeaveRequestCreateWithoutEscalatedByInput = {
   reason?: string | null
   status?: $Enums.LeaveStatus
   rejectionReason?: string | null
+  leaveAddress?: string | null
+  contactPhone?: string | null
+  isStationLeave?: boolean
+  stationLeaveDetails?: string | null
+  lastLeaveReturnDate?: Date | string | null
+  holidaysCount?: number
+  workingDaysCount?: number
+  isDiscretionaryHOM?: boolean
+  adminTitleNotes?: string | null
   escalatedAt?: Date | string | null
   escalationReason?: string | null
   approverRole?: string | null
@@ -909,6 +1142,15 @@ export type LeaveRequestUncheckedCreateWithoutEscalatedByInput = {
   reason?: string | null
   status?: $Enums.LeaveStatus
   rejectionReason?: string | null
+  leaveAddress?: string | null
+  contactPhone?: string | null
+  isStationLeave?: boolean
+  stationLeaveDetails?: string | null
+  lastLeaveReturnDate?: Date | string | null
+  holidaysCount?: number
+  workingDaysCount?: number
+  isDiscretionaryHOM?: boolean
+  adminTitleNotes?: string | null
   escalatedAt?: Date | string | null
   escalationReason?: string | null
   approverId?: number | null
@@ -935,6 +1177,15 @@ export type LeaveRequestCreateWithoutApproverInput = {
   reason?: string | null
   status?: $Enums.LeaveStatus
   rejectionReason?: string | null
+  leaveAddress?: string | null
+  contactPhone?: string | null
+  isStationLeave?: boolean
+  stationLeaveDetails?: string | null
+  lastLeaveReturnDate?: Date | string | null
+  holidaysCount?: number
+  workingDaysCount?: number
+  isDiscretionaryHOM?: boolean
+  adminTitleNotes?: string | null
   escalatedAt?: Date | string | null
   escalationReason?: string | null
   approverRole?: string | null
@@ -956,6 +1207,15 @@ export type LeaveRequestUncheckedCreateWithoutApproverInput = {
   reason?: string | null
   status?: $Enums.LeaveStatus
   rejectionReason?: string | null
+  leaveAddress?: string | null
+  contactPhone?: string | null
+  isStationLeave?: boolean
+  stationLeaveDetails?: string | null
+  lastLeaveReturnDate?: Date | string | null
+  holidaysCount?: number
+  workingDaysCount?: number
+  isDiscretionaryHOM?: boolean
+  adminTitleNotes?: string | null
   escalatedById?: number | null
   escalatedAt?: Date | string | null
   escalationReason?: string | null
@@ -1004,6 +1264,15 @@ export type LeaveRequestScalarWhereInput = {
   reason?: Prisma.StringNullableFilter<"LeaveRequest"> | string | null
   status?: Prisma.EnumLeaveStatusFilter<"LeaveRequest"> | $Enums.LeaveStatus
   rejectionReason?: Prisma.StringNullableFilter<"LeaveRequest"> | string | null
+  leaveAddress?: Prisma.StringNullableFilter<"LeaveRequest"> | string | null
+  contactPhone?: Prisma.StringNullableFilter<"LeaveRequest"> | string | null
+  isStationLeave?: Prisma.BoolFilter<"LeaveRequest"> | boolean
+  stationLeaveDetails?: Prisma.StringNullableFilter<"LeaveRequest"> | string | null
+  lastLeaveReturnDate?: Prisma.DateTimeNullableFilter<"LeaveRequest"> | Date | string | null
+  holidaysCount?: Prisma.IntFilter<"LeaveRequest"> | number
+  workingDaysCount?: Prisma.FloatFilter<"LeaveRequest"> | number
+  isDiscretionaryHOM?: Prisma.BoolFilter<"LeaveRequest"> | boolean
+  adminTitleNotes?: Prisma.StringNullableFilter<"LeaveRequest"> | string | null
   escalatedById?: Prisma.IntNullableFilter<"LeaveRequest"> | number | null
   escalatedAt?: Prisma.DateTimeNullableFilter<"LeaveRequest"> | Date | string | null
   escalationReason?: Prisma.StringNullableFilter<"LeaveRequest"> | string | null
@@ -1053,6 +1322,15 @@ export type LeaveRequestCreateWithoutLeaveTypeInput = {
   reason?: string | null
   status?: $Enums.LeaveStatus
   rejectionReason?: string | null
+  leaveAddress?: string | null
+  contactPhone?: string | null
+  isStationLeave?: boolean
+  stationLeaveDetails?: string | null
+  lastLeaveReturnDate?: Date | string | null
+  holidaysCount?: number
+  workingDaysCount?: number
+  isDiscretionaryHOM?: boolean
+  adminTitleNotes?: string | null
   escalatedAt?: Date | string | null
   escalationReason?: string | null
   approverRole?: string | null
@@ -1073,6 +1351,15 @@ export type LeaveRequestUncheckedCreateWithoutLeaveTypeInput = {
   reason?: string | null
   status?: $Enums.LeaveStatus
   rejectionReason?: string | null
+  leaveAddress?: string | null
+  contactPhone?: string | null
+  isStationLeave?: boolean
+  stationLeaveDetails?: string | null
+  lastLeaveReturnDate?: Date | string | null
+  holidaysCount?: number
+  workingDaysCount?: number
+  isDiscretionaryHOM?: boolean
+  adminTitleNotes?: string | null
   escalatedById?: number | null
   escalatedAt?: Date | string | null
   escalationReason?: string | null
@@ -1118,6 +1405,15 @@ export type LeaveRequestCreateManyUserInput = {
   reason?: string | null
   status?: $Enums.LeaveStatus
   rejectionReason?: string | null
+  leaveAddress?: string | null
+  contactPhone?: string | null
+  isStationLeave?: boolean
+  stationLeaveDetails?: string | null
+  lastLeaveReturnDate?: Date | string | null
+  holidaysCount?: number
+  workingDaysCount?: number
+  isDiscretionaryHOM?: boolean
+  adminTitleNotes?: string | null
   escalatedById?: number | null
   escalatedAt?: Date | string | null
   escalationReason?: string | null
@@ -1138,6 +1434,15 @@ export type LeaveRequestCreateManyEscalatedByInput = {
   reason?: string | null
   status?: $Enums.LeaveStatus
   rejectionReason?: string | null
+  leaveAddress?: string | null
+  contactPhone?: string | null
+  isStationLeave?: boolean
+  stationLeaveDetails?: string | null
+  lastLeaveReturnDate?: Date | string | null
+  holidaysCount?: number
+  workingDaysCount?: number
+  isDiscretionaryHOM?: boolean
+  adminTitleNotes?: string | null
   escalatedAt?: Date | string | null
   escalationReason?: string | null
   approverId?: number | null
@@ -1157,6 +1462,15 @@ export type LeaveRequestCreateManyApproverInput = {
   reason?: string | null
   status?: $Enums.LeaveStatus
   rejectionReason?: string | null
+  leaveAddress?: string | null
+  contactPhone?: string | null
+  isStationLeave?: boolean
+  stationLeaveDetails?: string | null
+  lastLeaveReturnDate?: Date | string | null
+  holidaysCount?: number
+  workingDaysCount?: number
+  isDiscretionaryHOM?: boolean
+  adminTitleNotes?: string | null
   escalatedById?: number | null
   escalatedAt?: Date | string | null
   escalationReason?: string | null
@@ -1173,6 +1487,15 @@ export type LeaveRequestUpdateWithoutUserInput = {
   reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumLeaveStatusFieldUpdateOperationsInput | $Enums.LeaveStatus
   rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  leaveAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contactPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isStationLeave?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stationLeaveDetails?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastLeaveReturnDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  holidaysCount?: Prisma.IntFieldUpdateOperationsInput | number
+  workingDaysCount?: Prisma.FloatFieldUpdateOperationsInput | number
+  isDiscretionaryHOM?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adminTitleNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   escalatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   escalationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   approverRole?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1193,6 +1516,15 @@ export type LeaveRequestUncheckedUpdateWithoutUserInput = {
   reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumLeaveStatusFieldUpdateOperationsInput | $Enums.LeaveStatus
   rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  leaveAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contactPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isStationLeave?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stationLeaveDetails?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastLeaveReturnDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  holidaysCount?: Prisma.IntFieldUpdateOperationsInput | number
+  workingDaysCount?: Prisma.FloatFieldUpdateOperationsInput | number
+  isDiscretionaryHOM?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adminTitleNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   escalatedById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   escalatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   escalationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1212,6 +1544,15 @@ export type LeaveRequestUncheckedUpdateManyWithoutUserInput = {
   reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumLeaveStatusFieldUpdateOperationsInput | $Enums.LeaveStatus
   rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  leaveAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contactPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isStationLeave?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stationLeaveDetails?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastLeaveReturnDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  holidaysCount?: Prisma.IntFieldUpdateOperationsInput | number
+  workingDaysCount?: Prisma.FloatFieldUpdateOperationsInput | number
+  isDiscretionaryHOM?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adminTitleNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   escalatedById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   escalatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   escalationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1229,6 +1570,15 @@ export type LeaveRequestUpdateWithoutEscalatedByInput = {
   reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumLeaveStatusFieldUpdateOperationsInput | $Enums.LeaveStatus
   rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  leaveAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contactPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isStationLeave?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stationLeaveDetails?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastLeaveReturnDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  holidaysCount?: Prisma.IntFieldUpdateOperationsInput | number
+  workingDaysCount?: Prisma.FloatFieldUpdateOperationsInput | number
+  isDiscretionaryHOM?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adminTitleNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   escalatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   escalationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   approverRole?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1250,6 +1600,15 @@ export type LeaveRequestUncheckedUpdateWithoutEscalatedByInput = {
   reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumLeaveStatusFieldUpdateOperationsInput | $Enums.LeaveStatus
   rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  leaveAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contactPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isStationLeave?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stationLeaveDetails?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastLeaveReturnDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  holidaysCount?: Prisma.IntFieldUpdateOperationsInput | number
+  workingDaysCount?: Prisma.FloatFieldUpdateOperationsInput | number
+  isDiscretionaryHOM?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adminTitleNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   escalatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   escalationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   approverId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -1269,6 +1628,15 @@ export type LeaveRequestUncheckedUpdateManyWithoutEscalatedByInput = {
   reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumLeaveStatusFieldUpdateOperationsInput | $Enums.LeaveStatus
   rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  leaveAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contactPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isStationLeave?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stationLeaveDetails?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastLeaveReturnDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  holidaysCount?: Prisma.IntFieldUpdateOperationsInput | number
+  workingDaysCount?: Prisma.FloatFieldUpdateOperationsInput | number
+  isDiscretionaryHOM?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adminTitleNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   escalatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   escalationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   approverId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -1285,6 +1653,15 @@ export type LeaveRequestUpdateWithoutApproverInput = {
   reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumLeaveStatusFieldUpdateOperationsInput | $Enums.LeaveStatus
   rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  leaveAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contactPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isStationLeave?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stationLeaveDetails?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastLeaveReturnDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  holidaysCount?: Prisma.IntFieldUpdateOperationsInput | number
+  workingDaysCount?: Prisma.FloatFieldUpdateOperationsInput | number
+  isDiscretionaryHOM?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adminTitleNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   escalatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   escalationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   approverRole?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1306,6 +1683,15 @@ export type LeaveRequestUncheckedUpdateWithoutApproverInput = {
   reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumLeaveStatusFieldUpdateOperationsInput | $Enums.LeaveStatus
   rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  leaveAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contactPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isStationLeave?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stationLeaveDetails?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastLeaveReturnDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  holidaysCount?: Prisma.IntFieldUpdateOperationsInput | number
+  workingDaysCount?: Prisma.FloatFieldUpdateOperationsInput | number
+  isDiscretionaryHOM?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adminTitleNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   escalatedById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   escalatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   escalationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1325,6 +1711,15 @@ export type LeaveRequestUncheckedUpdateManyWithoutApproverInput = {
   reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumLeaveStatusFieldUpdateOperationsInput | $Enums.LeaveStatus
   rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  leaveAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contactPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isStationLeave?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stationLeaveDetails?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastLeaveReturnDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  holidaysCount?: Prisma.IntFieldUpdateOperationsInput | number
+  workingDaysCount?: Prisma.FloatFieldUpdateOperationsInput | number
+  isDiscretionaryHOM?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adminTitleNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   escalatedById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   escalatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   escalationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1343,6 +1738,15 @@ export type LeaveRequestCreateManyLeaveTypeInput = {
   reason?: string | null
   status?: $Enums.LeaveStatus
   rejectionReason?: string | null
+  leaveAddress?: string | null
+  contactPhone?: string | null
+  isStationLeave?: boolean
+  stationLeaveDetails?: string | null
+  lastLeaveReturnDate?: Date | string | null
+  holidaysCount?: number
+  workingDaysCount?: number
+  isDiscretionaryHOM?: boolean
+  adminTitleNotes?: string | null
   escalatedById?: number | null
   escalatedAt?: Date | string | null
   escalationReason?: string | null
@@ -1360,6 +1764,15 @@ export type LeaveRequestUpdateWithoutLeaveTypeInput = {
   reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumLeaveStatusFieldUpdateOperationsInput | $Enums.LeaveStatus
   rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  leaveAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contactPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isStationLeave?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stationLeaveDetails?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastLeaveReturnDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  holidaysCount?: Prisma.IntFieldUpdateOperationsInput | number
+  workingDaysCount?: Prisma.FloatFieldUpdateOperationsInput | number
+  isDiscretionaryHOM?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adminTitleNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   escalatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   escalationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   approverRole?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1380,6 +1793,15 @@ export type LeaveRequestUncheckedUpdateWithoutLeaveTypeInput = {
   reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumLeaveStatusFieldUpdateOperationsInput | $Enums.LeaveStatus
   rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  leaveAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contactPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isStationLeave?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stationLeaveDetails?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastLeaveReturnDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  holidaysCount?: Prisma.IntFieldUpdateOperationsInput | number
+  workingDaysCount?: Prisma.FloatFieldUpdateOperationsInput | number
+  isDiscretionaryHOM?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adminTitleNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   escalatedById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   escalatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   escalationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1399,6 +1821,15 @@ export type LeaveRequestUncheckedUpdateManyWithoutLeaveTypeInput = {
   reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumLeaveStatusFieldUpdateOperationsInput | $Enums.LeaveStatus
   rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  leaveAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contactPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isStationLeave?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stationLeaveDetails?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastLeaveReturnDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  holidaysCount?: Prisma.IntFieldUpdateOperationsInput | number
+  workingDaysCount?: Prisma.FloatFieldUpdateOperationsInput | number
+  isDiscretionaryHOM?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adminTitleNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   escalatedById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   escalatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   escalationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1421,6 +1852,15 @@ export type LeaveRequestSelect<ExtArgs extends runtime.Types.Extensions.Internal
   reason?: boolean
   status?: boolean
   rejectionReason?: boolean
+  leaveAddress?: boolean
+  contactPhone?: boolean
+  isStationLeave?: boolean
+  stationLeaveDetails?: boolean
+  lastLeaveReturnDate?: boolean
+  holidaysCount?: boolean
+  workingDaysCount?: boolean
+  isDiscretionaryHOM?: boolean
+  adminTitleNotes?: boolean
   escalatedById?: boolean
   escalatedAt?: boolean
   escalationReason?: boolean
@@ -1447,6 +1887,15 @@ export type LeaveRequestSelectScalar = {
   reason?: boolean
   status?: boolean
   rejectionReason?: boolean
+  leaveAddress?: boolean
+  contactPhone?: boolean
+  isStationLeave?: boolean
+  stationLeaveDetails?: boolean
+  lastLeaveReturnDate?: boolean
+  holidaysCount?: boolean
+  workingDaysCount?: boolean
+  isDiscretionaryHOM?: boolean
+  adminTitleNotes?: boolean
   escalatedById?: boolean
   escalatedAt?: boolean
   escalationReason?: boolean
@@ -1458,7 +1907,7 @@ export type LeaveRequestSelectScalar = {
   updatedAt?: boolean
 }
 
-export type LeaveRequestOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "leaveTypeId" | "startDate" | "endDate" | "reason" | "status" | "rejectionReason" | "escalatedById" | "escalatedAt" | "escalationReason" | "approverId" | "approverRole" | "approvedAt" | "rejectedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["leaveRequest"]>
+export type LeaveRequestOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "leaveTypeId" | "startDate" | "endDate" | "reason" | "status" | "rejectionReason" | "leaveAddress" | "contactPhone" | "isStationLeave" | "stationLeaveDetails" | "lastLeaveReturnDate" | "holidaysCount" | "workingDaysCount" | "isDiscretionaryHOM" | "adminTitleNotes" | "escalatedById" | "escalatedAt" | "escalationReason" | "approverId" | "approverRole" | "approvedAt" | "rejectedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["leaveRequest"]>
 export type LeaveRequestInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   leaveType?: boolean | Prisma.LeaveTypeDefaultArgs<ExtArgs>
@@ -1483,6 +1932,15 @@ export type $LeaveRequestPayload<ExtArgs extends runtime.Types.Extensions.Intern
     reason: string | null
     status: $Enums.LeaveStatus
     rejectionReason: string | null
+    leaveAddress: string | null
+    contactPhone: string | null
+    isStationLeave: boolean
+    stationLeaveDetails: string | null
+    lastLeaveReturnDate: Date | null
+    holidaysCount: number
+    workingDaysCount: number
+    isDiscretionaryHOM: boolean
+    adminTitleNotes: string | null
     escalatedById: number | null
     escalatedAt: Date | null
     escalationReason: string | null
@@ -1873,6 +2331,15 @@ export interface LeaveRequestFieldRefs {
   readonly reason: Prisma.FieldRef<"LeaveRequest", 'String'>
   readonly status: Prisma.FieldRef<"LeaveRequest", 'LeaveStatus'>
   readonly rejectionReason: Prisma.FieldRef<"LeaveRequest", 'String'>
+  readonly leaveAddress: Prisma.FieldRef<"LeaveRequest", 'String'>
+  readonly contactPhone: Prisma.FieldRef<"LeaveRequest", 'String'>
+  readonly isStationLeave: Prisma.FieldRef<"LeaveRequest", 'Boolean'>
+  readonly stationLeaveDetails: Prisma.FieldRef<"LeaveRequest", 'String'>
+  readonly lastLeaveReturnDate: Prisma.FieldRef<"LeaveRequest", 'DateTime'>
+  readonly holidaysCount: Prisma.FieldRef<"LeaveRequest", 'Int'>
+  readonly workingDaysCount: Prisma.FieldRef<"LeaveRequest", 'Float'>
+  readonly isDiscretionaryHOM: Prisma.FieldRef<"LeaveRequest", 'Boolean'>
+  readonly adminTitleNotes: Prisma.FieldRef<"LeaveRequest", 'String'>
   readonly escalatedById: Prisma.FieldRef<"LeaveRequest", 'Int'>
   readonly escalatedAt: Prisma.FieldRef<"LeaveRequest", 'DateTime'>
   readonly escalationReason: Prisma.FieldRef<"LeaveRequest", 'String'>

@@ -25,7 +25,21 @@ export async function POST(request: NextRequest) {
     const userId = Number(session.user.id);
     const userRole = session.user.role;
     const body = await request.json();
-    const { leaveTypeId, startDate, endDate, reason, isHalfDay } = body;
+    const {
+      leaveTypeId,
+      startDate,
+      endDate,
+      reason,
+      isHalfDay,
+      leaveAddress,
+      contactPhone,
+      emergencyContact,
+      isStationLeave,
+      stationLeaveDetails,
+      lastLeaveReturnDate,
+      holidaysCount,
+      workingDaysCount,
+    } = body;
 
     if (!leaveTypeId || !startDate || !endDate) {
       return NextResponse.json(
@@ -85,23 +99,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    let workingDaysCount = 0;
+    let calculatedWorkingDays = 0;
     const cur = new Date(start);
     while (cur <= end) {
       if (cur.getDay() !== 0) {
-        workingDaysCount++;
+        calculatedWorkingDays++;
       }
       cur.setDate(cur.getDate() + 1);
     }
 
-    if (workingDaysCount <= 0) {
+    if (calculatedWorkingDays <= 0) {
       return NextResponse.json(
         { success: false, error: "Selected date range contains 0 working days (Sundays only)." },
         { status: 400 }
       );
     }
 
-    const requestedDays = isHalfDay ? 0.5 : workingDaysCount;
+    const requestedDays = isHalfDay ? 0.5 : calculatedWorkingDays;
     const settings = await getSystemSettings();
     const currentYear = new Date().getFullYear();
 
@@ -153,6 +167,8 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    const parsedLastReturnDate = lastLeaveReturnDate ? new Date(lastLeaveReturnDate) : null;
+
     // Create Leave Request in Prisma
     const newRequest = await prisma.leaveRequest.create({
       data: {
@@ -162,6 +178,13 @@ export async function POST(request: NextRequest) {
         endDate: end,
         reason: reason?.trim() || null,
         status: initialStatus,
+        leaveAddress: leaveAddress?.trim() || null,
+        contactPhone: contactPhone?.trim() || emergencyContact?.trim() || null,
+        isStationLeave: Boolean(isStationLeave),
+        stationLeaveDetails: isStationLeave ? stationLeaveDetails?.trim() || null : null,
+        lastLeaveReturnDate: parsedLastReturnDate && !isNaN(parsedLastReturnDate.getTime()) ? parsedLastReturnDate : null,
+        holidaysCount: Number(holidaysCount) || 0,
+        workingDaysCount: Number(workingDaysCount) || requestedDays,
       },
       include: {
         user: {
@@ -171,6 +194,8 @@ export async function POST(request: NextRequest) {
             email: true,
             teamId: true,
             role: true,
+            designation: true,
+            section: true,
           },
         },
         leaveType: true,
