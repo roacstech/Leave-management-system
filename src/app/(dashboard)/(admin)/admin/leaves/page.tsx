@@ -31,6 +31,13 @@ interface LeaveRequestItem {
   startDate: string;
   endDate: string;
   reason: string | null;
+  leaveAddress?: string | null;
+  contactPhone?: string | null;
+  isStationLeave?: boolean;
+  stationLeaveDetails?: string | null;
+  lastLeaveReturnDate?: string | null;
+  holidaysCount?: number;
+  workingDaysCount?: number;
   status: "PENDING_TL" | "PENDING_ADMIN" | "APPROVED" | "REJECTED" | "CANCELLED";
   rejectionReason: string | null;
   escalatedById: number | null;
@@ -45,6 +52,9 @@ interface LeaveRequestItem {
     name: string;
     email: string;
     role: string;
+    designation?: string | null;
+    section?: string | null;
+    joiningDate?: string | null;
     team?: {
       id: number;
       name: string;
@@ -545,12 +555,12 @@ export default function LeavesAdminPage() {
                 </div>
 
                 <div>
-                  <span className="text-[11px] font-medium text-slate-500 block">Role & Department</span>
+                  <span className="text-[11px] font-medium text-slate-500 block">Designation & Section</span>
                   <span className="font-bold text-slate-900">
-                    {selectedDetails.user.role === "TL" ? "Team Lead / Manager" : selectedDetails.user.role}
+                    {selectedDetails.user.designation || (selectedDetails.user.role === "TL" ? "Team Lead / Manager" : selectedDetails.user.role)}
                   </span>
                   <span className="text-[11px] text-slate-500 block">
-                    {selectedDetails.user.team?.name || "No Department"}
+                    {selectedDetails.user.section || selectedDetails.user.team?.name || "General Section"}
                   </span>
                 </div>
 
@@ -565,9 +575,28 @@ export default function LeavesAdminPage() {
                     {formatDate(new Date(selectedDetails.startDate))} - {formatDate(new Date(selectedDetails.endDate))}
                   </span>
                   <span className="text-[11px] text-slate-500 block">
-                    ({getDaysCount(selectedDetails.startDate, selectedDetails.endDate)} day{getDaysCount(selectedDetails.startDate, selectedDetails.endDate) > 1 ? "s" : ""})
+                    ({selectedDetails.workingDaysCount || getDaysCount(selectedDetails.startDate, selectedDetails.endDate)} working day{getDaysCount(selectedDetails.startDate, selectedDetails.endDate) > 1 ? "s" : ""})
+                    {selectedDetails.holidaysCount && selectedDetails.holidaysCount > 0 ? ` • ${selectedDetails.holidaysCount} Mission Holidays` : ""}
                   </span>
                 </div>
+
+                {selectedDetails.user.joiningDate && (
+                  <div>
+                    <span className="text-[11px] font-medium text-slate-500 block">Continuous Service Since</span>
+                    <span className="font-semibold text-slate-800">
+                      {formatDate(new Date(selectedDetails.user.joiningDate))}
+                    </span>
+                  </div>
+                )}
+
+                {selectedDetails.lastLeaveReturnDate && (
+                  <div>
+                    <span className="text-[11px] font-medium text-slate-500 block">Returned from Last Leave</span>
+                    <span className="font-semibold text-slate-800">
+                      {formatDate(new Date(selectedDetails.lastLeaveReturnDate))}
+                    </span>
+                  </div>
+                )}
 
                 <div>
                   <span className="text-[11px] font-medium text-slate-500 block">Application Date</span>
@@ -589,12 +618,54 @@ export default function LeavesAdminPage() {
                 </div>
               </div>
 
+              {/* Leave Address & Contact Info */}
+              {(selectedDetails.leaveAddress || selectedDetails.contactPhone) && (
+                <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-2 text-xs">
+                  <span className="font-bold text-slate-700 block text-[11px] uppercase tracking-wider">
+                    Leave Address & Contact Details
+                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-slate-800">
+                    {selectedDetails.leaveAddress && (
+                      <div>
+                        <span className="text-[11px] text-slate-500 block">Address during leave:</span>
+                        <span className="font-medium">{selectedDetails.leaveAddress}</span>
+                      </div>
+                    )}
+                    {selectedDetails.contactPhone && (
+                      <div>
+                        <span className="text-[11px] text-slate-500 block">Phone / Mobile No:</span>
+                        <span className="font-medium">{selectedDetails.contactPhone}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Station Leave Details */}
+              <div className="p-3.5 bg-indigo-50/70 border border-indigo-100 rounded-xl text-xs">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-indigo-950">Permission to Leave Station Sought?</span>
+                  <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${
+                    selectedDetails.isStationLeave
+                      ? "bg-indigo-100 text-indigo-800 border-indigo-300"
+                      : "bg-white text-slate-600 border-slate-200"
+                  }`}>
+                    {selectedDetails.isStationLeave ? "YES" : "NO"}
+                  </span>
+                </div>
+                {selectedDetails.isStationLeave && selectedDetails.stationLeaveDetails && (
+                  <p className="text-indigo-900 mt-1.5 text-[11px]">
+                    <strong>Destination / Travel Details:</strong> {selectedDetails.stationLeaveDetails}
+                  </p>
+                )}
+              </div>
+
               {/* Full Reason Box (Handles 1 to 200+ lines with perfect scrolling) */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between text-xs font-bold text-slate-800">
                   <span className="flex items-center gap-1.5">
                     <FileText className="w-3.5 h-3.5 text-indigo-600" />
-                    <span>Officer Stated Reason</span>
+                    <span>Grounds / Stated Reason</span>
                   </span>
                 </div>
                 <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 leading-relaxed font-normal max-h-52 overflow-y-auto whitespace-pre-wrap break-words [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-slate-300 [&::-webkit-scrollbar-thumb]:rounded-full">

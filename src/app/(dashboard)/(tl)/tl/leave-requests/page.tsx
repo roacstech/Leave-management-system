@@ -41,6 +41,13 @@ interface LeaveRequestItem {
   startDate: string;
   endDate: string;
   reason: string | null;
+  leaveAddress?: string | null;
+  contactPhone?: string | null;
+  isStationLeave?: boolean;
+  stationLeaveDetails?: string | null;
+  lastLeaveReturnDate?: string | null;
+  holidaysCount?: number;
+  workingDaysCount?: number;
   status: "PENDING_TL" | "PENDING_ADMIN" | "APPROVED" | "REJECTED" | "CANCELLED";
   rejectionReason: string | null;
   createdAt: string;
@@ -48,6 +55,9 @@ interface LeaveRequestItem {
     id: number;
     name: string;
     email: string;
+    designation?: string | null;
+    section?: string | null;
+    joiningDate?: string | null;
     team?: { id: number; name: string } | null;
     leaveBalances?: LeaveBalance[];
   };
@@ -784,13 +794,34 @@ export default function TLLeaveRequestsPage() {
               </button>
             </div>
 
-            <div className="p-5 space-y-4 text-xs">
-              <div className="grid grid-cols-2 gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200">
+            <div className="p-5 space-y-4 text-xs max-h-[75vh] overflow-y-auto">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200">
+                <div>
+                  <span className="text-slate-400 block text-[10px] uppercase font-bold">
+                    Applicant
+                  </span>
+                  <span className="font-bold text-slate-900 text-xs">
+                    {selectedRequest.user.name}
+                  </span>
+                  <span className="text-[11px] text-slate-500 block">
+                    {selectedRequest.user.email}
+                  </span>
+                </div>
+
+                <div>
+                  <span className="text-slate-400 block text-[10px] uppercase font-bold">
+                    Designation & Section
+                  </span>
+                  <span className="font-bold text-slate-900 text-xs">
+                    {selectedRequest.user.designation || "Local Staff"} • {selectedRequest.user.section || selectedRequest.user.team?.name || "General Section"}
+                  </span>
+                </div>
+
                 <div>
                   <span className="text-slate-400 block text-[10px] uppercase font-bold">
                     Leave Type
                   </span>
-                  <span className="font-bold text-slate-900 text-xs">
+                  <span className="font-bold text-indigo-700 text-xs">
                     {selectedRequest.leaveType.name} ({selectedRequest.leaveType.code})
                   </span>
                 </div>
@@ -806,7 +837,7 @@ export default function TLLeaveRequestsPage() {
 
                 <div>
                   <span className="text-slate-400 block text-[10px] uppercase font-bold">
-                    Date Range
+                    Requested Dates (Inclusive)
                   </span>
                   <span className="font-semibold text-slate-800 text-xs">
                     {formatDate(selectedRequest.startDate)} to {formatDate(selectedRequest.endDate)}
@@ -818,15 +849,80 @@ export default function TLLeaveRequestsPage() {
                     Duration
                   </span>
                   <span className="font-semibold text-slate-800 text-xs">
-                    {calculateDays(selectedRequest.startDate, selectedRequest.endDate)} Days
+                    {selectedRequest.workingDaysCount || calculateDays(selectedRequest.startDate, selectedRequest.endDate)} Working Days
+                    {selectedRequest.holidaysCount && selectedRequest.holidaysCount > 0 ? ` (${selectedRequest.holidaysCount} Holidays)` : ""}
                   </span>
                 </div>
+
+                {selectedRequest.user.joiningDate && (
+                  <div>
+                    <span className="text-slate-400 block text-[10px] uppercase font-bold">
+                      Continuous Service Since
+                    </span>
+                    <span className="font-semibold text-slate-800 text-xs">
+                      {formatDate(selectedRequest.user.joiningDate)}
+                    </span>
+                  </div>
+                )}
+
+                {selectedRequest.lastLeaveReturnDate && (
+                  <div>
+                    <span className="text-slate-400 block text-[10px] uppercase font-bold">
+                      Returned from Last Leave
+                    </span>
+                    <span className="font-semibold text-slate-800 text-xs">
+                      {formatDate(selectedRequest.lastLeaveReturnDate)}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Leave Address & Contact Info */}
+              {(selectedRequest.leaveAddress || selectedRequest.contactPhone) && (
+                <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1.5 text-xs">
+                  <span className="font-bold text-slate-700 block text-[10px] uppercase tracking-wider">
+                    Leave Address & Contact Details
+                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-slate-800">
+                    {selectedRequest.leaveAddress && (
+                      <div>
+                        <span className="text-[11px] text-slate-500 block">Address during leave:</span>
+                        <span className="font-medium">{selectedRequest.leaveAddress}</span>
+                      </div>
+                    )}
+                    {selectedRequest.contactPhone && (
+                      <div>
+                        <span className="text-[11px] text-slate-500 block">Phone / Mobile No:</span>
+                        <span className="font-medium">{selectedRequest.contactPhone}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Station Leave Details */}
+              <div className="p-3 bg-indigo-50/70 border border-indigo-100 rounded-xl text-xs">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-indigo-950">Permission to Leave Station Sought?</span>
+                  <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${
+                    selectedRequest.isStationLeave
+                      ? "bg-indigo-100 text-indigo-800 border-indigo-300"
+                      : "bg-white text-slate-600 border-slate-200"
+                  }`}>
+                    {selectedRequest.isStationLeave ? "YES" : "NO"}
+                  </span>
+                </div>
+                {selectedRequest.isStationLeave && selectedRequest.stationLeaveDetails && (
+                  <p className="text-indigo-900 mt-1.5 text-[11px]">
+                    <strong>Destination / Travel Details:</strong> {selectedRequest.stationLeaveDetails}
+                  </p>
+                )}
               </div>
 
               {selectedRequest.reason && (
                 <div>
                   <span className="text-slate-500 font-semibold block mb-1">
-                    Employee Reason:
+                    Grounds / Reason for Leave:
                   </span>
                   <p className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-slate-700 italic">
                     "{selectedRequest.reason}"

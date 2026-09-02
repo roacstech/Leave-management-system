@@ -263,7 +263,7 @@ export default function OrganizationRequestsTable({
                             {item.applicantName}
                           </p>
                           <p className="text-2xs text-base-content/60 font-medium">
-                            {item.designation || item.applicantRole} • {item.section || item.teamName || "General Section"}
+                            {item.designation || item.applicantRole} {item.section ? `• ${item.section}` : item.teamName ? `• ${item.teamName}` : ""}
                           </p>
                         </div>
                       </div>
@@ -275,26 +275,11 @@ export default function OrganizationRequestsTable({
                         {getLeaveIcon(item.leaveType)}
                         <span>{item.leaveType}</span>
                       </div>
-                      {item.isStationLeave && (
-                        <div className="mt-0.5">
-                          <span
-                            className="inline-flex items-center gap-1 px-1.5 py-0.2 text-[9px] font-bold rounded bg-indigo-50 text-indigo-700 border border-indigo-200"
-                            title={item.stationLeaveDetails ? `Station Leave: ${item.stationLeaveDetails}` : "Permission to leave station sought"}
-                          >
-                            ✈️ Station Leave
-                          </span>
-                        </div>
-                      )}
                     </td>
 
                     {/* Dates */}
                     <td className="text-base-content/80 font-medium whitespace-nowrap">
-                      <div>{item.startDate} {item.startDate !== item.endDate ? `➔ ${item.endDate}` : ""}</div>
-                      {item.holidaysCount && item.holidaysCount > 0 ? (
-                        <span className="text-[10px] text-purple-600 font-semibold">
-                          ({item.holidaysCount} Mission {item.holidaysCount === 1 ? "Holiday" : "Holidays"})
-                        </span>
-                      ) : null}
+                      {item.startDate} {item.startDate !== item.endDate ? `➔ ${item.endDate}` : ""}
                     </td>
 
                     {/* Days */}
@@ -303,13 +288,8 @@ export default function OrganizationRequestsTable({
                     </td>
 
                     {/* Reason */}
-                    <td className="max-w-xs text-base-content/70" title={item.reason || ""}>
-                      <div className="truncate">{item.reason || "—"}</div>
-                      {item.leaveAddress && (
-                        <div className="text-[10px] text-slate-500 truncate" title={`Address: ${item.leaveAddress}`}>
-                          📍 {item.leaveAddress}
-                        </div>
-                      )}
+                    <td className="max-w-xs truncate text-base-content/70" title={item.reason || ""}>
+                      {item.reason || "—"}
                     </td>
 
                     {/* Status */}
@@ -326,38 +306,40 @@ export default function OrganizationRequestsTable({
 
                     {/* Action */}
                     <td className="text-right pr-4">
-                      {isPending ? (
-                        <div className="flex items-center justify-end gap-1.5">
-                          <button
-                            type="button"
-                            onClick={() => handleApprove(item.id)}
-                            disabled={isItemLoading}
-                            className="px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs hover:shadow active:scale-95 transition-all duration-150 cursor-pointer flex items-center gap-1 disabled:opacity-50"
-                            title="Approve Leave"
-                          >
-                            <Check className="w-3 h-3" />
-                            Approve
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setRejectingItem(item)}
-                            disabled={isItemLoading}
-                            className="px-3 py-1.5 rounded-xl text-xs font-bold bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 active:scale-95 transition-all duration-150 cursor-pointer flex items-center gap-1 disabled:opacity-50"
-                            title="Reject Leave"
-                          >
-                            <X className="w-3 h-3" />
-                            Reject
-                          </button>
-                        </div>
-                      ) : (
+                      <div className="flex items-center justify-end gap-1.5">
                         <button
                           type="button"
                           onClick={() => setTimelineItem(item)}
-                          className="px-2.5 py-1 rounded-lg text-xs font-bold text-primary hover:bg-primary/10 active:scale-95 transition-all duration-150 cursor-pointer"
+                          className="px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-base-200 hover:bg-base-300 text-base-content/80 hover:text-base-content transition-all cursor-pointer"
+                          title="View Full Leave Details"
                         >
-                          View Details
+                          Details
                         </button>
-                      )}
+                        {isPending && (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => handleApprove(item.id)}
+                              disabled={isItemLoading}
+                              className="px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs hover:shadow active:scale-95 transition-all duration-150 cursor-pointer flex items-center gap-1 disabled:opacity-50"
+                              title="Approve Leave"
+                            >
+                              <Check className="w-3 h-3" />
+                              Approve
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setRejectingItem(item)}
+                              disabled={isItemLoading}
+                              className="px-3 py-1.5 rounded-xl text-xs font-bold bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 active:scale-95 transition-all duration-150 cursor-pointer flex items-center gap-1 disabled:opacity-50"
+                              title="Reject Leave"
+                            >
+                              <X className="w-3 h-3" />
+                              Reject
+                            </button>
+                          </>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );
@@ -424,7 +406,7 @@ export default function OrganizationRequestsTable({
         </div>
       )}
 
-      {/* Timeline Modal */}
+      {/* Details & Timeline Modal */}
       <LeaveTimelineModal
         isOpen={!!timelineItem}
         onClose={() => setTimelineItem(null)}
@@ -432,15 +414,33 @@ export default function OrganizationRequestsTable({
           timelineItem
             ? {
                 id: timelineItem.id,
+                userId: timelineItem.userId,
+                applicantName: timelineItem.applicantName,
+                applicantEmail: timelineItem.applicantEmail,
+                applicantRole: timelineItem.applicantRole,
+                designation: timelineItem.designation,
+                section: timelineItem.section,
+                teamName: timelineItem.teamName,
+                leaveType: timelineItem.leaveType,
                 leaveTypeName: timelineItem.leaveType,
                 startDate: timelineItem.startDate,
                 endDate: timelineItem.endDate,
                 days: timelineItem.days,
+                workingDaysCount: timelineItem.workingDaysCount,
+                holidaysCount: timelineItem.holidaysCount,
+                reason: timelineItem.reason,
+                leaveAddress: timelineItem.leaveAddress,
+                contactPhone: timelineItem.contactPhone,
+                isStationLeave: timelineItem.isStationLeave,
+                stationLeaveDetails: timelineItem.stationLeaveDetails,
+                lastLeaveReturnDate: timelineItem.lastLeaveReturnDate,
                 status: timelineItem.status,
-                applicantName: timelineItem.applicantName,
+                createdAt: timelineItem.createdAt,
               }
             : null
         }
+        onApprove={onApprove}
+        onReject={onReject}
       />
     </section>
   );
