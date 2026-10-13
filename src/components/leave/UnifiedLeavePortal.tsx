@@ -242,15 +242,15 @@ export default function UnifiedLeavePortal({
       headers.join(","),
       ...filteredList.map((item) => {
         return [
-          `"${item.leaveType}"`,
-          `"${item.from}"`,
-          `"${item.to}"`,
+          `"${(item.leaveType || "").replace(/"/g, '""')}"`,
+          `"${(item.from || "").replace(/"/g, '""')}"`,
+          `"${(item.to || "").replace(/"/g, '""')}"`,
           `"${item.totalDays || item.appliedDays || 0}"`,
-          `"${item.status}"`,
+          `"${item.status || ""}"`,
         ].join(",");
       }),
     ].join("\n");
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
     link.setAttribute("href", url);

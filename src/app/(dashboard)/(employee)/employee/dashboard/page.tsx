@@ -396,7 +396,7 @@ export default function EmployeeDashboardPage() {
           <div className="text-2xl font-black text-slate-900">
             {loading ? "--" : `${summary.remainingDays} Days`}
           </div>
-          <div className="text-[11px] text-slate-400">Total active leave balance</div>
+          <div className="text-[11px] text-slate-400">Total Leave</div>
         </div>
 
         {/* Total Leaves Used */}

@@ -194,13 +194,13 @@ export async function GET() {
         orderBy: {
           createdAt: "desc",
         },
-        take: 6,
+        take: 50,
       }),
 
       prisma.overtimeRecord.findMany({
         where: { userId },
         orderBy: { createdAt: "desc" },
-        take: 6,
+        take: 50,
       }),
 
       prisma.leaveRequest.findMany({
@@ -248,7 +248,7 @@ export async function GET() {
           code: "CO",
         },
       })),
-    ].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()).slice(0, 6);
+    ].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()).slice(0, 50);
 
     // 6. Fetch colleagues on leave today in the same team
     const teamMembersCount = employee.teamId
