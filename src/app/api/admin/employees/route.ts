@@ -36,6 +36,8 @@ export async function GET(request: NextRequest) {
 
     if (roleParam && roleParam !== "ALL") {
       whereClause.role = roleParam;
+    } else {
+      whereClause.role = { notIn: ["ADMIN", "CEO"] };
     }
 
     if (statusParam === "ACTIVE") {
@@ -51,6 +53,8 @@ export async function GET(request: NextRequest) {
         { team: { name: { contains: searchParam } } },
       ];
     }
+
+    const baseWhere: any = { role: { notIn: ["ADMIN", "CEO"] } };
 
     const [total, employees, teams, teamLeads, roles, activeCount, inactiveCount] =
       await Promise.all([
@@ -79,9 +83,10 @@ export async function GET(request: NextRequest) {
               },
             },
           },
-          orderBy: {
-            createdAt: "desc",
-          },
+          orderBy: [
+            { createdAt: "desc" },
+            { id: "desc" },
+          ],
           skip,
           take: limit,
         }),
@@ -116,7 +121,7 @@ export async function GET(request: NextRequest) {
           },
         }),
         prisma.roleDefinition.findMany({
-          where: { isActive: true },
+          where: { isActive: true, code: { notIn: ["ADMIN", "CEO"] } },
           select: {
             id: true,
             name: true,
@@ -129,8 +134,8 @@ export async function GET(request: NextRequest) {
             name: "asc",
           },
         }),
-        prisma.user.count({ where: { isActive: true } }),
-        prisma.user.count({ where: { isActive: false } }),
+        prisma.user.count({ where: { ...baseWhere, isActive: true } }),
+        prisma.user.count({ where: { ...baseWhere, isActive: false } }),
       ]);
 
     const totalPages = Math.ceil(total / limit);

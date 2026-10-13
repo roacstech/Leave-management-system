@@ -22,6 +22,9 @@ model User {
   email           String           @unique
   password        String
   role            Role
+  designation     String?
+  section         String?
+  joiningDate     DateTime?
   teamId          Int?
   reportingToId   Int?
   isActive        Boolean          @default(true)
@@ -133,23 +136,32 @@ enum LeaveStatus {
 }
 
 model LeaveRequest {
-  id               Int         @id @default(autoincrement())
-  userId           Int
-  leaveTypeId      Int
-  startDate        DateTime
-  endDate          DateTime
-  reason           String?     @db.Text
-  status           LeaveStatus @default(PENDING_TL)
-  rejectionReason  String?     @db.Text
-  escalatedById    Int?
-  escalatedAt      DateTime?
-  escalationReason String?     @db.Text
-  approverId       Int?
-  approverRole     String?
-  approvedAt       DateTime?
-  rejectedAt       DateTime?
-  createdAt        DateTime    @default(now())
-  updatedAt        DateTime    @updatedAt
+  id                  Int         @id @default(autoincrement())
+  userId              Int
+  leaveTypeId         Int
+  startDate           DateTime
+  endDate             DateTime
+  reason              String?     @db.Text
+  status              LeaveStatus @default(PENDING_TL)
+  rejectionReason     String?     @db.Text
+  leaveAddress        String?     @db.Text
+  contactPhone        String?
+  isStationLeave      Boolean     @default(false)
+  stationLeaveDetails String?     @db.Text
+  lastLeaveReturnDate DateTime?
+  holidaysCount       Int         @default(0)
+  workingDaysCount    Float       @default(1.0)
+  isDiscretionaryHOM  Boolean     @default(false)
+  adminTitleNotes     String?     @db.Text
+  escalatedById       Int?
+  escalatedAt         DateTime?
+  escalationReason    String?     @db.Text
+  approverId          Int?
+  approverRole        String?
+  approvedAt          DateTime?
+  rejectedAt          DateTime?
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
 
   user        User       @relation(fields: [userId], references: [id])
   leaveType   LeaveType  @relation(fields: [leaveTypeId], references: [id])

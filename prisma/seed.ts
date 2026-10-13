@@ -115,7 +115,7 @@ async function main() {
   if (!existingCeo) {
     const ceo = await prisma.user.create({
       data: {
-        name: "Executive CEO",
+        name: "Mr. Yashas Ravi",
         email: "ceo@lms.com",
         password: "ceo123",
         role: "CEO",

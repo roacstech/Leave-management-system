@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   Search,
   RotateCcw,
@@ -42,7 +42,17 @@ export interface LeaveRecord {
   totalDays: number;
   status: "Approved" | "Pending" | "Rejected" | "Cancelled";
   applicantName?: string;
+  applicantEmail?: string;
+  designation?: string | null;
+  section?: string | null;
   reason?: string;
+  leaveAddress?: string;
+  contactPhone?: string;
+  isStationLeave?: boolean;
+  stationLeaveDetails?: string;
+  lastLeaveReturnDate?: string;
+  holidaysCount?: number;
+  workingDaysCount?: number;
 }
 
 interface UnifiedLeavePortalProps {
@@ -74,6 +84,19 @@ export default function UnifiedLeavePortal({
   // Modals
   const [isApplyDrawerOpen, setIsApplyDrawerOpen] = useState(false);
   const [selectedTimelineRecord, setSelectedTimelineRecord] = useState<LeaveRecord | null>(null);
+
+  // Lock background scroll when drawer or modal is open
+  const isAnyModalOpen = isApplyDrawerOpen || !!selectedTimelineRecord;
+  useEffect(() => {
+    if (isAnyModalOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isAnyModalOpen]);
 
   const rawList = records;
 
@@ -629,26 +652,38 @@ export default function UnifiedLeavePortal({
         }}
       />
 
-      {/* Leave Timeline Modal */}
+      {/* Leave Details & Timeline Modal */}
       <LeaveTimelineModal
         isOpen={!!selectedTimelineRecord}
         onClose={() => setSelectedTimelineRecord(null)}
         leaveDetails={
           selectedTimelineRecord
             ? {
-              id: selectedTimelineRecord.id,
-              leaveTypeName: selectedTimelineRecord.leaveType,
-              startDate: selectedTimelineRecord.from,
-              endDate: selectedTimelineRecord.to,
-              days: selectedTimelineRecord.totalDays,
-              status:
-                selectedTimelineRecord.status === "Approved"
-                  ? "APPROVED"
-                  : selectedTimelineRecord.status === "Rejected"
+                id: selectedTimelineRecord.id,
+                leaveTypeName: selectedTimelineRecord.leaveType,
+                leaveType: selectedTimelineRecord.leaveType,
+                startDate: selectedTimelineRecord.from,
+                endDate: selectedTimelineRecord.to,
+                days: selectedTimelineRecord.totalDays,
+                workingDaysCount: selectedTimelineRecord.workingDaysCount,
+                holidaysCount: selectedTimelineRecord.holidaysCount,
+                status:
+                  selectedTimelineRecord.status === "Approved"
+                    ? "APPROVED"
+                    : selectedTimelineRecord.status === "Rejected"
                     ? "REJECTED"
                     : "PENDING_ADMIN",
-              applicantName: selectedTimelineRecord.applicantName || "Staff Member",
-            }
+                applicantName: selectedTimelineRecord.applicantName || "Staff Member",
+                applicantEmail: selectedTimelineRecord.applicantEmail,
+                designation: selectedTimelineRecord.designation,
+                section: selectedTimelineRecord.section,
+                reason: selectedTimelineRecord.reason,
+                leaveAddress: selectedTimelineRecord.leaveAddress,
+                contactPhone: selectedTimelineRecord.contactPhone,
+                isStationLeave: selectedTimelineRecord.isStationLeave,
+                stationLeaveDetails: selectedTimelineRecord.stationLeaveDetails,
+                lastLeaveReturnDate: selectedTimelineRecord.lastLeaveReturnDate,
+              }
             : null
         }
       />

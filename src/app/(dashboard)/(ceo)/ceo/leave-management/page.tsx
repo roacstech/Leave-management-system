@@ -326,7 +326,7 @@ export default function CEOLeaveManagementPage() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50/70 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-                  <th className="py-3 px-4">Employee</th>
+                  <th className="py-3 px-4">Officer</th>
                   <th className="py-3 px-4">Role & Team</th>
                   <th className="py-3 px-4">Leave Type</th>
                   <th className="py-3 px-4">Duration & Schedule</th>
@@ -567,7 +567,17 @@ export default function CEOLeaveManagementPage() {
                 </div>
                 <div>
                   <span className="text-slate-400 block text-[10px] uppercase font-bold">Current Status</span>
-                  <span className="font-bold text-slate-900">{selectedLeave.status}</span>
+                  <span className="font-bold text-slate-900">
+                    {selectedLeave.status === "PENDING_ADMIN" || selectedLeave.status === "PENDING" || selectedLeave.status === "PENDING_TL"
+                      ? "Pending for Approval"
+                      : selectedLeave.status === "APPROVED"
+                      ? "Approved"
+                      : selectedLeave.status === "REJECTED"
+                      ? "Rejected"
+                      : selectedLeave.status === "CANCELLED"
+                      ? "Cancelled"
+                      : selectedLeave.status}
+                  </span>
                 </div>
               </div>
 

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { getSystemSettings, formatDateWithPattern } from "@/lib/settings";
+import { getSystemSettings, formatDateWithPattern, calculateWorkingDays } from "@/lib/settings";
 import { createNotification } from "@/lib/notifications";
 import { sendLeaveDecisionEmail } from "@/lib/mail";
 
@@ -97,13 +97,22 @@ export async function PATCH(
     const formattedStart = formatDateWithPattern(existing.startDate, settings.dateFormat, settings.timezone);
     const formattedEnd = formatDateWithPattern(existing.endDate, settings.dateFormat, settings.timezone);
 
-    const daysDiff = Math.max(
-      1,
-      Math.round(
-        (new Date(existing.endDate).getTime() - new Date(existing.startDate).getTime()) /
-          (1000 * 60 * 60 * 24)
-      ) + 1
-    );
+    const holidays = await prisma.holiday.findMany({
+      where: {
+        OR: [
+          { fromDate: { lte: existing.endDate }, toDate: { gte: existing.startDate } },
+          { date: { gte: existing.startDate, lte: existing.endDate } },
+        ],
+      },
+    });
+
+    const isHalfDay = existing.reason?.toLowerCase().includes("[half day]") || false;
+    const daysDiff = calculateWorkingDays({
+      startDate: existing.startDate,
+      endDate: existing.endDate,
+      isHalfDay,
+      holidays,
+    });
     const leaveYear = new Date(existing.startDate).getFullYear();
 
     // Execute atomic transaction

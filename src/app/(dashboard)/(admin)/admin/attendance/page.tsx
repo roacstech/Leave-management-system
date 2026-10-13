@@ -320,6 +320,19 @@ export default function AttendanceAdminPage() {
   const [detailLoading, setDetailLoading] = useState(false);
   const [actionMenuOpen, setActionMenuOpen] = useState<number | null>(null);
 
+  // Lock background scroll when modal or drawer is open
+  const isAnyModalOpen = addModalOpen || editModalOpen || detailDrawerOpen;
+  useEffect(() => {
+    if (isAnyModalOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isAnyModalOpen]);
+
   // ── Add form ──
   const [addForm, setAddForm] = useState({
     userId: "",
@@ -740,7 +753,7 @@ export default function AttendanceAdminPage() {
               </div>
 
               {/* Export + Reset */}
-              <div className="flex items-center gap-2 ml-auto">
+              <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end sm:ml-auto">
                 <div className="flex items-center gap-1">
                   <button onClick={exportCSV} title="Export CSV" className="flex items-center gap-1.5 px-2.5 py-2 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 text-xs font-medium transition-all">
                     <Download className="w-3.5 h-3.5" /> CSV

@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ success: true, notifications: [], unreadCount: 0 });
     }
 
     const userId = Number(session.user.id);

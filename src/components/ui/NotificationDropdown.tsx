@@ -22,13 +22,14 @@ export default function NotificationDropdown() {
   const fetchNotifications = async () => {
     try {
       const res = await fetch("/api/notifications");
-      const data = await res.json();
-      if (data.success) {
+      if (!res.ok) return;
+      const data = await res.json().catch(() => null);
+      if (data && data.success) {
         setNotifications(data.notifications || []);
         setUnreadCount(data.unreadCount || 0);
       }
-    } catch (err) {
-      console.warn("Could not load notifications:", err);
+    } catch {
+      // Ignore network errors gracefully during dev reloads/unmounts
     }
   };
 

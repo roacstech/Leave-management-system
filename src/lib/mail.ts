@@ -307,22 +307,38 @@ export function renderRealCompanyEmail(opts: CompanyEmailOptions): string {
 export async function sendLeaveAppliedEmail({
   applicantName,
   applicantEmail,
+  designation,
+  section,
   leaveType,
   startDate,
   endDate,
   days,
   reason,
+  leaveAddress,
+  contactPhone,
+  isStationLeave,
+  stationLeaveDetails,
+  holidaysCount,
+  workingDaysCount,
   recipients,
   recipientRole,
   settings,
 }: {
   applicantName: string;
   applicantEmail?: string;
+  designation?: string | null;
+  section?: string | null;
   leaveType: string;
   startDate: string;
   endDate: string;
   days: number;
   reason?: string | null;
+  leaveAddress?: string | null;
+  contactPhone?: string | null;
+  isStationLeave?: boolean;
+  stationLeaveDetails?: string | null;
+  holidaysCount?: number;
+  workingDaysCount?: number;
   recipients: string[];
   recipientRole?: string;
   settings?: SystemSettingsData;
@@ -335,6 +351,23 @@ export async function sendLeaveAppliedEmail({
   const isExecutive = recipientRole === "ADMIN" || recipientRole === "CEO";
   const subject = `New Leave Request: ${applicantName} (${leaveType} - ${days} day${days === 1 ? "" : "s"})`;
   
+  const rows: { label: string; value: string; isBold?: boolean }[] = [
+    { label: "Applicant Name", value: applicantName, isBold: true },
+    ...(designation || section
+      ? [{ label: "Designation & Section", value: `${designation || "Staff"} • ${section || "Mission Section"}` }]
+      : []),
+    ...(applicantEmail ? [{ label: "Applicant Email", value: applicantEmail }] : []),
+    { label: "Leave Type", value: leaveType },
+    { label: "Duration", value: `${days} ${days === 1 ? "Working Day" : "Working Days"}${holidaysCount ? ` (${holidaysCount} Mission Holidays)` : ""}` },
+    { label: "Date Range (Inclusive)", value: `${startDate} to ${endDate}` },
+    ...(leaveAddress ? [{ label: "Leave Address", value: leaveAddress }] : []),
+    ...(contactPhone ? [{ label: "Contact Phone No.", value: contactPhone }] : []),
+    ...(isStationLeave
+      ? [{ label: "Station Leave Sought", value: `YES — Destination: ${stationLeaveDetails || "Out of Station"}` }]
+      : []),
+    { label: "Status", value: "Pending Approval", isBold: true },
+  ];
+
   const html = renderRealCompanyEmail({
     title: subject,
     statusBadge: {
@@ -343,17 +376,10 @@ export async function sendLeaveAppliedEmail({
     },
     headline: "New Leave Application",
     subheadline: `<strong>${applicantName}</strong> has submitted a new leave application awaiting your review and approval.`,
-    rows: [
-      { label: "Employee Name", value: applicantName, isBold: true },
-      ...(applicantEmail ? [{ label: "Employee Email", value: applicantEmail }] : []),
-      { label: "Leave Type", value: leaveType },
-      { label: "Duration", value: `${days} ${days === 1 ? "Working Day" : "Working Days"}` },
-      { label: "Date Range", value: `${startDate} to ${endDate}` },
-      { label: "Status", value: "Pending Approval", isBold: true },
-    ],
+    rows,
     noteBox: reason
       ? {
-          label: "Applicant Reason",
+          label: "Grounds / Reason for Leave",
           text: reason,
           isAlert: false,
         }

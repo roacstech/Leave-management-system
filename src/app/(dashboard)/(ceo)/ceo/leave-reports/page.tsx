@@ -239,7 +239,7 @@ export default function CEOLeaveReportsPage() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50/70 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-                <th className="py-3 px-4">Employee</th>
+                <th className="py-3 px-4">Officer</th>
                 <th className="py-3 px-4">Department</th>
                 <th className="py-3 px-4">Leave Type</th>
                 <th className="py-3 px-4">Schedule</th>

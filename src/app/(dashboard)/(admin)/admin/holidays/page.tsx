@@ -17,6 +17,19 @@ export default function HolidaysPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
 
+  // Lock background scroll when modal is open
+  const isAnyModalOpen = isModalOpen || !!holidayToDelete;
+  useEffect(() => {
+    if (isAnyModalOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isAnyModalOpen]);
+
   // Form & modal error state
   const [formData, setFormData] = useState({ name: "", fromDate: "", toDate: "" });
   const [modalError, setModalError] = useState<string | null>(null);
@@ -420,7 +433,7 @@ export default function HolidaysPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs animate-fadeIn">
           <form
             onSubmit={handleSubmit}
-            className="w-full max-w-md bg-white border border-slate-200 rounded-2xl p-6 shadow-2xl space-y-4 relative"
+            className="w-full max-w-md bg-white border border-slate-200 rounded-2xl p-6 shadow-2xl space-y-4 relative max-h-[90vh] overflow-y-auto"
           >
             {isSaving && (
               <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/50 backdrop-blur-xs rounded-2xl">

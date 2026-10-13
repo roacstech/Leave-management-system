@@ -111,7 +111,7 @@ export default function CEOEmployeesPage() {
               <span>Executive HR Directory</span>
             </div>
             <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-              Company Workforce & TL Roster
+              Company Officers &amp; Staff Roster
             </h1>
             <p className="text-xs text-slate-500 mt-0.5">
               Full organizational directory with manager hierarchy, leave quotas, and live presence status.
@@ -121,7 +121,7 @@ export default function CEOEmployeesPage() {
           <div className="flex items-center gap-3 self-start sm:self-auto">
             <div className="px-3.5 py-1.5 rounded-lg bg-slate-900 text-white font-bold text-xs shadow-2xs flex items-center gap-2">
               <Users className="w-3.5 h-3.5 text-indigo-400" />
-              <span>{totalItems} Total Staff</span>
+              <span>{totalItems} Total Officers</span>
             </div>
           </div>
         </div>
@@ -193,11 +193,11 @@ export default function CEOEmployeesPage() {
       {/* 2. EMPLOYEES TABLE */}
       <div className="rounded-xl bg-white border border-slate-200 overflow-hidden shadow-xs">
         {loading ? (
-          <div className="p-12 text-center text-xs text-slate-400">Loading company roster...</div>
+          <div className="p-12 text-center text-xs text-slate-400">Loading officers roster...</div>
         ) : employees.length === 0 ? (
           <div className="p-12 text-center">
             <Users className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-            <p className="font-semibold text-xs text-slate-700">No staff members found</p>
+            <p className="font-semibold text-xs text-slate-700">No officers found</p>
             <p className="text-[11px] text-slate-400 mt-0.5">Try clearing filters or search terms.</p>
           </div>
         ) : (
@@ -205,7 +205,7 @@ export default function CEOEmployeesPage() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50/70 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-                  <th className="py-3 px-4">Employee</th>
+                  <th className="py-3 px-4">Officer</th>
                   <th className="py-3 px-4">Role</th>
                   <th className="py-3 px-4">Assigned Team</th>
                   <th className="py-3 px-4">Reporting TL</th>

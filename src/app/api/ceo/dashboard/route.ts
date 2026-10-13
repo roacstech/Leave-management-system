@@ -163,6 +163,31 @@ export async function GET() {
       };
     });
 
+    // Day-based consumption breakdown (Monday to Sunday)
+    const dayOfWeekCounts: { [key: number]: number } = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
+    leaveTypeUsage.forEach((lt) => {
+      lt.leaveRequests.forEach((req) => {
+        const s = new Date(req.startDate);
+        const e = new Date(req.endDate);
+        const cur = new Date(s);
+        while (cur <= e) {
+          const dayIdx = cur.getDay(); // 0: Sun, 1: Mon, 2: Tue, 3: Wed, 4: Thu, 5: Fri, 6: Sat
+          dayOfWeekCounts[dayIdx] = (dayOfWeekCounts[dayIdx] || 0) + 1;
+          cur.setDate(cur.getDate() + 1);
+        }
+      });
+    });
+
+    const dayBasedStats = [
+      { day: "Monday", code: "Mon", shortName: "Mon", daysTaken: dayOfWeekCounts[1] || 0 },
+      { day: "Tuesday", code: "Tue", shortName: "Tue", daysTaken: dayOfWeekCounts[2] || 0 },
+      { day: "Wednesday", code: "Wed", shortName: "Wed", daysTaken: dayOfWeekCounts[3] || 0 },
+      { day: "Thursday", code: "Thu", shortName: "Thu", daysTaken: dayOfWeekCounts[4] || 0 },
+      { day: "Friday", code: "Fri", shortName: "Fri", daysTaken: dayOfWeekCounts[5] || 0 },
+      { day: "Saturday", code: "Sat", shortName: "Sat", daysTaken: dayOfWeekCounts[6] || 0 },
+      { day: "Sunday", code: "Sun", shortName: "Sun", daysTaken: dayOfWeekCounts[0] || 0 },
+    ];
+
     // Team Leads breakdown
     const tlMetrics = teamLeads.map((tl) => {
       return {
@@ -218,6 +243,7 @@ export async function GET() {
         };
       }),
       categoryStats,
+      dayBasedStats,
       tlMetrics,
       recentActivity: recentAuditLogs.map((log) => ({
         id: log.id,

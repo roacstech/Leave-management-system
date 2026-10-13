@@ -21,6 +21,7 @@ import {
   Info,
   Shield,
   FileSpreadsheet,
+  Eye,
 } from "lucide-react";
 import { useSettings } from "@/contexts/SettingsContext";
 import ThemedSelect from "@/components/ui/ThemedSelect";
@@ -41,6 +42,13 @@ interface LeaveRequestItem {
   startDate: string;
   endDate: string;
   reason: string | null;
+  leaveAddress?: string | null;
+  contactPhone?: string | null;
+  isStationLeave?: boolean;
+  stationLeaveDetails?: string | null;
+  lastLeaveReturnDate?: string | null;
+  holidaysCount?: number;
+  workingDaysCount?: number;
   status: "PENDING_TL" | "PENDING_ADMIN" | "APPROVED" | "REJECTED" | "CANCELLED";
   rejectionReason: string | null;
   createdAt: string;
@@ -48,6 +56,9 @@ interface LeaveRequestItem {
     id: number;
     name: string;
     email: string;
+    designation?: string | null;
+    section?: string | null;
+    joiningDate?: string | null;
     team?: { id: number; name: string } | null;
     leaveBalances?: LeaveBalance[];
   };
@@ -110,6 +121,19 @@ export default function TLLeaveRequestsPage() {
   // Detail Modal
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<LeaveRequestItem | null>(null);
+
+  // Lock background scroll when modal is open
+  const isAnyModalOpen = actionModal.open || detailModalOpen;
+  useEffect(() => {
+    if (isAnyModalOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isAnyModalOpen]);
 
   const showToast = (text: string, type: "success" | "error" = "success") => {
     setToast({ text, type });
@@ -445,67 +469,72 @@ export default function TLLeaveRequestsPage() {
 
                       {/* Actions */}
                       <td className="py-3 px-4 text-right">
-                        {isPending ? (
-                          <div className="flex items-center justify-end gap-1.5">
-                            {/* Approve */}
-                            <button
-                              onClick={() => {
-                                setActionNote("");
-                                setActionModal({
-                                  open: true,
-                                  type: "APPROVE",
-                                  request: req,
-                                });
-                              }}
-                              className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs shadow-2xs transition-all flex items-center gap-1"
-                              title="Approve request"
-                            >
-                              <Check className="w-3 h-3" />
-                              <span>Approve</span>
-                            </button>
+                        <div className="flex items-center justify-end gap-1.5">
+                          {isPending && (
+                            <>
+                              {/* Approve */}
+                              <button
+                                onClick={() => {
+                                  setActionNote("");
+                                  setActionModal({
+                                    open: true,
+                                    type: "APPROVE",
+                                    request: req,
+                                  });
+                                }}
+                                className="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs shadow-2xs transition-all flex items-center gap-1 cursor-pointer active:scale-95"
+                                title="Approve request"
+                              >
+                                <Check className="w-3.5 h-3.5" />
+                                <span>Approve</span>
+                              </button>
 
-                            {/* Reject */}
-                            <button
-                              onClick={() => {
-                                setActionNote("");
-                                setActionModal({
-                                  open: true,
-                                  type: "REJECT",
-                                  request: req,
-                                });
-                              }}
-                              className="px-2.5 py-1 rounded-lg border border-slate-200 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 text-slate-700 font-medium text-xs shadow-2xs transition-all flex items-center gap-1"
-                              title="Reject with reason"
-                            >
-                              <X className="w-3 h-3" />
-                              <span>Reject</span>
-                            </button>
+                              {/* Reject */}
+                              <button
+                                onClick={() => {
+                                  setActionNote("");
+                                  setActionModal({
+                                    open: true,
+                                    type: "REJECT",
+                                    request: req,
+                                  });
+                                }}
+                                className="px-2.5 py-1.5 rounded-lg border border-slate-200 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 text-slate-700 font-medium text-xs shadow-2xs transition-all flex items-center gap-1 cursor-pointer active:scale-95"
+                                title="Reject with reason"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                                <span>Reject</span>
+                              </button>
 
-                            {/* Switch / Escalate to Admin */}
-                            <button
-                              onClick={() => {
-                                setActionNote("");
-                                setActionModal({
-                                  open: true,
-                                  type: "ESCALATE",
-                                  request: req,
-                                });
-                              }}
-                              className="px-2 py-1 rounded-lg border border-slate-200 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-200 text-slate-600 font-medium text-xs shadow-2xs transition-all flex items-center gap-1"
-                              title="Switch/Escalate to Administrator"
-                            >
-                              <ArrowUpRight className="w-3.5 h-3.5 text-indigo-600" />
-                              <span className="hidden sm:inline">To Admin</span>
-                            </button>
-                          </div>
-                        ) : (
+                              {/* Switch / Escalate to Admin */}
+                              <button
+                                onClick={() => {
+                                  setActionNote("");
+                                  setActionModal({
+                                    open: true,
+                                    type: "ESCALATE",
+                                    request: req,
+                                  });
+                                }}
+                                className="px-2 py-1.5 rounded-lg border border-slate-200 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-200 text-slate-600 font-medium text-xs shadow-2xs transition-all flex items-center gap-1 cursor-pointer active:scale-95"
+                                title="Switch/Escalate to Administrator"
+                              >
+                                <ArrowUpRight className="w-3.5 h-3.5 text-indigo-600" />
+                                <span className="hidden sm:inline">To Admin</span>
+                              </button>
+                            </>
+                          )}
+
+                          {/* Eye Icon Button for Full Details View */}
                           <button
+                            type="button"
                             onClick={() => openDetail(req)}
-                            className="px-2.5 py-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-2xs transition-all"
+                            className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg border border-slate-200 bg-white shadow-2xs transition-colors cursor-pointer"
+                            title="View Full Application Details"
                           >
-                            Details
+                            <Eye className="w-4 h-4" />
                           </button>
-                        )}
+                        </div>
                       </td>
                     </tr>
                   );
@@ -573,7 +602,7 @@ export default function TLLeaveRequestsPage() {
       {/* 5. ACTION MODAL (APPROVE / REJECT / ESCALATE) */}
       {actionModal.open && actionModal.request && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
-          <div className="w-full max-w-md bg-white rounded-2xl border border-slate-200 shadow-xl overflow-hidden animate-in fade-in zoom-in-95">
+          <div className="w-full max-w-md bg-white rounded-2xl border border-slate-200 shadow-xl overflow-hidden animate-in fade-in zoom-in-95 max-h-[90vh] overflow-y-auto">
             {/* Header */}
             <div
               className={`p-5 border-b flex items-center justify-between ${
@@ -771,13 +800,34 @@ export default function TLLeaveRequestsPage() {
               </button>
             </div>
 
-            <div className="p-5 space-y-4 text-xs">
-              <div className="grid grid-cols-2 gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200">
+            <div className="p-5 space-y-4 text-xs max-h-[75vh] overflow-y-auto">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200">
+                <div>
+                  <span className="text-slate-400 block text-[10px] uppercase font-bold">
+                    Applicant
+                  </span>
+                  <span className="font-bold text-slate-900 text-xs">
+                    {selectedRequest.user.name}
+                  </span>
+                  <span className="text-[11px] text-slate-500 block">
+                    {selectedRequest.user.email}
+                  </span>
+                </div>
+
+                <div>
+                  <span className="text-slate-400 block text-[10px] uppercase font-bold">
+                    Designation & Section
+                  </span>
+                  <span className="font-bold text-slate-900 text-xs">
+                    {selectedRequest.user.designation || "Local Staff"} • {selectedRequest.user.section || selectedRequest.user.team?.name || "General Section"}
+                  </span>
+                </div>
+
                 <div>
                   <span className="text-slate-400 block text-[10px] uppercase font-bold">
                     Leave Type
                   </span>
-                  <span className="font-bold text-slate-900 text-xs">
+                  <span className="font-bold text-indigo-700 text-xs">
                     {selectedRequest.leaveType.name} ({selectedRequest.leaveType.code})
                   </span>
                 </div>
@@ -793,7 +843,7 @@ export default function TLLeaveRequestsPage() {
 
                 <div>
                   <span className="text-slate-400 block text-[10px] uppercase font-bold">
-                    Date Range
+                    Requested Dates (Inclusive)
                   </span>
                   <span className="font-semibold text-slate-800 text-xs">
                     {formatDate(selectedRequest.startDate)} to {formatDate(selectedRequest.endDate)}
@@ -805,15 +855,80 @@ export default function TLLeaveRequestsPage() {
                     Duration
                   </span>
                   <span className="font-semibold text-slate-800 text-xs">
-                    {calculateDays(selectedRequest.startDate, selectedRequest.endDate)} Days
+                    {selectedRequest.workingDaysCount || calculateDays(selectedRequest.startDate, selectedRequest.endDate)} Working Days
+                    {selectedRequest.holidaysCount && selectedRequest.holidaysCount > 0 ? ` (${selectedRequest.holidaysCount} Holidays)` : ""}
                   </span>
                 </div>
+
+                {selectedRequest.user.joiningDate && (
+                  <div>
+                    <span className="text-slate-400 block text-[10px] uppercase font-bold">
+                      Continuous Service Since
+                    </span>
+                    <span className="font-semibold text-slate-800 text-xs">
+                      {formatDate(selectedRequest.user.joiningDate)}
+                    </span>
+                  </div>
+                )}
+
+                {selectedRequest.lastLeaveReturnDate && (
+                  <div>
+                    <span className="text-slate-400 block text-[10px] uppercase font-bold">
+                      Returned from Last Leave
+                    </span>
+                    <span className="font-semibold text-slate-800 text-xs">
+                      {formatDate(selectedRequest.lastLeaveReturnDate)}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Leave Address & Contact Info */}
+              {(selectedRequest.leaveAddress || selectedRequest.contactPhone) && (
+                <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1.5 text-xs">
+                  <span className="font-bold text-slate-700 block text-[10px] uppercase tracking-wider">
+                    Leave Address & Contact Details
+                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-slate-800">
+                    {selectedRequest.leaveAddress && (
+                      <div>
+                        <span className="text-[11px] text-slate-500 block">Address during leave:</span>
+                        <span className="font-medium">{selectedRequest.leaveAddress}</span>
+                      </div>
+                    )}
+                    {selectedRequest.contactPhone && (
+                      <div>
+                        <span className="text-[11px] text-slate-500 block">Phone / Mobile No:</span>
+                        <span className="font-medium">{selectedRequest.contactPhone}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Station Leave Details */}
+              <div className="p-3 bg-indigo-50/70 border border-indigo-100 rounded-xl text-xs">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-indigo-950">Permission to Leave Station Sought?</span>
+                  <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${
+                    selectedRequest.isStationLeave
+                      ? "bg-indigo-100 text-indigo-800 border-indigo-300"
+                      : "bg-white text-slate-600 border-slate-200"
+                  }`}>
+                    {selectedRequest.isStationLeave ? "YES" : "NO"}
+                  </span>
+                </div>
+                {selectedRequest.isStationLeave && selectedRequest.stationLeaveDetails && (
+                  <p className="text-indigo-900 mt-1.5 text-[11px]">
+                    <strong>Destination / Travel Details:</strong> {selectedRequest.stationLeaveDetails}
+                  </p>
+                )}
               </div>
 
               {selectedRequest.reason && (
                 <div>
                   <span className="text-slate-500 font-semibold block mb-1">
-                    Employee Reason:
+                    Grounds / Reason for Leave:
                   </span>
                   <p className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-slate-700 italic">
                     "{selectedRequest.reason}"
@@ -857,14 +972,58 @@ export default function TLLeaveRequestsPage() {
               )}
             </div>
 
-            <div className="p-4 bg-slate-50 border-t border-slate-100 flex justify-end">
+            <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
               <button
                 type="button"
                 onClick={() => setDetailModalOpen(false)}
-                className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-white transition-all"
+                className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-white transition-all cursor-pointer"
               >
                 Close
               </button>
+
+              {selectedRequest.status === "PENDING_TL" && (
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const req = selectedRequest;
+                      setDetailModalOpen(false);
+                      setActionNote("");
+                      setActionModal({ open: true, type: "REJECT", request: req });
+                    }}
+                    className="px-3.5 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer active:scale-95"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                    <span>Reject</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const req = selectedRequest;
+                      setDetailModalOpen(false);
+                      setActionNote("");
+                      setActionModal({ open: true, type: "ESCALATE", request: req });
+                    }}
+                    className="px-3.5 py-2 rounded-xl border border-slate-200 bg-white hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-200 text-slate-700 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer active:scale-95"
+                  >
+                    <ArrowUpRight className="w-3.5 h-3.5 text-indigo-600" />
+                    <span>To Admin</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const req = selectedRequest;
+                      setDetailModalOpen(false);
+                      setActionNote("");
+                      setActionModal({ open: true, type: "APPROVE", request: req });
+                    }}
+                    className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer active:scale-95"
+                  >
+                    <Check className="w-3.5 h-3.5" />
+                    <span>Approve Leave</span>
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>

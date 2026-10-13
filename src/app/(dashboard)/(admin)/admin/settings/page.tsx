@@ -509,7 +509,7 @@ export default function AdminSettingsPage() {
               <button
                 type="button"
                 onClick={() => setIsEditing(true)}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary hover:opacity-90 text-primary-content text-xs font-bold transition-all shadow-xs cursor-pointer"
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all active:scale-95 shadow-xs cursor-pointer"
               >
                 <Edit3 className="w-3.5 h-3.5" />
                 Edit Settings
