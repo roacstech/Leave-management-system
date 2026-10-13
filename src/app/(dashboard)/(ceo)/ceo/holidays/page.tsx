@@ -75,16 +75,11 @@ export default function CEOHolidaysPage() {
         {/* Header Row */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200 text-[10px] font-semibold mb-1">
-              <CalendarDays className="w-3 h-3" />
-              <span>Official Company Roster</span>
-            </div>
+           
             <h1 className="text-xl font-bold text-slate-900 tracking-tight">
               Corporate Public Holidays Calendar
             </h1>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Official paid non-working days and statutory company closures for Year {currentYear}.
-            </p>
+            
           </div>
 
           <div className="flex items-center gap-2 self-start sm:self-auto">

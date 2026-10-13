@@ -157,14 +157,12 @@ export default function CEODashboardPage() {
       {/* 1. Header Banner */}
       <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200 text-[10px] font-semibold mb-1">
+          {/* <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200 text-[10px] font-semibold mb-1">
             <Sparkles className="w-3 h-3 text-indigo-600" />
             <span>Executive Business Overview</span>
-          </div>
+          </div> */}
           <h1 className="text-xl font-bold text-slate-900 tracking-tight">Head Of Chancery</h1>
-          <p className="text-xs text-slate-500 mt-0.5 max-w-xl">
-            Monitor real-time company workforce presence, departmental outage capacity, and review high-priority leave authorizations.
-          </p>
+         
         </div>
 
         {/* <div className="flex items-center gap-3 self-start md:self-auto">

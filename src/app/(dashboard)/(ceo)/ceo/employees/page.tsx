@@ -106,16 +106,11 @@ export default function CEOEmployeesPage() {
         {/* Header Row */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200 text-[10px] font-semibold mb-1">
-              <Users className="w-3 h-3" />
-              <span>Executive HR Directory</span>
-            </div>
+          
             <h1 className="text-xl font-bold text-slate-900 tracking-tight">
               Company Officers &amp; Staff Roster
             </h1>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Full organizational directory with manager hierarchy, leave quotas, and live presence status.
-            </p>
+            
           </div>
 
           <div className="flex items-center gap-3 self-start sm:self-auto">

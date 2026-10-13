@@ -318,16 +318,11 @@ export default function CEOLeaveRequestsPage() {
         {/* Header Row */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200 text-[10px] font-semibold mb-1">
-              <CalendarCheck2 className="w-3 h-3" />
-              <span>CEO Executive Authorization</span>
-            </div>
+           
             <h1 className="text-xl font-bold text-slate-900 tracking-tight">
               Admin & Executive Leave Requests
             </h1>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Review and authorize leave applications submitted by Administrators and Team Leads.
-            </p>
+           
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5 self-start md:self-auto">
