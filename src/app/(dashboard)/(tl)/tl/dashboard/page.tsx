@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import Link from "next/link";
 import {
   Users,
@@ -11,8 +11,102 @@ import {
   TrendingUp,
   Activity,
   ArrowRight,
+  ArrowUpRight,
+  Building2,
+  CalendarCheck,
+  Sparkles,
+  AlertCircle,
+  FileText,
+  Calendar,
 } from "lucide-react";
 import TeamCalendarWidget from "@/components/tl/TeamCalendarWidget";
+
+// US Flag Miniature SVG
+function USFlagIcon({ className = "w-4 h-3 shrink-0 rounded-xs shadow-2xs" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 741 390" className={className}>
+      <rect width="741" height="390" fill="#B22234" />
+      <path d="M0,30h741v30H0zM0,90h741v30H0zM0,150h741v30H0zM0,210h741v30H0zM0,270h741v30H0zM0,330h741v30H0z" fill="#FFFFFF" />
+      <rect width="296.4" height="210" fill="#3C3B6E" />
+      <g fill="#FFFFFF">
+        {[
+          [24.7, 17.5], [74.1, 17.5], [123.5, 17.5], [172.9, 17.5], [222.3, 17.5], [271.7, 17.5],
+          [49.4, 35], [98.8, 35], [148.2, 35], [197.6, 35], [247, 35],
+          [24.7, 52.5], [74.1, 52.5], [123.5, 52.5], [172.9, 52.5], [222.3, 52.5], [271.7, 52.5],
+          [49.4, 70], [98.8, 70], [148.2, 70], [197.6, 70], [247, 70],
+          [24.7, 87.5], [74.1, 87.5], [123.5, 87.5], [172.9, 87.5], [222.3, 87.5], [271.7, 87.5],
+          [49.4, 105], [98.8, 105], [148.2, 105], [197.6, 105], [247, 105],
+          [24.7, 122.5], [74.1, 122.5], [123.5, 122.5], [172.9, 122.5], [222.3, 122.5], [271.7, 122.5],
+          [49.4, 140], [98.8, 140], [148.2, 140], [197.6, 140], [247, 140],
+          [24.7, 157.5], [74.1, 157.5], [123.5, 157.5], [172.9, 157.5], [222.3, 157.5], [271.7, 157.5],
+          [49.4, 175], [98.8, 175], [148.2, 175], [197.6, 175], [247, 175],
+          [24.7, 192.5], [74.1, 192.5], [123.5, 192.5], [172.9, 192.5], [222.3, 192.5], [271.7, 192.5],
+        ].map(([cx, cy], idx) => (
+          <circle key={idx} cx={cx} cy={cy} r="6" />
+        ))}
+      </g>
+    </svg>
+  );
+}
+
+// India Flag Miniature SVG
+function IndiaFlagIcon({ className = "w-4 h-3 shrink-0 rounded-xs shadow-2xs" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 900 600" className={className}>
+      <rect width="900" height="200" fill="#FF9933" />
+      <rect y="200" width="900" height="200" fill="#FFFFFF" />
+      <rect y="400" width="900" height="200" fill="#128807" />
+      <circle cx="450" cy="300" r="60" fill="none" stroke="#000088" strokeWidth="6" />
+      <circle cx="450" cy="300" r="12" fill="#000088" />
+      <g stroke="#000088" strokeWidth="2">
+        {Array.from({ length: 24 }).map((_, i) => (
+          <line
+            key={i}
+            x1="450"
+            y1="300"
+            x2={450 + 60 * Math.cos((i * 15 * Math.PI) / 180)}
+            y2={300 + 60 * Math.sin((i * 15 * Math.PI) / 180)}
+          />
+        ))}
+      </g>
+    </svg>
+  );
+}
+
+// Formatter matching Indian Embassy website format: "Thu, 27 Aug 2026, 3:23:46 am EDT"
+function formatEmbassyTime(date: Date, timeZone: string, zoneAbbr?: string) {
+  try {
+    const parts = new Intl.DateTimeFormat("en-GB", {
+      timeZone,
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: true,
+    }).formatToParts(date);
+
+    const map: Record<string, string> = {};
+    parts.forEach((p) => {
+      map[p.type] = p.value;
+    });
+
+    const dayPeriod = (map.dayPeriod || "").toLowerCase();
+    const abbr = zoneAbbr ? ` ${zoneAbbr}` : "";
+    return `${map.weekday}, ${map.day} ${map.month} ${map.year}, ${map.hour}:${map.minute}:${map.second} ${dayPeriod}${abbr}`;
+  } catch {
+    return date.toLocaleTimeString("en-US");
+  }
+}
+
+function getGreeting(date: Date) {
+  const hour = date.getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 17) return "Good afternoon";
+  return "Good evening";
+}
 
 interface MonthlyTrend {
   month: string;
@@ -33,6 +127,26 @@ interface LeaveTypeStat {
   annualAllocation: number;
   _count: {
     leaveRequests: number;
+  };
+}
+
+interface PendingLeaveItem {
+  id: number;
+  startDate: string;
+  endDate: string;
+  reason?: string | null;
+  status: string;
+  createdAt: string;
+  user: {
+    id: number;
+    name: string;
+    email: string;
+    team?: { name: string } | null;
+  };
+  leaveType: {
+    id: number;
+    name: string;
+    code: string;
   };
 }
 
@@ -71,7 +185,19 @@ interface StaffOnLeave {
 
 export default function ManagerDashboardPage() {
   const [loading, setLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
+  const [currentTime, setCurrentTime] = useState<Date>(new Date());
+
+  const [tlInfo, setTlInfo] = useState<{
+    name: string;
+    teamName: string;
+  }>({
+    name: "Team Lead",
+    teamName: "General Team",
+  });
+
   const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [pendingRequests, setPendingRequests] = useState<PendingLeaveItem[]>([]);
   const [monthlyTrends, setMonthlyTrends] = useState<MonthlyTrend[]>([]);
   const [leaveTypeStats, setLeaveTypeStats] = useState<LeaveTypeStat[]>([]);
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
@@ -80,21 +206,68 @@ export default function ManagerDashboardPage() {
   
   const [selectedTrendIndex, setSelectedTrendIndex] = useState<number | null>(null);
 
+  // Live Dual Timezone Interval
+  useEffect(() => {
+    setMounted(true);
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch("/api/tl/dashboard");
       if (res.ok) {
         const data = await res.json();
+        if (data.tl) {
+          setTlInfo({
+            name: data.tl.name || "Team Lead",
+            teamName: data.tl.teamName || "General Team",
+          });
+        }
         setStats(data.stats);
+        setPendingRequests(data.pendingRequests || []);
         setMonthlyTrends(data.monthlyTrends || []);
         setLeaveTypeStats(data.leaveTypeStats || []);
         setRecentActivity(data.recentActivity || []);
         setTeamMembers(data.teamMembers || []);
         setOnLeaveToday(data.onLeaveToday || []);
+      } else {
+        setStats({
+          totalTeamMembers: 0,
+          pendingLeaves: 0,
+          approvedLeaves: 0,
+          rejectedLeaves: 0,
+          onLeaveToday: 0,
+          attendance: {
+            presentCount: 0,
+            lateCount: 0,
+            halfDayCount: 0,
+            absentCount: 0,
+            checkedInCount: 0,
+            attendanceRate: 0,
+          },
+        });
       }
     } catch (err: any) {
       console.error("TL dashboard error:", err);
+      setStats({
+        totalTeamMembers: 0,
+        pendingLeaves: 0,
+        approvedLeaves: 0,
+        rejectedLeaves: 0,
+        onLeaveToday: 0,
+        attendance: {
+          presentCount: 0,
+          lateCount: 0,
+          halfDayCount: 0,
+          absentCount: 0,
+          checkedInCount: 0,
+          attendanceRate: 0,
+        },
+      });
     } finally {
       setLoading(false);
     }
@@ -104,6 +277,21 @@ export default function ManagerDashboardPage() {
     fetchData();
   }, [fetchData]);
 
+  const formatDate = (dateStr?: string) => {
+    if (!dateStr) return "-";
+    const d = new Date(dateStr);
+    return isNaN(d.getTime())
+      ? "-"
+      : d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }).replace(/ /g, "-");
+  };
+
+  const getDaysCount = (start: string, end: string) => {
+    const s = new Date(start);
+    const e = new Date(end);
+    const diff = Math.round((e.getTime() - s.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    return Math.max(1, diff);
+  };
+
   if (loading || !stats) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -112,90 +300,164 @@ export default function ManagerDashboardPage() {
     );
   }
 
+  const attendanceRate = stats.attendance?.attendanceRate ?? 0;
+  const presentCount = stats.attendance?.presentCount ?? 0;
+  const checkedInCount = stats.attendance?.checkedInCount ?? 0;
+
   return (
-    <div className="space-y-6 pb-8 animate-in fade-in duration-300">
-      <div className="flex items-center justify-between mb-4">
+    <div className="space-y-5 pb-16 animate-in fade-in duration-200">
+      {/* 1. EXECUTIVE PAGE HEADER (Greeting & Quick Action Links) */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Team Dashboard</h1>
-          <p className="text-sm text-slate-500 mt-1">Overview of your team's schedule and activities.</p>
+          {/* <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200 text-[10px] font-bold mb-1">
+            <Building2 className="w-3 h-3" />
+            <span>{tlInfo.teamName} &bull; Team Lead Dashboard</span>
+          </div> */}
+          <h1 className="text-xl font-bold text-slate-900 tracking-tight">
+            {getGreeting(currentTime)}, {tlInfo.name}
+          </h1>
+         
+        </div>
+
+        {/* <div className="flex items-center gap-2.5 shrink-0">
+          <Link
+            href="/tl/my-leaves"
+            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 shadow-2xs transition-colors cursor-pointer"
+          >
+            <CalendarCheck className="w-3.5 h-3.5 text-indigo-600" />
+            <span>My Leave</span>
+            <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
+          </Link>
+          <Link
+            href="/tl/leave-requests"
+            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-2xs hover:shadow-xs transition-all cursor-pointer"
+          >
+            <span>Review Requests</span>
+            {stats.pendingLeaves > 0 && (
+              <span className="px-1.5 py-0.2 bg-white/25 rounded-full text-[10px] font-bold">
+                {stats.pendingLeaves}
+              </span>
+            )}
+            <ArrowUpRight className="w-3.5 h-3.5 text-white/80" />
+          </Link>
+        </div> */}
+      </div>
+
+      {/* 2. TOP ROW: 3 BALANCED KPI & TIMEZONE CARDS (Like Admin Dashboard) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 items-stretch">
+        {/* Card 1: Total Team Size */}
+        <Link
+          href="/tl/my-team"
+          className="lg:col-span-3 md:col-span-6 bg-white border border-slate-200/90 border-l-4 border-l-indigo-600 rounded-2xl p-4 sm:p-4.5 shadow-2xs hover:border-indigo-400 hover:shadow-xs transition-all group flex flex-col justify-between"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 group-hover:text-indigo-600 transition-colors">
+              Team Roster
+            </span>
+            <div className="w-7 h-7 rounded-lg bg-indigo-50 border border-indigo-100 text-indigo-600 flex items-center justify-center">
+              <Users className="w-3.5 h-3.5" />
+            </div>
+          </div>
+          <div className="mt-3">
+            <div className="text-2xl font-black text-slate-900 tracking-tight">
+              {stats.totalTeamMembers} Officers
+            </div>
+            <p className="text-xs text-slate-500 font-medium mt-1 flex items-center gap-1.5">
+              <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+              <span>{presentCount} on duty today</span>
+              <span>&bull;</span>
+              <span className="truncate">{tlInfo.teamName}</span>
+            </p>
+          </div>
+        </Link>
+
+        {/* Card 2: Pending Approvals Queue */}
+        <Link
+          href="/tl/leave-requests"
+          className="lg:col-span-3 md:col-span-6 bg-white border border-slate-200/90 border-l-4 border-l-amber-500 rounded-2xl p-4 sm:p-4.5 shadow-2xs hover:border-amber-400 hover:shadow-xs transition-all group flex flex-col justify-between"
+          title="Open Leave Requests"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 group-hover:text-amber-600 transition-colors">
+              Pending Approvals
+            </span>
+            <div className="w-7 h-7 rounded-lg bg-amber-50 border border-amber-100 text-amber-600 flex items-center justify-center">
+              <Clock className="w-3.5 h-3.5" />
+            </div>
+          </div>
+          <div className="mt-3">
+            <div className="text-2xl font-black text-slate-900 tracking-tight">
+              {stats.pendingLeaves} In Queue
+            </div>
+            <p className="text-xs text-slate-500 font-medium mt-1">
+              {stats.pendingLeaves > 0
+                ? `${stats.pendingLeaves} awaiting review`
+                : "All team requests reviewed"}
+            </p>
+          </div>
+        </Link>
+
+        {/* Card 3: Dual Timezone (EDT & IST) + Team Presence */}
+        <div className="lg:col-span-6 md:col-span-12 bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-4.5 shadow-2xs flex flex-col justify-between gap-3">
+          {/* Top of Card: Live Dual Timezone (EDT & IST) */}
+          <div className="pb-2.5 border-b border-slate-100 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            {/* USA EDT Time */}
+            <div className="px-3 py-2 rounded-xl bg-slate-50 border border-slate-200/80 text-slate-700">
+              <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                <USFlagIcon className="w-4 h-2.5 rounded-xs shadow-2xs shrink-0" />
+                <span>USA (EDT)</span>
+              </div>
+              <div className="font-mono text-xs font-bold text-slate-900 mt-1 whitespace-nowrap">
+                {mounted ? formatEmbassyTime(currentTime, "America/New_York") : "--"}
+              </div>
+            </div>
+
+            {/* IND IST Time */}
+            <div className="px-3 py-2 rounded-xl bg-slate-50 border border-slate-200/80 text-slate-700">
+              <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                <IndiaFlagIcon className="w-4 h-2.5 rounded-xs shadow-2xs shrink-0" />
+                <span>IND (IST)</span>
+              </div>
+              <div className="font-mono text-xs font-bold text-slate-900 mt-1 whitespace-nowrap">
+                {mounted ? formatEmbassyTime(currentTime, "Asia/Kolkata") : "--"}
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom of Card: Team Duty & Presence Rate */}
+          <div className="flex items-center gap-3 text-xs flex-wrap">
+            <div className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+              <strong className="text-slate-900 font-bold">
+                {attendanceRate}% Present
+              </strong>
+              <span className="text-slate-500 text-xs">
+                ({checkedInCount} of {stats.totalTeamMembers} Officers)
+              </span>
+            </div>
+
+            <span className="text-slate-300 hidden sm:inline">&bull;</span>
+
+            <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
+              <span>On Leave Today:</span>
+              <strong className={stats.onLeaveToday > 0 ? "text-amber-700 font-bold" : "text-slate-800 font-bold"}>
+                {stats.onLeaveToday}
+              </strong>
+            </div>
+
+            <span className="text-slate-300 hidden sm:inline">&bull;</span>
+
+            <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
+              <span>Approved YTD:</span>
+              <strong className="text-emerald-700 font-bold">
+                {stats.approvedLeaves}
+              </strong>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* 1. TOP METRICS CARDS */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 items-stretch">
-        <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-2xs group hover:shadow-sm hover:border-indigo-100 transition-all flex flex-col justify-between">
-          <div>
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-[11px] font-bold text-slate-400 tracking-wider uppercase mb-1">Total Team Size</p>
-                <h3 className="text-3xl font-black text-slate-900 tracking-tight">{stats.totalTeamMembers}</h3>
-              </div>
-              <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl group-hover:bg-indigo-100 transition-colors">
-                <Users className="w-5 h-5" />
-              </div>
-            </div>
-            <p className="text-xs text-slate-500 mt-3 flex items-center gap-1.5 font-medium">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-              {stats.attendance.presentCount} present today
-            </p>
-          </div>
-        </div>
-
-        <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-2xs group hover:shadow-sm hover:border-amber-100 transition-all flex flex-col justify-between">
-          <div>
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-[11px] font-bold text-slate-400 tracking-wider uppercase mb-1">Pending Approvals</p>
-                <h3 className="text-3xl font-black text-amber-500 tracking-tight">{stats.pendingLeaves}</h3>
-              </div>
-              <div className="p-2 bg-amber-50 text-amber-500 rounded-xl group-hover:bg-amber-100 transition-colors">
-                <Clock className="w-5 h-5" />
-              </div>
-            </div>
-            <Link href="/tl/leave-requests" className="text-xs text-amber-600 font-bold hover:text-amber-700 mt-3 inline-flex items-center gap-1 transition-colors">
-              Review requests <ArrowRight className="w-3 h-3" />
-            </Link>
-          </div>
-        </div>
-
-        <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-2xs group hover:shadow-sm hover:border-emerald-100 transition-all flex flex-col justify-between">
-          <div>
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-[11px] font-bold text-slate-400 tracking-wider uppercase mb-1">Approved Leaves</p>
-                <h3 className="text-3xl font-black text-emerald-500 tracking-tight">{stats.approvedLeaves}</h3>
-              </div>
-              <div className="p-2 bg-emerald-50 text-emerald-500 rounded-xl group-hover:bg-emerald-100 transition-colors">
-                <CheckCircle2 className="w-5 h-5" />
-              </div>
-            </div>
-            <p className="text-xs text-slate-500 mt-3 flex items-center gap-1.5 font-medium">
-              <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
-              Year to date
-            </p>
-          </div>
-        </div>
-
-        <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-2xs group hover:shadow-sm hover:border-rose-100 transition-all flex flex-col justify-between">
-          <div>
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-[11px] font-bold text-slate-400 tracking-wider uppercase mb-1">On Leave Today</p>
-                <h3 className="text-3xl font-black text-rose-500 tracking-tight">{stats.onLeaveToday}</h3>
-              </div>
-              <div className="p-2 bg-rose-50 text-rose-500 rounded-xl group-hover:bg-rose-100 transition-colors">
-                <Activity className="w-5 h-5" />
-              </div>
-            </div>
-            <p className="text-xs text-slate-500 mt-3 flex items-center gap-1.5 font-medium">
-              <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-              Team members away
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* 2. MIDDLE SECTION: CHARTS */}
+      {/* 3. MIDDLE SECTION: MONTHLY LEAVE TRENDS (7 Cols) + LEAVE POLICY UTILIZATION (5 Cols) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
         {/* Left 7 Cols: MONTHLY LEAVE TRENDS */}
         <div className="lg:col-span-7 bg-white border border-slate-200/90 rounded-2xl p-5 shadow-2xs flex flex-col justify-between space-y-4">
@@ -207,7 +469,7 @@ export default function ManagerDashboardPage() {
                   <span>Team Leave Trends (6 Months)</span>
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Historical view of team leave requests.
+                  Click any month bar to dynamically view breakdown.
                 </p>
               </div>
             </div>
@@ -432,41 +694,135 @@ export default function ManagerDashboardPage() {
         </div>
       </div>
 
-      {/* 3. BOTTOM SECTION: TOOLS */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-stretch">
-        <div className="h-full">
-          <TeamCalendarWidget />
-        </div>
-        <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-2xs space-y-4 flex flex-col justify-between">
+      {/* 4. BOTTOM SECTION: ACTIONABLE PENDING REQUESTS (7 COLS) + TEAM AVAILABILITY & CALENDAR (5 COLS) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
+        {/* Left 7 Cols: PENDING REQUESTS ACTION QUEUE */}
+        <div className="lg:col-span-7 bg-white border border-slate-200/90 rounded-2xl p-5 shadow-2xs space-y-4 flex flex-col justify-between">
           <div>
-             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                <h3 className="text-sm font-bold text-slate-900">Team Availability Overview</h3>
-             </div>
-             <div className="pt-4 space-y-3 overflow-y-auto max-h-[300px]">
-                {onLeaveToday.length > 0 ? (
-                  onLeaveToday.map((leave) => (
-                    <div key={leave.id} className="flex items-center justify-between p-3 rounded-xl bg-slate-50/70 border border-slate-100">
-                      <div className="flex flex-col">
-                        <span className="text-sm font-semibold text-slate-800">{leave.user.name}</span>
-                        <span className="text-xs text-slate-500">{leave.leaveType.name}</span>
-                      </div>
-                      <span className="text-xs font-bold text-rose-500 bg-rose-50 px-2 py-1 rounded-md">
-                        On Leave
-                      </span>
-                    </div>
-                  ))
-                ) : (
-                  <div className="text-center py-6">
-                    <p className="text-sm text-slate-500 font-semibold">Everyone is available today!</p>
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <Clock className="w-4 h-4 text-amber-600" />
+                <h3 className="text-sm font-bold text-slate-900">
+                  Pending Approvals Queue
+                </h3>
+              </div>
+              <Link
+                href="/tl/leave-requests"
+                className="text-xs font-semibold text-indigo-600 hover:text-indigo-700 flex items-center gap-1 cursor-pointer"
+              >
+                <span>View All Requests</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+
+            <div className="pt-3 space-y-2.5">
+              {pendingRequests.length === 0 ? (
+                <div className="py-10 text-center text-slate-400 space-y-2">
+                  <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto">
+                    <CheckCircle2 className="w-5 h-5" />
                   </div>
-                )}
-             </div>
+                  <p className="text-xs font-bold text-slate-700">All caught up!</p>
+                  <p className="text-[11px] text-slate-400">No pending leave requests awaiting your review.</p>
+                </div>
+              ) : (
+                pendingRequests.slice(0, 4).map((req) => {
+                  const days = getDaysCount(req.startDate, req.endDate);
+                  const initials = req.user?.name
+                    ? req.user.name.substring(0, 2).toUpperCase()
+                    : "OF";
+
+                  return (
+                    <div
+                      key={req.id}
+                      className="p-3.5 rounded-xl border border-slate-100 bg-slate-50/50 hover:bg-slate-50 hover:border-slate-200 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-9 h-9 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-xs shrink-0">
+                          {initials}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-slate-900 truncate">{req.user?.name}</span>
+                            <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                              {req.leaveType?.name}
+                            </span>
+                          </div>
+                          <div className="text-[11px] text-slate-500 mt-0.5">
+                            {formatDate(req.startDate)} &rarr; {formatDate(req.endDate)} ({days} {days === 1 ? "day" : "days"})
+                            {req.reason && <span className="italic ml-2 truncate text-slate-400">&quot;{req.reason}&quot;</span>}
+                          </div>
+                        </div>
+                      </div>
+
+                      <Link
+                        href={`/tl/leave-requests`}
+                        className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs transition-colors self-start sm:self-auto shrink-0 flex items-center gap-1 cursor-pointer"
+                      >
+                        <span>Review</span>
+                        <ArrowUpRight className="w-3 h-3" />
+                      </Link>
+                    </div>
+                  );
+                })
+              )}
+            </div>
           </div>
+
           <div className="p-3 bg-slate-50/80 rounded-xl border border-slate-100 flex items-center justify-between text-xs mt-auto">
-             <span className="text-slate-500 font-medium">Active Team Members:</span>
-             <strong className="text-slate-900 font-black">{teamMembers.length} Members</strong>
+            <span className="text-slate-500 font-medium">Actionable Pending Requests:</span>
+            <strong className="text-slate-900 font-black">{stats.pendingLeaves} Total</strong>
           </div>
         </div>
+
+        {/* Right 5 Cols: TEAM AVAILABILITY & ON LEAVE TODAY */}
+        <div className="lg:col-span-5 bg-white border border-slate-200/90 rounded-2xl p-5 shadow-2xs space-y-4 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <Activity className="w-4 h-4 text-indigo-600" />
+                <span>Team Availability Overview</span>
+              </h3>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                {attendanceRate}% Present
+              </span>
+            </div>
+
+            <div className="pt-3 space-y-2.5 overflow-y-auto max-h-[300px]">
+              {onLeaveToday.length > 0 ? (
+                onLeaveToday.map((leave) => (
+                  <div
+                    key={leave.id}
+                    className="flex items-center justify-between p-3 rounded-xl bg-rose-50/60 border border-rose-100"
+                  >
+                    <div className="flex flex-col">
+                      <span className="text-xs font-bold text-slate-800">{leave.user.name}</span>
+                      <span className="text-[11px] text-slate-500">{leave.leaveType.name}</span>
+                    </div>
+                    <span className="text-[10px] font-bold text-rose-600 bg-white border border-rose-200 px-2.5 py-0.5 rounded-full">
+                      On Leave
+                    </span>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-8 space-y-1">
+                  <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto mb-1.5" />
+                  <p className="text-xs font-bold text-slate-800">Full Team Present</p>
+                  <p className="text-[11px] text-slate-400">All officers are available on duty today.</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="p-3 bg-slate-50/80 rounded-xl border border-slate-100 flex items-center justify-between text-xs mt-auto">
+            <span className="text-slate-500 font-medium">Active Team Members:</span>
+            <strong className="text-slate-900 font-black">{teamMembers.length} Officers</strong>
+          </div>
+        </div>
+      </div>
+
+      {/* 5. EMBEDDED TEAM CALENDAR WIDGET */}
+      <div className="pt-1">
+        <TeamCalendarWidget />
       </div>
     </div>
   );

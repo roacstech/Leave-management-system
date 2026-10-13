@@ -3,57 +3,78 @@
 import React, { useState, useEffect } from "react";
 import { Cloud, CloudRain, Sun, CloudLightning, Snowflake, CloudFog, Loader2, MapPin } from "lucide-react";
 
+// Fallback to Embassy of India premise location: Washington, D.C.
+const DEFAULT_LAT = 38.8951;
+const DEFAULT_LON = -77.0364;
+const DEFAULT_CITY = "Washington, D.C.";
+
 export default function WeatherWidget() {
   const [weather, setWeather] = useState<{ temp: number; code: number; city: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
   useEffect(() => {
-    if (!navigator.geolocation) {
-      setError(true);
-      setLoading(false);
-      return;
-    }
+    let isMounted = true;
 
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const lat = position.coords.latitude;
-        const lon = position.coords.longitude;
-        
-        try {
-          // Fetch Weather
-          const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
-          const weatherData = await weatherRes.json();
-          
-          // Fetch City (Reverse Geocoding)
-          let city = "Local";
+    async function loadWeather(lat: number, lon: number, cityName?: string) {
+      try {
+        const weatherRes = await fetch(
+          `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`
+        );
+        if (!weatherRes.ok) throw new Error("Weather fetch failed");
+        const weatherData = await weatherRes.json();
+
+        let city = cityName || "Washington, D.C.";
+        if (!cityName) {
           try {
-            const geoRes = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=en`);
-            const geoData = await geoRes.json();
-            city = geoData.city || geoData.locality || "Local";
-          } catch (e) {
-            console.error("Failed to fetch city", e);
+            const geoRes = await fetch(
+              `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=en`
+            );
+            if (geoRes.ok) {
+              const geoData = await geoRes.json();
+              city = geoData.city || geoData.locality || "Local";
+            }
+          } catch {
+            // Silently fall back
           }
+        }
 
+        if (isMounted) {
           setWeather({
             temp: Math.round(weatherData.current_weather.temperature),
             code: weatherData.current_weather.weathercode,
-            city
+            city,
           });
-        } catch (e) {
-          console.error("Failed to fetch weather", e);
+        }
+      } catch {
+        if (isMounted) {
           setError(true);
-        } finally {
+        }
+      } finally {
+        if (isMounted) {
           setLoading(false);
         }
-      },
-      (err) => {
-        console.error("Geolocation error", err);
-        setError(true);
-        setLoading(false);
-      },
-      { timeout: 10000 }
-    );
+      }
+    }
+
+    if (typeof navigator !== "undefined" && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          loadWeather(position.coords.latitude, position.coords.longitude);
+        },
+        () => {
+          // If user denies permission or browser blocks location, silently fall back without console.error
+          loadWeather(DEFAULT_LAT, DEFAULT_LON, DEFAULT_CITY);
+        },
+        { timeout: 5000 }
+      );
+    } else {
+      loadWeather(DEFAULT_LAT, DEFAULT_LON, DEFAULT_CITY);
+    }
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   if (loading) {
@@ -66,7 +87,7 @@ export default function WeatherWidget() {
   }
 
   if (error || !weather) {
-    return null; // Don't show anything if we can't get weather
+    return null;
   }
 
   const getWeatherIcon = (code: number) => {

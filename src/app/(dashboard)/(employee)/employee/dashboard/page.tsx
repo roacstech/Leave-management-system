@@ -369,7 +369,7 @@ export default function EmployeeDashboardPage() {
               <RotateCcw className={`w-4 h-4 ${loading ? "animate-spin text-indigo-600" : ""}`} />
             </button> */}
 
-            <Link
+            {/* <Link
               href="/employee/my-leaves"
               className="px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-2xs transition-all cursor-pointer"
             >
@@ -383,7 +383,7 @@ export default function EmployeeDashboardPage() {
             >
               <Plus className="w-4 h-4" />
               <span>Apply for Leave</span>
-            </button>
+            </button> */}
           </div>
         </div>
       </div>
